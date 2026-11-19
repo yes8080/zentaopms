@@ -32,3 +32,5 @@ php -r 'require "framework/control.class.php"; require "framework/model.class.ph
 ```sh
 python3 plugins/reqintake/tests/smoke.py http://127.0.0.1:8097 /path/to/test-admin-password
 ```
+
+管理员可在禅道权限组中为普通账号授予需求池的列表和详情权限。列表权限包括登记反馈，用户只能查看有权访问的产品。实际负责人可办理已分派的反馈，临时跟进人和其他用户无权变更状态。负责人配置仍由管理员管理。

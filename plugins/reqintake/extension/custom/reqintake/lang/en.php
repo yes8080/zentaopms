@@ -24,3 +24,4 @@ $lang->reqintake->errors['transitionReason'] = 'For closing or reopening, enter 
 $lang->reqintake->history = 'Status history';
 $lang->reqintake->scopes = array_combine(array('all', 'mine', 'assigned'), array('All', 'Submitted by me', 'Assigned to me'));
 $lang->reqintake->submitter = 'Submitter';
+$lang->reqintake->errors['handler'] = 'Only the assigned owner can handle this request.';

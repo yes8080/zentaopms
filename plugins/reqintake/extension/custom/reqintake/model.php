@@ -1,14 +1,25 @@
 <?php
 class reqintakeModel extends model
 {
+    public function canAccess(string $method): bool
+    {
+        return !empty($this->app->user->account) && common::hasPriv('reqintake', $method);
+    }
+
+    private function visibleProducts(): array
+    {
+        return array_values(array_filter(array_map('intval', explode(',', (string)($this->app->user->view->products ?? '')))));
+    }
+
     public function recent(string $scope = 'all'): array
     {
-        if(empty($this->app->user->admin)) throw new DomainException('product');
+        if(!$this->canAccess('index')) throw new DomainException('product');
 
         $query = $this->dao->select('f.id,f.title,f.assignedTo,f.assignmentPending,f.status,f.version,p.name AS productName')
             ->from($this->config->db->prefix . 'reqintakeFeedback')->alias('f')
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
             ->where('p.deleted')->eq('0');
+        if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
         $account = $this->app->user->account;
         if($scope === 'mine') $query->andWhere('f.openedBy')->eq($account);
         if($scope === 'assigned') $query->andWhere('f.assignedTo')->eq($account)->andWhere('f.status')->ne('closed');
@@ -17,7 +28,7 @@ class reqintakeModel extends model
 
     public function findFeedback(int $id): object|false
     {
-        if(empty($this->app->user->admin) || $id < 1) return false;
+        if(!$this->canAccess('detail') || $id < 1) return false;
 
         $feedback = $this->dao->select('f.id,f.product,f.title,f.description,f.customer,f.channel,f.openedBy,f.assignedTo,f.status,f.assignmentPending,p.name AS productName')
             ->from($this->config->db->prefix . 'reqintakeFeedback')->alias('f')
@@ -28,16 +39,17 @@ class reqintakeModel extends model
 
     public function historyForRecent(array $recent): array
     {
-        if(empty($this->app->user->admin)) throw new DomainException('product');
+        if(!$this->canAccess('index')) throw new DomainException('product');
         if(!$recent) return array();
 
         $ids = array_map(static fn($item) => (int)$item->id, $recent);
-        $history = $this->dao->select('h.feedback,h.actor,h.action,h.reason,h.createdDate')
+        $query = $this->dao->select('h.feedback,h.actor,h.action,h.reason,h.createdDate')
             ->from($this->config->db->prefix . 'reqintakeHistory')->alias('h')
             ->innerJoin($this->config->db->prefix . 'reqintakeFeedback')->alias('f')->on('h.feedback = f.id')
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
-            ->where('p.deleted')->eq('0')->andWhere('h.feedback')->in($ids)
-            ->orderBy('h.feedback,h.version_desc')->fetchAll();
+            ->where('p.deleted')->eq('0')->andWhere('h.feedback')->in($ids);
+        if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
+        $history = $query->orderBy('h.feedback,h.version_desc')->fetchAll();
 
         $grouped = array();
         foreach($history as $entry) $grouped[$entry->feedback][] = $entry;
@@ -46,11 +58,13 @@ class reqintakeModel extends model
 
     public function transition(int $id, int $version, string $action, string $reason): void
     {
-        if(empty($this->app->user->admin)) throw new DomainException('product');
+        if(!$this->canAccess('index')) throw new DomainException('product');
 
         $table = $this->config->db->prefix . 'reqintakeFeedback';
-        $feedback = $this->dao->select('product,status')->from($table)->where('id')->eq($id)->fetch();
+        $feedback = $this->dao->select('product,status,assignedTo,assignmentPending')->from($table)->where('id')->eq($id)->fetch();
         if(!$feedback || !$this->canReadProduct((int)$feedback->product)) throw new DomainException('product');
+
+        if(empty($this->app->user->admin) && ($feedback->assignedTo !== $this->app->user->account || $feedback->assignmentPending)) throw new DomainException('handler');
 
         $next = match($action)
         {
@@ -138,7 +152,7 @@ class reqintakeModel extends model
     public function receive(int $product, string $operation, string $title, string $description, string $customer = '', string $channel = ''): int
     {
         $account = $this->app->user->account ?? '';
-        if($account === '' || !$this->canReadProduct($product)) throw new DomainException('product');
+        if(!$this->canAccess('index') || !$this->canReadProduct($product)) throw new DomainException('product');
 
         $title = trim($title);
         if(!preg_match('/\A[a-f0-9]{32}\z/', $operation)) throw new InvalidArgumentException('operation');

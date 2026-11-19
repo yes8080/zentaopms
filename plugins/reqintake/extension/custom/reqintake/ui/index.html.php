@@ -30,6 +30,7 @@ ob_start();
         </label>
         <button class="btn primary" type="submit"><?= $escape($labels->submit) ?></button>
     </form>
+    <?php if($isAdmin): ?>
     <hr>
     <?php if(isset($ownerSaved)): ?><p role="status"><?= $escape($labels->ownerSaved) ?></p><?php endif; ?>
     <form method="post">
@@ -49,6 +50,7 @@ ob_start();
         </label>
         <button class="btn" type="submit"><?= $escape($labels->saveOwner) ?></button>
     </form>
+    <?php endif; ?>
     <hr>
     <h3><?= $escape($labels->recent) ?></h3>
     <nav class="mb-2">
@@ -90,6 +92,7 @@ ob_start();
                         <td><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></td>
                         <td><?= $escape($labels->states[$item->status] ?? $item->status) ?></td>
                         <td>
+                            <?php if($isAdmin || ($item->assignedTo === $currentAccount && !$item->assignmentPending)): ?>
                             <form method="post">
                                 <input type="hidden" name="intent" value="transition">
                                 <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
@@ -103,6 +106,7 @@ ob_start();
                                     <button class="btn" type="submit" name="action" value="<?= $escape($action) ?>"><?= $escape($labels->actions[$action]) ?></button>
                                 <?php endforeach; ?>
                             </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

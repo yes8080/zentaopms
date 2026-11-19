@@ -3,7 +3,7 @@ class reqintake extends control
 {
     public function index(string $scope = 'all')
     {
-        if(empty($this->app->user->admin))
+        if(!$this->loadModel('reqintake')->canAccess('index'))
         {
             http_response_code(403);
             return;
@@ -62,6 +62,8 @@ class reqintake extends control
         $this->view->fields = $fields;
         $this->view->products = $this->loadModel('product')->getPairs();
         $model = $this->loadModel('reqintake');
+        $this->view->isAdmin = !empty($this->app->user->admin);
+        $this->view->currentAccount = $this->app->user->account;
         $this->view->scope = in_array($scope, array('all', 'mine', 'assigned'), true) ? $scope : 'all';
         $this->view->feedback = $model->recent($this->view->scope);
         $this->view->history = $model->historyForRecent($this->view->feedback);
@@ -70,7 +72,7 @@ class reqintake extends control
 
     public function detail(int $id = 0)
     {
-        if(empty($this->app->user->admin))
+        if(!$this->loadModel('reqintake')->canAccess('detail'))
         {
             http_response_code(403);
             return;
