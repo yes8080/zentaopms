@@ -188,3 +188,5 @@ node plugins/reqintake/tests/browser-smoke.cjs http://127.0.0.1:8097 /path/to/ad
 ### 0.39.0 升级复验
 
 在原有 0.32.0 的独立禅道 22.7 Compose 实例备份数据库，按 `ri_` 前缀应用当前安装脚本和 0.39.0 升级脚本。后台扩展管理升级成功。PHP 重启就绪后，原反馈和附件可读取，附件下载字节一致。新反馈 #9 可保存采纳决定并显示历史。Chromium 提报和附件回归通过。
+
+0.40.0 新转单持久记录来源反馈及版本、目标类型、产品、执行和操作人。运维可按操作编号连接 `reqintakeConversionDetails` 和 `reqintakeConversion`。目标编号为 0 表示待核对。有目标编号时，还应核实 `reqintakeLink` 中对应来源的承接关系。升级先应用本版 `db/install.sql`，从 0.39.0 以前版本升级时也应用 `db/upgrade-0.39.0.sql`。

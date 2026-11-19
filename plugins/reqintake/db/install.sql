@@ -219,3 +219,14 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeReviewers` (
   `suggestedReviewers` text NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeConversionDetails` (
+  `operation` char(64) NOT NULL,
+  `targetType` varchar(20) NOT NULL,
+  `product` int unsigned NOT NULL,
+  `execution` int unsigned NOT NULL DEFAULT 0,
+  `sources` text NOT NULL,
+  `actor` varchar(30) NOT NULL,
+  `createdDate` datetime NOT NULL,
+  PRIMARY KEY (`operation`)
+) ENGINE=InnoDB;

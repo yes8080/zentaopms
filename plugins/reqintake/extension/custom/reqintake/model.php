@@ -725,6 +725,13 @@ class reqintakeModel extends model
         return array_filter($executions, static fn($id) => $model->checkPriv((int)$id) && !in_array((string)$id, $limited, true), ARRAY_FILTER_USE_KEY);
     }
 
+    private function recordConversion(string $operation, string $type, int $product, array $sources, int $execution = 0): void
+    {
+        $table = $this->config->db->prefix . 'reqintakeConversionDetails';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (operation,targetType,product,execution,sources,actor,createdDate) VALUES (?,?,?,?,?,?,?)");
+        $insert->execute([$operation, $type, $product, $execution, json_encode((object)$sources, JSON_THROW_ON_ERROR), $this->app->user->account, helper::now()]);
+    }
+
     public function convertToTask(string $token, int $execution, callable $create): int|false
     {
         $feedback = $this->conversionSource($token, 'task');
@@ -732,13 +739,15 @@ class reqintakeModel extends model
 
         /* Native task creation commits the transaction opened by task::create. The reservation
            becomes durable in that same commit, even if the native call never returns an ID. */
+        $sources = array((int)$feedback->id => $feedback->version);
         $operation = hash('sha256', "task:$feedback->id:$feedback->version");
         $table = $this->config->db->prefix . 'reqintakeConversion';
         $reserve = $this->dbh->prepare("INSERT IGNORE INTO `$table` (operation) VALUES (?)");
         $reserve->execute([$operation]);
         if($reserve->rowCount() === 1)
         {
-            $this->conversionProduct(array((int)$feedback->id => $feedback->version), 'task', true);
+            $product = $this->conversionProduct($sources, 'task', true);
+            $this->recordConversion($operation, 'task', $product, $sources, $execution);
             $id = $create();
             if(!$id) return false;
 
@@ -759,7 +768,7 @@ class reqintakeModel extends model
 
         $target = $this->targetForProduct('task', $id, (int)$feedback->product);
         if(!$target || (int)$target->execution !== $execution) throw new DomainException('linkTarget');
-        $this->linkTargets(array((int)$feedback->id => $feedback->version), $id, '', 'task', created: true);
+        $this->linkTargets($sources, $id, '', 'task', created: true);
         if($this->dbh->inTransaction()) $this->dbh->commit();
         return $id;
     }
@@ -876,6 +885,7 @@ class reqintakeModel extends model
             }
 
             $this->conversionProduct($sources, $type, true);
+            $this->recordConversion($operation, $type, $product, $sources);
 
             $id = $create();
             if(!$id || dao::isError())
