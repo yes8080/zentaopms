@@ -144,3 +144,6 @@ $lang->reqintake->errors['suggestedGrade'] = 'Select a valid suggested demand gr
 
 $lang->reqintake->fields['suggestedParent'] = 'Suggested parent demand ID';
 $lang->reqintake->errors['suggestedParent'] = 'Enter an eligible parent demand ID from the same product.';
+
+$lang->reqintake->fields['suggestedReviewers'] = 'Suggested reviewers';
+$lang->reqintake->errors['suggestedReviewers'] = 'Select eligible reviewers for this product.';

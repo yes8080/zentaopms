@@ -212,3 +212,10 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeParent` (
   `suggestedParent` varchar(10) NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeReviewers` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `suggestedReviewers` text NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

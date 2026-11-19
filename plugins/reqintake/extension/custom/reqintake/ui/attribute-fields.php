@@ -32,24 +32,27 @@
 <label class="block mb-2"><?= $escape($labels->fields['acceptance']) ?>
     <?= $renderEditor('acceptance', $values['acceptance'], $rich) ?>
 </label>
-<?php
-$selectedAccounts = array_filter(explode(',', $values['mailto']), static fn($account) => $account !== '');
-$pickerAccounts = $mailtoOptions + array_combine($selectedAccounts, $selectedAccounts);
-$items = array();
-foreach($pickerAccounts as $account => $label) $items[] = array('value' => (string)$account, 'text' => $label);
-?>
-<div class="mb-2">
-    <span><?= $escape($labels->fields['mailto']) ?></span>
-    <input type="hidden" name="mailtoPresent" value="1">
+<?php foreach(array('mailto', 'suggestedReviewers') as $field): ?>
     <?php
-    \zin\disableGlobalRender();
-    try
-    {
-        echo \zin\mailto(\zin\set::items($items), \zin\set::value($values['mailto']), \zin\set::multiple(100), \zin\set::contactList(false))->render();
-    }
-    finally
-    {
-        \zin\enableGlobalRender();
-    }
+    $selectedAccounts = array_filter(explode(',', $values[$field]), static fn($account) => $account !== '');
+    $pickerAccounts = $mailtoOptions + array_combine($selectedAccounts, $selectedAccounts);
+    $items = array();
+    foreach($pickerAccounts as $account => $label) $items[] = array('value' => (string)$account, 'text' => $label);
     ?>
-</div>
+    <div class="mb-2">
+        <span><?= $escape($labels->fields[$field]) ?></span>
+        <input type="hidden" name="<?= $field ?>Present" value="1">
+        <?php
+        \zin\disableGlobalRender();
+        try
+        {
+            echo \zin\mailto(\zin\set::name($field . '[]'), \zin\set::items($items), \zin\set::value($values[$field]),
+                \zin\set::multiple(100), \zin\set::contactList(false))->render();
+        }
+        finally
+        {
+            \zin\enableGlobalRender();
+        }
+        ?>
+    </div>
+<?php endforeach; ?>

@@ -53,6 +53,14 @@ query('formGridPanel')->each(function($node) use($title, $description, $attribut
     {
         if($attributes[$field] !== '') $fields->field($field)->value($attributes[$field]);
     }
+    $reviewers = implode(',', array_intersect(explode(',', $attributes['suggestedReviewers']), array_keys(data('fields.reviewer.options') ?? array())));
+    if($reviewers !== '')
+    {
+        foreach($fields->field('reviewer')->get('items') ?? array() as $item)
+        {
+            if($item instanceof field && $item->getName() === 'reviewer[]') $item->value($reviewers);
+        }
+    }
     if($mailto !== '') $fields->field('mailto')->value($mailto);
     $node->setProp('fields', $fields);
 });

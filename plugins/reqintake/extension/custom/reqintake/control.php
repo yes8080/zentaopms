@@ -361,20 +361,21 @@ class reqintake extends control
         $attributes = array();
         foreach(array_keys($this->reqintake->attributeDefaults()) as $field)
         {
-            if(in_array($field, array('branchModules', 'mailto'), true)) continue;
+            if(in_array($field, array('branchModules', 'mailto', 'suggestedReviewers'), true)) continue;
             if(isset($_POST[$field])) $attributes[$field] = $this->formValue($field);
         }
-        if(isset($_POST['mailtoPresent']) || isset($_POST['mailto']))
+        foreach(array('mailto', 'suggestedReviewers') as $field)
         {
-            $accounts = $_POST['mailto'] ?? array();
-            if(!is_array($accounts) || count($accounts) > 100) throw new InvalidArgumentException('mailto');
+            if(!isset($_POST[$field . 'Present']) && !isset($_POST[$field])) continue;
+            $accounts = $_POST[$field] ?? array();
+            if(!is_array($accounts) || count($accounts) > 100) throw new InvalidArgumentException($field);
             foreach($accounts as $account)
             {
-                if(!is_string($account) || str_contains($account, ',') || strlen($account) > 120) throw new InvalidArgumentException('mailto');
+                if(!is_string($account) || str_contains($account, ',') || strlen($account) > 120) throw new InvalidArgumentException($field);
             }
             $accounts = array_unique(array_filter($accounts, static fn($account) => $account !== ''));
             sort($accounts, SORT_STRING);
-            $attributes['mailto'] = implode(',', $accounts);
+            $attributes[$field] = implode(',', $accounts);
         }
         if(isset($_POST['branchModules']))
         {
