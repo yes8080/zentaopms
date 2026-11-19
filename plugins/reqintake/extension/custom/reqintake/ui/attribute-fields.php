@@ -9,5 +9,5 @@
     </label>
 <?php endforeach; ?>
 <label class="block mb-2"><?= $escape($labels->fields['acceptance']) ?>
-    <textarea class="form-control" name="acceptance"><?= $escape($values['acceptance']) ?></textarea>
+    <?= $renderEditor('acceptance', $values['acceptance'], $rich) ?>
 </label>

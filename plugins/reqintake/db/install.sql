@@ -95,3 +95,9 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeAttributes` (
   `acceptance` mediumtext NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeRichText` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

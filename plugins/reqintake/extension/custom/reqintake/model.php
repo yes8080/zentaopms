@@ -49,6 +49,33 @@ class reqintakeModel extends model
         return $feedback && $this->canReadProduct((int)$feedback->product) ? $feedback : false;
     }
 
+    public function richTextVersions(int $id): array
+    {
+        return $this->dao->select('version')->from($this->config->db->prefix . 'reqintakeRichText')
+            ->where('feedback')->eq($id)->fetchPairs('version', 'version');
+    }
+
+    private function saveRichTextVersion(int $id, int $version): void
+    {
+        $table = $this->config->db->prefix . 'reqintakeRichText';
+        $this->dbh->prepare("INSERT INTO `$table` (feedback,version) VALUES (?,?)")->execute([$id, $version]);
+    }
+
+    public function cleanRichText(string $text): string
+    {
+        static $purifier;
+        if($purifier === null)
+        {
+            $this->app->loadClass('purifier', true);
+            $config = HTMLPurifier_Config::createDefault();
+            $config->set('Cache.DefinitionImpl', null);
+            /* Images and external resources require feedback-specific file access. */
+            $config->set('HTML.Allowed', 'p,br,strong,b,em,i,u,s,ul,ol,li,blockquote,pre,code,h1,h2,h3,h4,hr');
+            $purifier = new HTMLPurifier($config);
+        }
+        return $purifier->purify($text);
+    }
+
     public function attributeOptions(): array
     {
         $this->app->loadLang('story');
@@ -91,13 +118,18 @@ class reqintakeModel extends model
             ->orderBy('version_desc')->fetchAll();
     }
 
-    public function revise(object $feedback, int $version, array $fields): void
+    public function revise(object $feedback, int $version, array $fields, bool $rich = false): void
     {
         if(!$this->canHandle($feedback)) throw new DomainException('handler');
 
+        if($rich)
+        {
+            $fields['description'] = $this->cleanRichText($fields['description']);
+            $fields['acceptance'] = $this->cleanRichText($fields['acceptance'] ?? '');
+        }
         $title = trim($fields['title']);
         if($title === '' || mb_strlen($title) > 255) throw new InvalidArgumentException('title');
-        if(trim($fields['description']) === '' || strlen($fields['description']) > 16777215) throw new InvalidArgumentException('description');
+        if(trim($rich ? html_entity_decode(strip_tags($fields['description'])) : $fields['description']) === '' || strlen($fields['description']) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($fields['customer']) > 255 || mb_strlen($fields['channel']) > 64) throw new InvalidArgumentException('source');
 
         $attributes = $this->validatedAttributes(array_intersect_key($fields, array_flip(array('category', 'priority', 'acceptance'))) + $this->attributes((int)$feedback->id));
@@ -114,6 +146,7 @@ class reqintakeModel extends model
             $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeRevision` (feedback,version,title,description,customer,channel,actor,createdDate) VALUES (?,?,?,?,?,?,?,?)");
             $insert->execute([$feedback->id, $version + 1, $title, $fields['description'], $fields['customer'], $fields['channel'], $this->app->user->account, $now]);
             $this->saveAttributes((int)$feedback->id, $version + 1, $attributes);
+            if($rich) $this->saveRichTextVersion((int)$feedback->id, $version + 1);
             $this->dbh->commit();
         }
         catch(Throwable $error)
@@ -618,7 +651,7 @@ class reqintakeModel extends model
         return in_array((string)$product, explode(',', (string)($view->products ?? '')), true);
     }
 
-    public function receive(int $product, string $operation, string $title, string $description, string $customer = '', string $channel = '', array $attributes = array()): int
+    public function receive(int $product, string $operation, string $title, string $description, string $customer = '', string $channel = '', array $attributes = array(), bool $rich = false): int
     {
         $account = $this->app->user->account ?? '';
         if(!$this->canAccess('index') || !$this->canReadProduct($product)) throw new DomainException('product');
@@ -626,7 +659,12 @@ class reqintakeModel extends model
         $title = trim($title);
         if(!preg_match('/\A[a-f0-9]{32}\z/', $operation)) throw new InvalidArgumentException('operation');
         if($title === '' || mb_strlen($title) > 255) throw new InvalidArgumentException('title');
-        if(trim($description) === '' || strlen($description) > 16777215) throw new InvalidArgumentException('description');
+        if($rich)
+        {
+            $description = $this->cleanRichText($description);
+            $attributes['acceptance'] = $this->cleanRichText($attributes['acceptance'] ?? '');
+        }
+        if(trim($rich ? html_entity_decode(strip_tags($description)) : $description) === '' || strlen($description) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($customer) > 255 || mb_strlen($channel) > 64) throw new InvalidArgumentException('source');
 
         $attributes = $this->validatedAttributes($attributes + array('category' => 'feature', 'priority' => '3', 'acceptance' => ''));
@@ -654,7 +692,12 @@ class reqintakeModel extends model
             }
 
             $id = (int)$saved->id;
-            if($created) $this->saveAttributes($id, 1, $attributes);
+            if($created)
+            {
+                $this->saveAttributes($id, 1, $attributes);
+                if($rich) $this->saveRichTextVersion($id, 1);
+            }
+            if((bool)isset($this->richTextVersions($id)[1]) !== $rich) throw new DomainException('submissionConflict');
             if($this->attributes($id, 1) !== $attributes) throw new DomainException('submissionConflict');
             $this->dbh->commit();
             return $id;

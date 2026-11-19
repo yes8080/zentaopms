@@ -82,7 +82,7 @@ class reqintake extends control
                 }
                 else
                 {
-                    $id = $model->receive((int)$fields['product'], $operation, $fields['title'], $fields['description'], $fields['customer'], $fields['channel'], $this->attributeInputs());
+                    $id = $model->receive((int)$fields['product'], $operation, $fields['title'], $fields['description'], $fields['customer'], $fields['channel'], $this->attributeInputs(), $this->formValue('bodyFormat') === 'rich');
                     $this->view->savedID = $id;
                 }
                 $operation = bin2hex(random_bytes(16));
@@ -99,6 +99,12 @@ class reqintake extends control
         $this->view->token = hash_hmac('sha256', $operation, $key);
         $this->view->fields = $fields + (isset($this->view->formError) ? $this->attributeInputs() : array()) + array('category' => 'feature', 'priority' => '3', 'acceptance' => '');
         $this->view->attributeOptions = $this->reqintake->attributeOptions();
+        $this->view->inputRich = isset($this->view->formError) && $this->formValue('bodyFormat') === 'rich';
+        if($this->view->inputRich)
+        {
+            foreach(array('description', 'acceptance') as $field)
+                $this->view->fields[$field] = $this->reqintake->cleanRichText($this->view->fields[$field]);
+        }
         $this->view->products = $this->loadModel('product')->getPairs();
         $model = $this->loadModel('reqintake');
         $this->view->isAdmin = !empty($this->app->user->admin);
@@ -162,7 +168,7 @@ class reqintake extends control
                 {
                     $fields = array();
                     foreach(array('title', 'description', 'customer', 'channel') as $field) $fields[$field] = $this->formValue($field);
-                    $model->revise($feedback, (int)$this->formValue('version'), $fields + $this->attributeInputs());
+                    $model->revise($feedback, (int)$this->formValue('version'), $fields + $this->attributeInputs(), $this->formValue('bodyFormat') === 'rich');
                 }
                 elseif(in_array($this->formValue('intent'), array('followup', 'transfer'), true))
                 {
@@ -184,6 +190,7 @@ class reqintake extends control
         $this->view->attributes = $model->attributes($id);
         $this->view->attributeOptions = $model->attributeOptions();
         $this->view->followups = $model->followups($feedback);
+        $this->view->richVersions = $model->richTextVersions($id);
         $this->view->original = $feedback;
         $this->view->revisions = $model->revisions($feedback);
         if($this->view->revisions)

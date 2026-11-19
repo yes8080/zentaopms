@@ -298,3 +298,24 @@ if args.task_conversion:
     assert first['changes']['objectList'] == second['changes']['objectList']
     assert task_name in request(source_route)
     print('Task conversion checks execution, rejects multiple-task modes, and reuses the native ID')
+
+
+page = request(route)
+assert all(re.search(r'<zen-editor[^>]+name="' + field + '"', page)
+           for field in ('description', 'acceptance'))
+fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
+         for key in ('operation', 'token')}
+rich = dict(payload, **fresh) | dict(bodyFormat='rich',
+    description='<p>Formatted <strong>description</strong></p>',
+    acceptance='<ol><li>First criterion</li></ol>')
+source = re.search(r'已登记反馈 #(\d+)', submit(rich))[1]
+assert re.search(r'已登记反馈 #(\d+)', submit(rich))[1] == source
+source_route = detail_route + source
+page = request(source_route)
+assert '<strong>description</strong>' in page and '<ol><li>First criterion</li></ol>' in page
+token = re.search(r'name="token" value="([^"]+)"', page)[1]
+revision = dict(rich, token=token, intent='revise', version=1,
+                description='<p><em>Edited and formatted</em></p>')
+page = request(source_route, revision)
+assert '<em>Edited and formatted</em>' in page and '<strong>description</strong>' in page
+print('Rich description and acceptance round-trip, preserve history, and support replay')

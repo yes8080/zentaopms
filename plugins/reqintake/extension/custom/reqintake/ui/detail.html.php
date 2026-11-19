@@ -3,6 +3,9 @@ namespace zin;
 
 $labels = $lang->reqintake;
 $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$renderEditor = require __DIR__ . '/rich-editor.php';
+$revisionVersion = (int)($revisions[0]->version ?? 1);
+$rich = isset($richVersions[$revisionVersion]);
 ob_start();
 ?>
 <section class="panel p-4">
@@ -19,11 +22,11 @@ ob_start();
         <dd><?= $escape($labels->states[$item->status] ?? $item->status) ?></dd>
         <?php foreach(array('customer', 'channel', 'description') as $field): ?>
             <dt><?= $escape($labels->fields[$field]) ?></dt>
-            <dd style="white-space: pre-wrap"><?= $escape($item->$field) ?></dd>
+            <dd style="white-space: pre-wrap"><?= $field === 'description' && $rich ? $item->$field : $escape($item->$field) ?></dd>
         <?php endforeach; ?>
         <?php foreach($attributes as $field => $value): ?>
             <dt><?= $escape($labels->fields[$field]) ?></dt>
-            <dd style="white-space: pre-wrap"><?= $escape($attributeOptions[$field][$value] ?? $value) ?></dd>
+            <dd style="white-space: pre-wrap"><?= $field === 'acceptance' && $rich ? $value : $escape($attributeOptions[$field][$value] ?? $value) ?></dd>
         <?php endforeach; ?>
     </dl>
     <?php if($canRevise): ?>
@@ -31,15 +34,16 @@ ob_start();
             <summary><?= $escape($labels->editFeedback) ?></summary>
             <form method="post">
                 <input type="hidden" name="intent" value="revise">
+                <input type="hidden" name="bodyFormat" value="rich">
                 <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
                 <input type="hidden" name="version" value="<?= (int)$item->version ?>">
                 <?php foreach(array('title' => 255, 'customer' => 255, 'channel' => 64) as $field => $limit): ?>
                     <label class="block"><?= $escape($labels->fields[$field]) ?>
-                        <input name="<?= $field ?>" value="<?= $escape($item->$field) ?>" maxlength="<?= $limit ?>" <?= $field === 'title' ? 'required' : '' ?>>
+                        <input name="<?= $field ?>" value="<?= $field === 'description' && $rich ? $item->$field : $escape($item->$field) ?>" maxlength="<?= $limit ?>" <?= $field === 'title' ? 'required' : '' ?>>
                     </label>
                 <?php endforeach; ?>
                 <label class="block"><?= $escape($labels->fields['description']) ?>
-                    <textarea name="description" required><?= $escape($item->description) ?></textarea>
+                    <?= $renderEditor('description', $item->description, $rich) ?>
                 </label>
                 <?php $values = $attributes; require __DIR__ . '/attribute-fields.php'; ?>
                 <button class="btn" type="submit"><?= $escape($labels->editFeedback) ?></button>
@@ -52,7 +56,7 @@ ob_start();
             <?php foreach(array_merge($revisions, array($original)) as $revision): ?>
                 <p><?= $escape($revision->title) ?> <?= $escape($revision->actor ?? $original->openedBy) ?> <?= $escape($revision->createdDate ?? '') ?></p>
                 <p><?= $escape($revision->customer) ?> · <?= $escape($revision->channel) ?></p>
-                <p class="whitespace-pre-wrap"><?= $escape($revision->description) ?></p>
+                <p class="whitespace-pre-wrap"><?= isset($richVersions[(int)($revision === $original ? 1 : $revision->version)]) ? $revision->description : $escape($revision->description) ?></p>
             <?php endforeach; ?>
         </details>
     <?php endif; ?>

@@ -3,6 +3,8 @@ namespace zin;
 
 $labels = $lang->reqintake;
 $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$renderEditor = require __DIR__ . '/rich-editor.php';
+$rich = $inputRich;
 ob_start();
 ?>
 <section class="panel p-4">
@@ -10,6 +12,7 @@ ob_start();
     <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
     <?php if(isset($savedID)): ?><p role="status"><?= $escape(sprintf($labels->saved, $savedID)) ?></p><?php endif; ?>
     <form id="reqintake-receive" method="post">
+        <input type="hidden" name="bodyFormat" value="rich">
         <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
         <input type="hidden" name="token" value="<?= $escape($token) ?>">
         <label class="block mb-2"><?= $escape($labels->fields['product']) ?>
@@ -31,7 +34,7 @@ ob_start();
             </label>
         <?php endforeach; ?>
         <label class="block mb-2"><?= $escape($labels->fields['description']) ?>
-            <textarea class="form-control" name="description" required><?= $escape($fields['description']) ?></textarea>
+            <?= $renderEditor('description', $fields['description'], $rich) ?>
         </label>
         <?php $values = $fields; require __DIR__ . '/attribute-fields.php'; ?>
         <button class="btn primary" type="submit"><?= $escape($labels->submit) ?></button>
