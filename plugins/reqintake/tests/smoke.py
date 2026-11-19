@@ -236,11 +236,11 @@ batch_kind = next((kind for kind in args.conversion if kind != 'bug'), None)
 if batch_kind:
     kind = batch_kind
 
-    def receive_source():
+    def receive_source(customer=payload['customer']):
         page = request(route)
         fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
                  for key in ('operation', 'token')}
-        return re.search(r'已登记反馈 #(\d+)', submit(dict(payload, **fresh)))[1]
+        return re.search(r'已登记反馈 #(\d+)', submit(dict(payload, **fresh) | dict(customer=customer)))[1]
 
     def open_batch(sources):
         data = dict(keys, intent='batchCreate', storyType=kind, linkScope='Shared follow-up',
@@ -249,7 +249,7 @@ if batch_kind:
         with opener.open(req, timeout=10) as response:
             return response.url.removeprefix(base), response.read().decode()
 
-    source_ids = [receive_source(), receive_source()]
+    source_ids = [receive_source(customer) for customer in ('Customer A', 'Customer B', 'Customer C')]
     native_form, page = open_batch([f'{source}:1' for source in source_ids])
     assert 'Shared follow-up' in page and all(f'#{source}' in page for source in source_ids)
     assert payload['description'] not in page
@@ -262,6 +262,43 @@ if batch_kind:
     for source in source_ids:
         page = request(detail_route + source)
         assert all(text in page for text in (native_title, 'Shared follow-up', '跟进中'))
+
+    target_id, = first['changes']['objectList']
+    fourth = receive_source('Customer D')
+    fourth_route = detail_route + fourth
+    token = re.search(r'name="token" value="([^"]+)"', request(fourth_route))[1]
+    attached = request(fourth_route, dict(token=token, version=1, storyID=target_id,
+                                          storyType=kind, linkScope='Later customer'))
+    assert native_title in attached and 'Later customer' in attached
+    target_route = f'index.php?m={kind}&f=view&storyID={target_id}'
+    backlinks = html.unescape(request(target_route))
+    for source in (*source_ids, fourth):
+        assert re.search(re.escape(detail_route + source) + r'(?!\d)', backlinks)
+
+    def handle_source(source, **fields):
+        path = detail_route + source
+        page = request(path)
+        token = re.search(r'name="token" value="([^"]+)"', page)[1]
+        version = re.search(r'name="version" value="(\d+)"', page)[1]
+        return request(path, dict(token=token, version=version, **fields))
+
+    confirmed, waiting, extra = source_ids
+    confirmation = 'Confirmed warehouse inventory export'
+    upgrade = 'Wait for customer upgrade'
+    remainder = 'Approver column remains outstanding'
+    assert confirmation in handle_source(confirmed, intent='handling', kind='reply',
+                                         summary='Customer A', details=confirmation, replyChannel='phone')
+    assert '已关闭' in handle_source(confirmed, intent='transition', action='close', reason=confirmation)
+    assert upgrade in handle_source(waiting, intent='handling', kind='plan', summary=upgrade, details='')
+    assert remainder in handle_source(extra, intent='handling', kind='plan', summary='Check extra requirement',
+                                       details=remainder)
+    for source, state, marker in ((confirmed, '已关闭', confirmation), (waiting, '跟进中', upgrade),
+                                  (extra, '跟进中', remainder), (fourth, '跟进中', None)):
+        page = request(detail_route + source)
+        assert state in page and native_title in page
+        for note in (confirmation, upgrade, remainder):
+            assert (note in page) == (note == marker), (source, note)
+    print(f'Shared {kind} #{target_id}: feedback {confirmed}, {waiting}, {extra}, {fourth} retain independent outcomes')
 
     stale_ids = [receive_source(), receive_source()]
     native_form, _ = open_batch([f'{source}:1' for source in stale_ids])
