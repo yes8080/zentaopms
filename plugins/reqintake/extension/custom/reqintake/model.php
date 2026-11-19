@@ -699,7 +699,14 @@ class reqintakeModel extends model
         return $grouped;
     }
 
-    public function transition(int $id, int $version, string $action, string $reason): void
+    public function duplicateOriginal(object $feedback): object|false
+    {
+        $row = $this->dao->select('original')->from($this->config->db->prefix . 'reqintakeDuplicate')
+            ->where('feedback')->eq((int)$feedback->id)->orderBy('version_desc')->limit(1)->fetch();
+        return $row ? $this->findFeedback((int)$row->original) : false;
+    }
+
+    public function transition(int $id, int $version, string $action, string $reason, int $original = 0): void
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -721,11 +728,20 @@ class reqintakeModel extends model
         $reason = trim($reason);
         if(($action !== 'start' && $reason === '') || mb_strlen($reason) > 500) throw new DomainException('transitionReason');
 
+        if($original)
+        {
+            $target = $this->findFeedback($original);
+            if($action !== 'close' || !$target || $original === $id || (int)$target->product !== (int)$feedback->product)
+                throw new DomainException('duplicateTarget');
+        }
+
         $history = $this->config->db->prefix . 'reqintakeHistory';
         $now = helper::now();
         $this->dbh->beginTransaction();
         try
         {
+            if($original) $this->recordDuplicate((int)$feedback->product, $id, $version + 1, $original);
+
             $query = $this->dbh->prepare("UPDATE `$table` SET status = ?, version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status = ?");
             $query->execute([$next, $now, $id, $version, $feedback->status]);
             if($query->rowCount() !== 1) throw new DomainException('staleFeedback');
@@ -739,6 +755,30 @@ class reqintakeModel extends model
             if($this->dbh->inTransaction()) $this->dbh->rollBack();
             throw $error;
         }
+    }
+
+    private function recordDuplicate(int $product, int $feedback, int $version, int $original): void
+    {
+        /* Serialize duplicate changes in the product so simultaneous links cannot form a cycle. */
+        $productTable = TABLE_PRODUCT;
+        $lock = $this->dbh->prepare("SELECT id FROM $productTable WHERE id = ? AND deleted = '0' FOR UPDATE");
+        $lock->execute([$product]);
+        if(!$lock->fetchColumn()) throw new DomainException('duplicateTarget');
+        $lock->closeCursor();
+
+        $table = $this->config->db->prefix . 'reqintakeDuplicate';
+        $read = $this->dbh->prepare("SELECT original FROM `$table` WHERE feedback = ? ORDER BY version DESC LIMIT 1 FOR UPDATE");
+        $seen = array($feedback => true);
+        for($id = $original; $id; )
+        {
+            if(isset($seen[$id])) throw new DomainException('duplicateTarget');
+            $seen[$id] = true;
+            $read->execute([$id]);
+            $id = (int)$read->fetchColumn();
+            $read->closeCursor();
+        }
+
+        $this->dbh->prepare("INSERT INTO `$table` (feedback,version,original) VALUES (?,?,?)")->execute([$feedback, $version, $original]);
     }
 
     public function canReadProduct(int $product): bool

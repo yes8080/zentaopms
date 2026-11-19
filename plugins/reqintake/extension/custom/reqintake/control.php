@@ -173,7 +173,13 @@ class reqintake extends control
             }
             try
             {
-                if($this->formValue('intent') === 'handling')
+                if($this->formValue('intent') === 'duplicate')
+                {
+                    $original = (int)$this->formValue('original');
+                    if($original < 1) throw new DomainException('duplicateTarget');
+                    $model->transition($id, (int)$this->formValue('version'), 'close', $this->formValue('reason'), $original);
+                }
+                elseif($this->formValue('intent') === 'handling')
                 {
                     $model->recordHandling($feedback, (int)$this->formValue('version'), $this->formValue('kind'),
                         $this->formValue('summary'), $this->formValue('details'), $this->formValue('replyChannel'));
@@ -225,6 +231,7 @@ class reqintake extends control
         $this->view->attributeOptions = $model->attributeOptions();
         $this->view->handling = $model->handling($feedback);
         $this->view->followups = $model->followups($feedback);
+        $this->view->duplicateOriginal = $model->duplicateOriginal($feedback);
         $this->view->attachments = $model->attachments($id);
         $this->view->richVersions = $model->richTextVersions($id);
         $this->view->original = $feedback;

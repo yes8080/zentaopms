@@ -60,6 +60,28 @@ ob_start();
             <?php endforeach; ?>
         </details>
     <?php endif; ?>
+    <?php if($duplicateOriginal): ?>
+        <p><?= $escape($labels->duplicateOf) ?>
+            <a href="<?= $escape(\helper::createLink('reqintake', 'detail', 'id=' . (int)$duplicateOriginal->id)) ?>">#<?= (int)$duplicateOriginal->id ?></a>
+        </p>
+    <?php endif; ?>
+    <?php if($canRevise): ?>
+        <details>
+            <summary><?= $escape($labels->closeDuplicate) ?></summary>
+            <form method="post">
+                <input type="hidden" name="intent" value="duplicate">
+                <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+                <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+                <label class="block"><?= $escape($labels->duplicateOf) ?>
+                    <input type="number" name="original" min="1" required>
+                </label>
+                <label class="block"><?= $escape($labels->duplicateReason) ?>
+                    <textarea name="reason" maxlength="500" required></textarea>
+                </label>
+                <button class="btn" type="submit"><?= $escape($labels->closeDuplicate) ?></button>
+            </form>
+        </details>
+    <?php endif; ?>
     <?php require __DIR__ . '/handling.php'; ?>
     <h3><?= $escape($labels->attachments) ?></h3>
     <?php if($attachments): ?>

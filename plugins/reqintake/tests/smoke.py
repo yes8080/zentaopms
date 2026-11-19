@@ -379,3 +379,17 @@ page = request(source_route, reply)
 assert all(reply[field] in page for field in ('summary', 'details', 'replyChannel'))
 assert plan['summary'] in page
 print('Follow-up plan and customer reply are saved with separate history and stale-write checks')
+
+
+duplicate = dict(token=token, intent='duplicate', version=6, original=id, reason='Already tracked')
+assert '请选择同产品' in request(source_route, dict(duplicate, original=source))
+page = request(source_route, duplicate)
+assert '已关闭' in page and detail_route + id in html.unescape(page)
+original_route = detail_route + id
+original_page = request(original_route)
+original_token = re.search(r'name="token" value="([^"]+)"', original_page)[1]
+original_version = re.search(r'name="version" value="(\d+)"', original_page)[1]
+cycle = request(original_route, dict(duplicate, token=original_token, version=original_version, original=source))
+assert '关联不会形成循环' in cycle
+assert '跟进中' in request(original_route)
+print('Duplicate closure keeps original open and rejects circular references')

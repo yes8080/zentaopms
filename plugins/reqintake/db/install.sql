@@ -141,3 +141,11 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeHandling` (
   `createdDate` datetime NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeDuplicate` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `original` int unsigned NOT NULL,
+  PRIMARY KEY (`feedback`, `version`),
+  KEY `original` (`original`)
+) ENGINE=InnoDB;

@@ -93,3 +93,7 @@ $lang->reqintake->handlingRecipient = '答复对象';
 $lang->reqintake->handlingContent = '答复内容';
 $lang->reqintake->handlingHistory = '计划与答复历史';
 $lang->reqintake->errors['handlingFields'] = '请填写答复对象、渠道和内容，或缩短计划说明。';
+$lang->reqintake->duplicateOf = '原反馈编号';
+$lang->reqintake->closeDuplicate = '按重复反馈关闭';
+$lang->reqintake->duplicateReason = '结案原因';
+$lang->reqintake->errors['duplicateTarget'] = '请选择同产品下的另一条反馈，并确保关联不会形成循环。';

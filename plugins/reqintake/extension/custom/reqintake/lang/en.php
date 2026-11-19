@@ -93,3 +93,7 @@ $lang->reqintake->handlingRecipient = 'Recipient';
 $lang->reqintake->handlingContent = 'Reply content';
 $lang->reqintake->handlingHistory = 'Plan and reply history';
 $lang->reqintake->errors['handlingFields'] = 'Check the recipient, channel and reply content, or shorten the plan.';
+$lang->reqintake->duplicateOf = 'Original feedback ID';
+$lang->reqintake->closeDuplicate = 'Close as duplicate';
+$lang->reqintake->duplicateReason = 'Closure reason';
+$lang->reqintake->errors['duplicateTarget'] = 'Select a different feedback from the same product without a circular reference.';
