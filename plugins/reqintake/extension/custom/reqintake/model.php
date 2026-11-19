@@ -11,6 +11,15 @@ class reqintakeModel extends model
             ->where('p.deleted')->eq('0')->orderBy('f.id_desc')->limit(50)->fetchAll();
     }
 
+    public function findFeedback(int $id): object|false
+    {
+        if(empty($this->app->user->admin) || $id < 1) return false;
+
+        $feedback = $this->dao->select('id,product,title,description,customer,channel,openedBy,assignedTo,status')
+            ->from($this->config->db->prefix . 'reqintakeFeedback')->where('id')->eq($id)->fetch();
+        return $feedback && $this->canReadProduct((int)$feedback->product) ? $feedback : false;
+    }
+
     public function historyForRecent(array $recent): array
     {
         if(empty($this->app->user->admin)) throw new DomainException('product');

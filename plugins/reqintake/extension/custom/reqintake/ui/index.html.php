@@ -64,7 +64,7 @@ ob_start();
                     <tr>
                         <td>#<?= (int)$item->id ?></td>
                         <td>
-                            <?= $escape($item->title) ?>
+                            <a href="<?= $escape(\helper::createLink('reqintake', 'detail', "id=" . (int)$item->id)) ?>"><?= $escape($item->title) ?></a>
                             <?php if(!empty($history[$item->id])): ?>
                                 <details>
                                     <summary><?= $escape($labels->history) ?></summary>

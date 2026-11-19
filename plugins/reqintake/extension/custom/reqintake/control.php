@@ -63,6 +63,27 @@ class reqintake extends control
         $this->display();
     }
 
+    public function detail(int $id = 0)
+    {
+        if(empty($this->app->user->admin))
+        {
+            http_response_code(403);
+            return;
+        }
+
+        $model = $this->loadModel('reqintake');
+        $feedback = $model->findFeedback($id);
+        if(!$feedback)
+        {
+            http_response_code(404);
+            return;
+        }
+
+        $this->view->title = $feedback->title;
+        $this->view->item = $feedback;
+        $this->display();
+    }
+
     private function formValue(string $name): string
     {
         $value = $this->post->$name;
