@@ -28,6 +28,8 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         const app = page;
         const form = app.locator('#reqintake-receive');
         await form.waitFor({timeout:8000});
+        assert.equal(await page.locator('zen-editor').count(), 2);
+        assert.equal(await form.locator('zen-editor').count(), 2);
         await form.locator('[name=product]').selectOption({label:product});
         await page.waitForFunction(() => document.querySelector('#reqintake-receive output')?.textContent.includes('待配置负责人'),{},{timeout:5000}).catch(async e=>{console.log(await form.locator('output').textContent(),errors);throw e;});
         const branchModule = process.env.REQINTAKE_BRANCH_MODULE;
