@@ -364,3 +364,18 @@ assert '反馈状态已变化' in request(source_route, remove)
 assert 'fixture.bin' not in request(source_route, dict(remove, version=3))
 assert_file_unavailable(file_link)
 print('Attachment bytes round-trip, are bound to the source, and are unavailable after removal')
+
+
+plan = dict(token=token, intent='handling', kind='plan', version=4,
+            summary='Arrange customer retest', details='Confirm supported browser versions')
+page = request(source_route, plan)
+assert plan['summary'] in page and plan['details'] in page
+assert plan['summary'] in request(route)
+assert '反馈状态已变化' in request(source_route, plan)
+reply = dict(token=token, intent='handling', kind='reply', version=5,
+             summary='Customer contact', details='Confirmed the next retest slot', replyChannel='email')
+assert '请填写答复对象' in request(source_route, dict(reply, replyChannel=''))
+page = request(source_route, reply)
+assert all(reply[field] in page for field in ('summary', 'details', 'replyChannel'))
+assert plan['summary'] in page
+print('Follow-up plan and customer reply are saved with separate history and stale-write checks')

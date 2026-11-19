@@ -173,7 +173,12 @@ class reqintake extends control
             }
             try
             {
-                if($this->formValue('intent') === 'attachment')
+                if($this->formValue('intent') === 'handling')
+                {
+                    $model->recordHandling($feedback, (int)$this->formValue('version'), $this->formValue('kind'),
+                        $this->formValue('summary'), $this->formValue('details'), $this->formValue('replyChannel'));
+                }
+                elseif($this->formValue('intent') === 'attachment')
                 {
                     $upload = $_FILES['attachment'] ?? null;
                     $model->changeAttachment($feedback, (int)$this->formValue('version'), $upload, (int)$this->formValue('removeAttachment'));
@@ -218,6 +223,7 @@ class reqintake extends control
             'branch' => $scope['branches'], 'module' => $scope['modules'][$this->view->attributes['branch']] ?? array()
         );
         $this->view->attributeOptions = $model->attributeOptions();
+        $this->view->handling = $model->handling($feedback);
         $this->view->followups = $model->followups($feedback);
         $this->view->attachments = $model->attachments($id);
         $this->view->richVersions = $model->richTextVersions($id);

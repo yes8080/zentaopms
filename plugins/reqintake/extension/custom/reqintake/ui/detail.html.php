@@ -60,6 +60,7 @@ ob_start();
             <?php endforeach; ?>
         </details>
     <?php endif; ?>
+    <?php require __DIR__ . '/handling.php'; ?>
     <h3><?= $escape($labels->attachments) ?></h3>
     <?php if($attachments): ?>
         <ul>

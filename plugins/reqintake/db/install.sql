@@ -129,3 +129,15 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeProductScope` (
   `module` mediumint unsigned NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeHandling` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `kind` enum('plan','reply') NOT NULL,
+  `actor` varchar(30) NOT NULL,
+  `summary` varchar(500) NOT NULL,
+  `details` varchar(2000) NOT NULL,
+  `channel` varchar(64) NOT NULL,
+  `createdDate` datetime NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

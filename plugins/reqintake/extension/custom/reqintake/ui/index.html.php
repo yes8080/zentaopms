@@ -97,6 +97,7 @@ ob_start();
             <thead><tr>
                 <?php if($batchTypes): ?><th scope="col"><?= $escape($labels->batchSelect) ?></th><?php endif; ?>
                 <?php foreach($labels->listColumns as $column): ?><th scope="col"><?= $escape($column) ?></th><?php endforeach; ?>
+                <th scope="col"><?= $escape($labels->handlingNext) ?></th>
                 <th scope="col"><?= $escape($labels->actionsLabel) ?></th>
             </tr></thead>
             <tbody>
@@ -129,6 +130,7 @@ ob_start();
                         <td><?= $escape($item->productName) ?></td>
                         <td><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></td>
                         <td><?= $escape($labels->states[$item->status] ?? $item->status) ?></td>
+                        <td><?= $escape($item->nextStep) ?></td>
                         <td>
                             <?php if($isAdmin || ($item->assignedTo === $currentAccount && !$item->assignmentPending)): ?>
                             <form method="post">

@@ -34,7 +34,15 @@ class reqintakeModel extends model
             ->where('feedback')->in($ids)->orderBy('version_desc')->fetchAll();
         $titles = array();
         foreach($changes as $change) $titles[(int)$change->feedback] ??= $change->title;
-        foreach($rows as $row) $row->title = $titles[(int)$row->id] ?? $row->title;
+        $plans = $this->dao->select('feedback,summary')->from($this->config->db->prefix . 'reqintakeHandling')
+            ->where('feedback')->in($ids)->andWhere('kind')->eq('plan')->orderBy('version_desc')->fetchAll();
+        $next = array();
+        foreach($plans as $plan) $next[(int)$plan->feedback] ??= $plan->summary;
+        foreach($rows as $row)
+        {
+            $row->title = $titles[(int)$row->id] ?? $row->title;
+            $row->nextStep = $next[(int)$row->id] ?? '';
+        }
         return $rows;
     }
 
@@ -260,6 +268,46 @@ class reqintakeModel extends model
             $insert->execute([$feedback->id, $version + 1, $title, $fields['description'], $fields['customer'], $fields['channel'], $this->app->user->account, $now]);
             $this->saveAttributes((int)$feedback->id, $version + 1, $attributes);
             if($rich) $this->saveRichTextVersion((int)$feedback->id, $version + 1);
+            $this->dbh->commit();
+        }
+        catch(Throwable $error)
+        {
+            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            throw $error;
+        }
+    }
+
+    public function handling(object $feedback): array
+    {
+        if(!$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
+        return $this->dao->select('kind,actor,summary,details,channel,createdDate')
+            ->from($this->config->db->prefix . 'reqintakeHandling')
+            ->where('feedback')->eq((int)$feedback->id)->orderBy('version_desc')->fetchAll();
+    }
+
+    public function recordHandling(object $feedback, int $version, string $kind, string $summary, string $details, string $channel): void
+    {
+        if(!$this->canHandle($feedback)) throw new DomainException('handler');
+
+        $summary = trim($summary);
+        $details = trim($details);
+        $channel = trim($channel);
+        if(!in_array($kind, array('plan', 'reply'), true)
+            || mb_strlen($summary) > 500 || mb_strlen($details) > 2000 || mb_strlen($channel) > 64
+            || ($kind === 'reply' && ($summary === '' || $details === '' || $channel === '')))
+            throw new InvalidArgumentException('handlingFields');
+
+        $prefix = $this->config->db->prefix;
+        $now = helper::now();
+        $this->dbh->beginTransaction();
+        try
+        {
+            $update = $this->dbh->prepare("UPDATE `{$prefix}reqintakeFeedback` SET version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status <> 'closed'");
+            $update->execute([$now, $feedback->id, $version]);
+            if($update->rowCount() !== 1) throw new DomainException('staleFeedback');
+
+            $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeHandling` (feedback,version,kind,actor,summary,details,channel,createdDate) VALUES (?,?,?,?,?,?,?,?)");
+            $insert->execute([$feedback->id, $version + 1, $kind, $this->app->user->account, $summary, $details, $kind === 'reply' ? $channel : '', $now]);
             $this->dbh->commit();
         }
         catch(Throwable $error)
