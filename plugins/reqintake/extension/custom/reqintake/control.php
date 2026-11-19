@@ -1,7 +1,7 @@
 <?php
 class reqintake extends control
 {
-    public function index(string $scope = 'all')
+    public function index(string $scope = 'all', int $filterProduct = 0)
     {
         if(!$this->loadModel('reqintake')->canAccess('index'))
         {
@@ -65,7 +65,8 @@ class reqintake extends control
         $this->view->isAdmin = !empty($this->app->user->admin);
         $this->view->currentAccount = $this->app->user->account;
         $this->view->scope = in_array($scope, array('all', 'mine', 'assigned'), true) ? $scope : 'all';
-        $this->view->feedback = $model->recent($this->view->scope);
+        $this->view->filterProduct = max(0, $filterProduct);
+        $this->view->feedback = $model->recent($this->view->scope, $this->view->filterProduct);
         $this->view->history = $model->historyForRecent($this->view->feedback);
         $this->display();
     }

@@ -11,7 +11,7 @@ class reqintakeModel extends model
         return array_values(array_filter(array_map('intval', explode(',', (string)($this->app->user->view->products ?? '')))));
     }
 
-    public function recent(string $scope = 'all'): array
+    public function recent(string $scope = 'all', int $product = 0): array
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -20,6 +20,7 @@ class reqintakeModel extends model
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
             ->where('p.deleted')->eq('0');
         if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
+        if($product > 0) $query->andWhere('f.product')->eq($product);
         $account = $this->app->user->account;
         if($scope === 'mine') $query->andWhere('f.openedBy')->eq($account);
         if($scope === 'assigned') $query->andWhere('f.assignedTo')->eq($account)->andWhere('f.status')->ne('closed');

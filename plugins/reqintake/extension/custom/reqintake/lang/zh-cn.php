@@ -25,3 +25,4 @@ $lang->reqintake->history = '办理历史';
 $lang->reqintake->scopes = array_combine(array('all', 'mine', 'assigned'), array('全部', '我提交的', '待我处理'));
 $lang->reqintake->submitter = '提报人';
 $lang->reqintake->errors['handler'] = '只有实际负责人可以办理这条反馈。';
+$lang->reqintake->allProducts = '全部产品';

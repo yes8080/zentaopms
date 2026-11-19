@@ -55,7 +55,12 @@ ob_start();
     <h3><?= $escape($labels->recent) ?></h3>
     <nav class="mb-2">
         <?php foreach($labels->scopes as $key => $label): ?>
-            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$key")) ?>" <?= $key === $scope ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
+            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$key&filterProduct=$filterProduct")) ?>" <?= $key === $scope ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
+        <?php endforeach; ?>
+    </nav>
+    <nav class="mb-2" aria-label="<?= $escape($labels->fields['product']) ?>">
+        <?php foreach(array(0 => $labels->allProducts) + $products as $productID => $productName): ?>
+            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=" . (int)$productID)) ?>" <?= (int)$productID === $filterProduct ? 'aria-current="page"' : '' ?>><?= $escape($productName) ?></a>
         <?php endforeach; ?>
     </nav>
     <?php if(!$feedback): ?>
