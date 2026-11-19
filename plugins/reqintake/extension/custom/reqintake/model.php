@@ -161,7 +161,7 @@ class reqintakeModel extends model
     public function attributeDefaults(): array
     {
         return array('category' => 'feature', 'priority' => '3', 'acceptance' => '',
-            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0');
+            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'branchModules' => array());
     }
 
     public function attributes(int $id, ?int $version = null): array
@@ -175,6 +175,10 @@ class reqintakeModel extends model
             $row = $query->orderBy('version_desc')->limit(1)->fetch();
             if($row) $defaults = array_replace($defaults, array_map('strval', (array)$row));
         }
+        $query = $this->dao->select('branchModules')->from($prefix . 'reqintakeBranchScope')->where('feedback')->eq($id);
+        if($version !== null) $query->andWhere('version')->le($version);
+        $row = $query->orderBy('version_desc')->limit(1)->fetch();
+        if($row) $defaults['branchModules'] = json_decode($row->branchModules, true, flags: JSON_THROW_ON_ERROR);
         return $defaults;
     }
 
@@ -201,12 +205,23 @@ class reqintakeModel extends model
             || ($fields['estimate'] !== '' && !preg_match('/\A[0-9]{1,8}(?:\.[0-9]{1,2})?\z/', $fields['estimate'])))
             throw new InvalidArgumentException('demandFields');
 
-        if(($fields['branch'] !== ($previous['branch'] ?? '0')) || ($fields['module'] !== ($previous['module'] ?? '0')))
+        $extra = $fields['branchModules'];
+        if(!is_array($extra) || count($extra) > 100) throw new InvalidArgumentException('productScope');
+        ksort($extra, SORT_NUMERIC);
+        $fields['branchModules'] = $extra;
+        if(($fields['branch'] !== ($previous['branch'] ?? '0')) || ($fields['module'] !== ($previous['module'] ?? '0')) || $extra !== ($previous['branchModules'] ?? array()))
         {
             $scope = $this->productScopeOptions($product);
             if(!array_key_exists($fields['branch'], $scope['branches'])
                 || !array_key_exists($fields['module'], $scope['modules'][$fields['branch']] ?? array()))
                 throw new InvalidArgumentException('productScope');
+            foreach($extra as $branch => $module)
+            {
+                if((string)$branch === $fields['branch'] || !is_string($module)
+                    || !array_key_exists($branch, $scope['branches'])
+                    || !array_key_exists($module, $scope['modules'][$branch] ?? array()))
+                    throw new InvalidArgumentException('productScope');
+            }
         }
 
         $validated = array_replace($this->attributeDefaults(), $fields);
@@ -227,6 +242,10 @@ class reqintakeModel extends model
         $table = $this->config->db->prefix . 'reqintakeProductScope';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branch,module) VALUES (?,?,?,?)");
         $insert->execute([$id, $version, $fields['branch'], $fields['module']]);
+
+        $table = $this->config->db->prefix . 'reqintakeBranchScope';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branchModules) VALUES (?,?,?)");
+        $insert->execute([$id, $version, json_encode($fields['branchModules'], JSON_THROW_ON_ERROR)]);
     }
 
     public function revisions(object $feedback): array

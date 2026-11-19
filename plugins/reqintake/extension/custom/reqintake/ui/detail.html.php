@@ -25,9 +25,20 @@ ob_start();
             <dd style="white-space: pre-wrap"><?= $field === 'description' && $rich ? $item->$field : $escape($item->$field) ?></dd>
         <?php endforeach; ?>
         <?php foreach($attributes as $field => $value): ?>
+            <?php if($field === 'branchModules') continue; ?>
             <dt><?= $escape($labels->fields[$field]) ?></dt>
             <dd style="white-space: pre-wrap"><?= $field === 'acceptance' && $rich ? $value : $escape($scopeLabels[$field][$value] ?? $attributeOptions[$field][$value] ?? $value) ?></dd>
         <?php endforeach; ?>
+        <?php if($attributes['branchModules']): ?>
+            <dt><?= $escape($labels->additionalBranches) ?></dt>
+            <dd>
+                <ul>
+                    <?php foreach($attributes['branchModules'] as $branch => $module): ?>
+                        <li><?= $escape($scopeOptions['branches'][$branch] ?? '#' . $branch) ?> · <?= $escape($scopeOptions['modules'][$branch][$module] ?? '#' . $module) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </dd>
+        <?php endif; ?>
     </dl>
     <?php if($canRevise): ?>
         <details>
@@ -207,4 +218,4 @@ ob_start();
 html(ob_get_clean());
 require __DIR__ . '/product-scope-js.php';
 context::js('document.querySelectorAll("form:has(input[name=intent][value=revise])").forEach(form => reqintakeScope(form, ' .
-    json_encode($scopeOptions['modules'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) . '));');
+    json_encode($scopeOptions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) . '));');

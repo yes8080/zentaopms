@@ -181,6 +181,10 @@ if (receiveForm) {
         const initial = requestNumber === 1;
         const selectedBranch = initial ? branch.dataset.initial : '0';
         const selectedModule = initial ? receiveForm.elements.module.dataset.initial : '0';
+        const extra = receiveForm.querySelector('[data-reqintake-extra]');
+        extra.hidden = true;
+        extra.querySelector('[data-reqintake-branches]').replaceChildren();
+        branch.onchange = null;
         reqintakeOptions(branch, {0: ''}, '0');
         reqintakeOptions(receiveForm.elements.module, {0: ''}, '0');
         if (!product.value) return;
@@ -191,7 +195,7 @@ if (receiveForm) {
             const data = await response.json();
             if (requestNumber !== sequence) return;
             reqintakeOptions(branch, data.branches, selectedBranch);
-            reqintakeScope(receiveForm, data.modules, selectedModule);
+            reqintakeScope(receiveForm, data, selectedModule, initial);
             const label = data.pending ? preview.dataset.pending : preview.dataset.owner;
             preview.textContent = label + ' · ' + data.name;
         } catch {

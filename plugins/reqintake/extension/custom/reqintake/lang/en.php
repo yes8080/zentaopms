@@ -97,3 +97,5 @@ $lang->reqintake->duplicateOf = 'Original feedback ID';
 $lang->reqintake->closeDuplicate = 'Close as duplicate';
 $lang->reqintake->duplicateReason = 'Closure reason';
 $lang->reqintake->errors['duplicateTarget'] = 'Select a different feedback from the same product without a circular reference.';
+$lang->reqintake->additionalBranches = 'Additional branches or platforms';
+$lang->reqintake->branchNotSelected = 'Outside feedback scope';

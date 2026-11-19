@@ -108,3 +108,5 @@ docker compose exec -T -u www-data php php extension/custom/reqintake/bin/sync.p
 ```sh
 node plugins/reqintake/tests/browser-smoke.cjs http://127.0.0.1:8097 /path/to/admin-password 'Smoke Product'
 ```
+
+0.17.0 支持在一个反馈中记录主选分支／平台及其他适用分支／平台，每个分支分别选择模块。历史单分支记录可继续读取。单条反馈转成一张原生需求时预填主选分支和模块，其他适用范围保留在原反馈。升级前执行本版 `db/install.sql` 创建分支范围表。Chromium 验证了附加分支及模块的选择、提交和回显。

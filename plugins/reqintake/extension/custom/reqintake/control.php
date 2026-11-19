@@ -97,7 +97,13 @@ class reqintake extends control
         $this->view->title = $this->lang->reqintake->common;
         $this->view->operation = $operation;
         $this->view->token = hash_hmac('sha256', $operation, $key);
-        $this->view->fields = $fields + (isset($this->view->formError) ? $this->attributeInputs() : array()) + $this->reqintake->attributeDefaults();
+        $inputAttributes = array();
+        if(isset($this->view->formError))
+        {
+            try { $inputAttributes = $this->attributeInputs(); }
+            catch(InvalidArgumentException $error) {}
+        }
+        $this->view->fields = $fields + $inputAttributes + $this->reqintake->attributeDefaults();
         $this->view->attributeOptions = $this->reqintake->attributeOptions();
         $this->view->inputRich = isset($this->view->formError) && $this->formValue('bodyFormat') === 'rich';
         if($this->view->inputRich)
@@ -276,7 +282,20 @@ class reqintake extends control
         $attributes = array();
         foreach(array_keys($this->reqintake->attributeDefaults()) as $field)
         {
+            if($field === 'branchModules') continue;
             if(isset($_POST[$field])) $attributes[$field] = $this->formValue($field);
+        }
+        if(isset($_POST['branchModules']))
+        {
+            $modules = $_POST['branchModules'];
+            if(!is_array($modules) || count($modules) > 100) throw new InvalidArgumentException('productScope');
+            $attributes['branchModules'] = array();
+            foreach($modules as $branch => $module)
+            {
+                if(!is_int($branch) || $branch < 0 || !is_string($module) || !preg_match('/\A(?:-1|0|[1-9][0-9]{0,8})\z/', $module))
+                    throw new InvalidArgumentException('productScope');
+                if($module !== '-1') $attributes['branchModules'][$branch] = $module;
+            }
         }
         return $attributes;
     }

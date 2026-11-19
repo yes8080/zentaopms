@@ -149,3 +149,10 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeDuplicate` (
   PRIMARY KEY (`feedback`, `version`),
   KEY `original` (`original`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeBranchScope` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `branchModules` json NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

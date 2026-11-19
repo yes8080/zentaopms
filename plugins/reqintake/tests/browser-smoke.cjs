@@ -30,6 +30,13 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await form.waitFor({timeout:8000});
         await form.locator('[name=product]').selectOption({label:product});
         await page.waitForFunction(() => document.querySelector('#reqintake-receive output')?.textContent.includes('待配置负责人'),{},{timeout:5000}).catch(async e=>{console.log(await form.locator('output').textContent(),errors);throw e;});
+        const branchModule = process.env.REQINTAKE_BRANCH_MODULE;
+        if (branchModule) {
+            const scope = form.locator('[data-reqintake-extra]');
+            await scope.waitFor();
+            await scope.locator('select').filter({has: page.getByRole('option', {name: branchModule})})
+                .selectOption({label: branchModule});
+        }
         const title = 'Browser clipboard smoke ' + randomUUID();
         await form.locator('[name=title]').fill(title);
         const editor = form.locator('zen-editor[name=description] .tiptap[contenteditable=true]');
@@ -52,6 +59,7 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await page.goto(new URL(detail,base).href+'&attachmentID=0&_single=1');
         await app.locator('dl').getByText('Browser acceptance',{exact:true}).waitFor();
         assert.equal(await app.locator('dd img').count(),1);
+        if (branchModule) await app.locator('dl').getByText(branchModule, {exact:false}).waitFor();
         assert.deepEqual(errors,[]);
         if (process.env.REQINTAKE_SCREENSHOT) await page.screenshot({path:process.env.REQINTAKE_SCREENSHOT,fullPage:true});
         console.log('Browser verified product preview, editor input, clipboard PNG, submission and detail');
