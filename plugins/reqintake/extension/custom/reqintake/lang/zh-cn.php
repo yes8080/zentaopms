@@ -43,3 +43,4 @@ $lang->reqintake->batchScope = '每条反馈的共同承接范围';
 $lang->reqintake->batchSuccess = '已关联 %d 条反馈。';
 $lang->reqintake->errors['batchSelection'] = '请选择 1 至 50 条反馈。';
 $lang->reqintake->errors['batchProduct'] = '请选择同一产品下的反馈。';
+$lang->reqintake->checkedDate = '最近后台核对：%s';

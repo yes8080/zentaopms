@@ -79,8 +79,11 @@ class reqintakeModel extends model
         $types = $this->visibleTargetTypes();
         if(!$types || !$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
 
-        $links = $this->dao->select('target,targetType,scope')->from($this->config->db->prefix . 'reqintakeLink')
-            ->where('feedback')->eq((int)$feedback->id)->andWhere('targetType')->in($types)->orderBy('target_desc')->fetchAll();
+        $prefix = $this->config->db->prefix;
+        $links = $this->dao->select('l.target,l.targetType,l.scope,p.checkedDate')
+            ->from($prefix . 'reqintakeLink')->alias('l')
+            ->leftJoin($prefix . 'reqintakeProgress')->alias('p')->on('p.feedback = l.feedback AND p.targetType = l.targetType AND p.target = l.target')
+            ->where('l.feedback')->eq((int)$feedback->id)->andWhere('l.targetType')->in($types)->orderBy('l.target_desc')->fetchAll();
         foreach($links as $link)
         {
             $target = $this->targetForProduct($link->targetType, (int)$link->target, (int)$feedback->product);

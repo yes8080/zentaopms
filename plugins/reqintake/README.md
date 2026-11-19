@@ -38,3 +38,11 @@ python3 plugins/reqintake/tests/smoke.py http://127.0.0.1:8097 /path/to/test-adm
 从开发版 0.1.0 升到 0.2.0 前，请在维护窗口用数据库管理工具执行 `db/install.sql`。如果实例使用其他表前缀，先把脚本中的 `zt_reqintake` 改为实际前缀加 `reqintake`。该脚本只创建缺失的表；确认关联表存在后再上传 ZIP 并升级。首次安装由禅道执行建表脚本。
 
 可重复传入 `--target TYPE ID` 来检查已存在的同产品原生单据是否能从反馈详情关联，以及原生详情能否返回反馈。类型支持 `story`、`requirement`、`epic`、`bug` 和 `task`。执行任务的执行必须关联该测试产品。
+
+0.3.0 增加了后台进度核对表。升级前仍需执行当前版本的 `db/install.sql`。在禅道应用根目录手动运行一次核对命令，成功后可由部署环境的调度服务定时调用。Compose 中可用：
+
+```sh
+docker compose exec -T -u www-data php php extension/custom/reqintake/bin/sync.php
+```
+
+命令只在插件处于已安装状态时更新快照。详情仍读取单据当前状态，并显示最近后台核对时间。单据的进度不会改变反馈的办理状态。

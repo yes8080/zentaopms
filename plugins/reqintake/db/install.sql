@@ -45,3 +45,15 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeLink` (
   PRIMARY KEY (`feedback`, `targetType`, `target`),
   KEY `targetLookup` (`targetType`, `target`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeProgress` (
+  `feedback` int unsigned NOT NULL,
+  `targetType` varchar(20) NOT NULL,
+  `target` int unsigned NOT NULL,
+  `available` tinyint unsigned NOT NULL,
+  `status` varchar(30) NOT NULL DEFAULT '',
+  `stage` varchar(50) NOT NULL DEFAULT '',
+  `reason` varchar(50) NOT NULL DEFAULT '',
+  `checkedDate` datetime NOT NULL,
+  PRIMARY KEY (`feedback`, `targetType`, `target`)
+) ENGINE=InnoDB;

@@ -43,3 +43,4 @@ $lang->reqintake->batchScope = 'Shared scope for all selected feedback';
 $lang->reqintake->batchSuccess = 'Linked %d requests.';
 $lang->reqintake->errors['batchSelection'] = 'Select 1 to 50 requests.';
 $lang->reqintake->errors['batchProduct'] = 'Select requests from the same product.';
+$lang->reqintake->checkedDate = 'Last scheduled check: %s';

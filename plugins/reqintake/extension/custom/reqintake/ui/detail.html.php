@@ -43,6 +43,7 @@ ob_start();
                 <?php else: ?>
                     <span><?= $escape($labels->storyUnavailable) ?></span>
                 <?php endif; ?>
+                <?php if($story->checkedDate): ?><span><?= $escape(sprintf($labels->checkedDate, $story->checkedDate)) ?></span><?php endif; ?>
                 <?php if($story->scope !== ''): ?><span><?= $escape($story->scope) ?></span><?php endif; ?>
             </li>
         <?php endforeach; ?>
