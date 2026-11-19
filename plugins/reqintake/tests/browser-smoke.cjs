@@ -104,8 +104,8 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         });
         await form.getByRole('button',{name:'提交需求'}).click();
         await app.getByText(/已登记反馈 #\d+/).waitFor();
-        const detail = await app.getByRole('link',{name:title,exact:true}).getAttribute('href');
-        await page.goto(new URL(detail,base).href+'&attachmentID=0&_single=1');
+        assert.match(page.url(), /[?&]f=detail(?:&|$)/);
+        await app.getByRole('heading',{name:new RegExp(title)}).waitFor();
         await app.locator('dl').getByText('Browser acceptance',{exact:true}).waitFor();
         assert.equal(await app.locator('dd img').count(),1);
         const attachment = app.getByRole('link',{name:'initial-attachment.bin',exact:true});

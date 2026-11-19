@@ -102,6 +102,13 @@ class reqintake extends control
                 else
                 {
                     $id = $model->receive((int)$fields['product'], $operation, $fields['title'], $fields['description'], $fields['customer'], $fields['channel'], $this->attributeInputs(), $this->formValue('bodyFormat') === 'rich', $_FILES['attachment'] ?? null);
+                    if($this->formValue('openDetail') === '1' && $model->canAccess('detail'))
+                    {
+                        $url = helper::createLink('reqintake', 'detail', "id=$id&attachmentID=0&submitted=1");
+                        if(isset($_GET['_single'])) $url .= (str_contains($url, '?') ? '&' : '?') . '_single=1';
+                        header('Location: ' . $url, true, 303);
+                        return;
+                    }
                     $this->view->savedID = $id;
                 }
                 $operation = bin2hex(random_bytes(16));
@@ -155,7 +162,7 @@ class reqintake extends control
         $this->display();
     }
 
-    public function detail(int $id = 0, int $attachmentID = 0)
+    public function detail(int $id = 0, int $attachmentID = 0, int $submitted = 0)
     {
         if(!$this->loadModel('reqintake')->canAccess('detail'))
         {
@@ -330,6 +337,7 @@ class reqintake extends control
         $this->view->linkedStories = $model->linkedTargets($feedback, $branches);
         $this->view->title = $feedback->title;
         $this->view->item = $feedback;
+        $this->view->submitted = $submitted === 1 && $_SERVER['REQUEST_METHOD'] === 'GET';
         $this->display();
     }
 

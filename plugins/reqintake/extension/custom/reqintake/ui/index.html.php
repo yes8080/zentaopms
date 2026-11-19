@@ -19,6 +19,7 @@ ob_start();
     <?php if(isset($savedID)): ?><p role="status"><?= $escape(sprintf($labels->saved, $savedID)) ?></p><?php endif; ?>
     <form id="reqintake-receive" method="post" enctype="multipart/form-data">
         <input type="hidden" name="bodyFormat" value="rich">
+        <input type="hidden" name="openDetail" value="1">
         <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
         <input type="hidden" name="token" value="<?= $escape($token) ?>">
         <label class="block mb-2"><?= $escape($labels->fields['product']) ?>

@@ -11,6 +11,7 @@ ob_start();
 <section class="reqintake-detail">
     <a href="<?= $escape(\helper::createLink('reqintake', 'index')) ?>"><?= $escape($labels->common) ?></a>
     <h2>#<?= (int)$item->id ?> <?= $escape($item->title) ?></h2>
+    <?php if($submitted): ?><p role="status"><?= $escape(sprintf($labels->saved, (int)$item->id)) ?></p><?php endif; ?>
     <div class="reqintake-detail-grid">
     <article class="reqintake-detail-content panel p-4">
     <dl>
