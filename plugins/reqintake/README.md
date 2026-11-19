@@ -100,3 +100,11 @@ docker compose exec -T -u www-data php php extension/custom/reqintake/bin/sync.p
 在隔离测试实例备份数据库后，通过扩展管理卸载 0.16.0。插件代码被移除，数据库保留。重新安装 0.16.0 后，原反馈和附件恢复可见，附件内容一致。
 
 同一测试实例也验证了卸载 0.16.0 后安装先前构建的 0.15.0，原反馈和附件可读取。随后重新安装 0.16.0 并再次检查数据。该演练验证插件代码回退，数据库保留新增表，旧版界面只能使用其原有功能。生产回退前备份数据库和扩展卷，确认目标版本与保留的表结构兼容。
+
+### 浏览器验收
+
+0.16.1 修复浏览器中的负责人预览。预览请求使用禅道识别的 AJAX 请求头，避免被导航框架重定向。Chromium 已验证切换产品、负责人预览、编辑两个富文本字段、粘贴 PNG、提交和详情回显。测试需要本机 Chromium、Node.js 和 Playwright，并使用待配置负责人的测试产品。
+
+```sh
+node plugins/reqintake/tests/browser-smoke.cjs http://127.0.0.1:8097 /path/to/admin-password 'Smoke Product'
+```

@@ -186,7 +186,7 @@ if (receiveForm) {
         if (!product.value) return;
 
         try {
-            const response = await fetch(preview.dataset.url.replace('987654321', product.value), {cache: 'no-store'});
+            const response = await fetch(preview.dataset.url.replace('987654321', product.value), {cache: 'no-store', headers: {'X-Requested-With': 'XMLHttpRequest'}});
             if (!response.ok) throw new Error('Assignment preview failed');
             const data = await response.json();
             if (requestNumber !== sequence) return;
