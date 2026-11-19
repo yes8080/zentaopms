@@ -21,7 +21,7 @@ def request(path, data=None):
     headers = {'Referer': base + 'index.php?m=user&f=login'}
     if data is not None:
         headers['X-Requested-With'] = 'XMLHttpRequest'
-    encoded = None if data is None else urlencode(data).encode()
+    encoded = None if data is None else urlencode(data, doseq=True).encode()
     with opener.open(Request(base + path, encoded, headers), timeout=30) as response:
         return response.read().decode()
 
@@ -47,7 +47,7 @@ keys = {k:re.search(f'name="{k}" value="([^"]+)"',page)[1] for k in ('operation'
 product = re.search(r'<option value="(\d+)"[^>]*>Smoke Product',page)[1]
 payload = dict(keys,product=product,title='Reqintake integration request',description='Integration description',customer='Test customer',channel='test')
 def submit(data):
-    with opener.open(Request(base+route,urlencode(data).encode(), {'Referer':base+route}),timeout=10) as response:
+    with opener.open(Request(base+route,urlencode(data, doseq=True).encode(), {'Referer':base+route}),timeout=10) as response:
         return response.read().decode()
 first = submit(payload)
 second = submit(payload)
@@ -97,3 +97,28 @@ if args.target:
         assert target_route in html.unescape(request(detail, link))
         assert detail in html.unescape(request(target_route))
         print(f'{kind} #{target_id} links in both directions')
+
+batch_target = next(((kind, target_id) for kind, target_id in args.target
+                     if kind in ('story', 'requirement', 'epic')), None)
+if batch_target:
+    kind, target_id = batch_target
+    page = request(route)
+    fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
+             for key in ('operation', 'token')}
+    other = submit(dict(payload, **fresh))
+    other_id = re.search(r'已登记反馈 #(\d+)', other)[1]
+    scope = 'Atomic batch smoke scope'
+    base_detail = 'index.php?m=reqintake&f=detail&id='
+
+    def batch_link(other_version):
+        return submit(dict(keys, intent='batchLink', storyID=target_id, storyType=kind,
+                           linkScope=scope, **{'sources[]': [assigned_id + ':1',
+                                                               f'{other_id}:{other_version}']}))
+
+    assert '反馈状态已变化' in batch_link(2)
+    assert scope not in request(base_detail + assigned_id)
+    assert '已关联 2 条反馈' in batch_link(1)
+    for source_id in (assigned_id, other_id):
+        assert scope in request(base_detail + source_id)
+    assert '已关联 2 条反馈' in batch_link(1)
+    print('Batch linking rolls back on stale version and accepts identical retry')
