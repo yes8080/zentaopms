@@ -300,9 +300,7 @@ for kind in args.conversion:
     print(f'Native {kind} creation, feedback association and idempotent replay passed')
 
 
-batch_kind = next((kind for kind in args.conversion if kind != 'bug'), None)
-if batch_kind:
-    kind = batch_kind
+for kind in (kind for kind in args.conversion if kind != 'bug'):
 
     def receive_source(customer=payload['customer']):
         page = request(route)
@@ -375,7 +373,7 @@ if batch_kind:
     failure = json.loads(request(native_form, native_fields))
     assert failure['result'] == 'fail' and '反馈状态已变化' in json.dumps(failure, ensure_ascii=False), failure
     assert native_fields['title'] not in request(detail_route + stale_ids[1])
-    print('Batch conversion links every source, reuses the native ID, and rejects stale selections')
+    print(f'Batch {kind} conversion links every source, reuses the native ID, and rejects stale selections')
     if args.native_product:
         page = request(route)
         fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
