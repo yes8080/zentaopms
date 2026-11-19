@@ -601,6 +601,8 @@ class reqintakeModel extends model
 
     public function convertToNative(string $token, string $type, int $targetProduct, callable $create): int|false
     {
+        $legacyOperation = substr($token, strrpos($token, '.') + 1);
+        $operation = $legacyOperation;
         if(str_starts_with($token, 'batch.'))
         {
             $batch = $this->batchConversion($token, $type);
@@ -612,12 +614,12 @@ class reqintakeModel extends model
             $feedback = $this->conversionSource($token, $type);
             $sources = array((int)$feedback->id => $feedback->version);
             $scope = '';
+            $operation = hash('sha256', "$type:$feedback->id:$feedback->version");
         }
         $product = $this->conversionProduct($sources, $type);
         if($product !== $targetProduct) throw new DomainException('linkTarget');
 
         $table = $this->config->db->prefix . 'reqintakeConversion';
-        $operation = substr($token, strrpos($token, '.') + 1);
         $this->dbh->beginTransaction();
         try
         {
@@ -627,6 +629,18 @@ class reqintakeModel extends model
             $read->execute([$operation]);
             $id = (int)$read->fetchColumn();
             $read->closeCursor();
+            if(!$id && $legacyOperation !== $operation)
+            {
+                $legacy = $this->dbh->prepare("SELECT target FROM `$table` WHERE operation = ?");
+                $legacy->execute([$legacyOperation]);
+                $id = (int)$legacy->fetchColumn();
+                $legacy->closeCursor();
+                if($id)
+                {
+                    $update = $this->dbh->prepare("UPDATE `$table` SET target = ? WHERE operation = ?");
+                    $update->execute([$id, $operation]);
+                }
+            }
             if($id)
             {
                 if(!$this->targetForProduct($type, $id, $product)) throw new DomainException('linkTarget');

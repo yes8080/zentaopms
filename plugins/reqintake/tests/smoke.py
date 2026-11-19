@@ -3,6 +3,8 @@ import argparse
 import hashlib
 import html
 import json
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError
@@ -24,28 +26,32 @@ args = parser.parse_args()
 base = args.base_url.rstrip('/') + '/'
 opener = build_opener(HTTPCookieProcessor())
 
-def request(path, data=None):
+def request(path, data=None, client=opener):
     headers = {'Referer': base + 'index.php?m=user&f=login'}
     if data is not None:
         headers['X-Requested-With'] = 'XMLHttpRequest'
     encoded = None if data is None else urlencode(data, doseq=True).encode()
-    with opener.open(Request(base + path, encoded, headers), timeout=30) as response:
+    with client.open(Request(base + path, encoded, headers), timeout=30) as response:
         return response.read().decode()
 
 def md5(value):
     return hashlib.md5(value.encode(), usedforsecurity=False).hexdigest()
 
-assert '<title>用户登录 - 禅道</title>' in request('')
-rand = request('index.php?m=user&f=refreshRandom').strip()
-assert rand
-password = args.password_file.read_text().strip()
-result = json.loads(request('index.php?m=user&f=login', {
-    'account': 'admin', 'password': md5(md5(password) + rand),
-    'passwordStrength': '2', 'verifyRand': rand, 'referer': '/',
-}))
-assert result.get('result') == 'success', result.get('message', 'login failed')
-page = request('index.php?m=my&f=index')
-assert '<title>用户登录' not in page and 'admin' in page and '<title>' in page
+def sign_in(client):
+    assert '<title>用户登录 - 禅道</title>' in request('', client=client)
+    rand = request('index.php?m=user&f=refreshRandom', client=client).strip()
+    assert rand
+    password = args.password_file.read_text().strip()
+    result = json.loads(request('index.php?m=user&f=login', {
+        'account': 'admin', 'password': md5(md5(password) + rand),
+        'passwordStrength': '2', 'verifyRand': rand, 'referer': '/',
+    }, client=client))
+    assert result.get('result') == 'success', result.get('message', 'login failed')
+    page = request('index.php?m=my&f=index', client=client)
+    assert '<title>用户登录' not in page and 'admin' in page and '<title>' in page
+
+
+sign_in(opener)
 print('Administrator login and authenticated workspace check passed')
 import re
 route = 'index.php?m=reqintake&f=index'
@@ -238,6 +244,29 @@ for kind in args.conversion:
     native_fields = dict(product=product, title=native_title, spec='Public description',
                          category='feature', pri=3, needNotReview=1, status='active', module=0,
                          branch=0, **{'reviewer[]': ''})
+    if kind == 'story':
+        second_client = build_opener(HTTPCookieProcessor())
+        sign_in(second_client)
+        request(route, client=second_client)
+        second_source = request(source_route, client=second_client)
+        second_form = next(html.unescape(link).lstrip('/')
+                           for link in re.findall(r'href="([^"]+riOperation[^"]+)"', second_source)
+                           if 'm=story&' in html.unescape(link))
+        request(second_form, client=second_client)
+        gate = Barrier(2)
+
+        def save_story(client, form):
+            gate.wait(timeout=10)
+            return json.loads(request(form, native_fields, client=client))
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first_save = pool.submit(save_story, opener, native_form)
+            second_save = pool.submit(save_story, second_client, second_form)
+            first, second = first_save.result(), second_save.result()
+        assert first['result'] == second['result'] == 'success', (first, second)
+        story_id, = first['changes']['objectList']
+        assert second['changes']['objectList'] == [story_id]
+        print(f'Two authenticated sessions concurrently submit feedback {source_id} and share story {story_id}')
     if kind == 'bug':
         bug_fields = dict(product=product, title=native_title, type='codeerror',
                           steps='Confirmed steps', severity=3, pri=3, module=0,

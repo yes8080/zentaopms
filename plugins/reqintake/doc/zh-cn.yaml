@@ -7,7 +7,7 @@ desc: |
 install: |
   在后台扩展管理中本地安装 ZIP。
 releases:
-  0.21.0:
+  0.21.1:
     zentao:
       compatible: '22.7'
       incompatible: ''
