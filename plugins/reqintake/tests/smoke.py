@@ -60,7 +60,7 @@ keys = {k:re.search(f'name="{k}" value="([^"]+)"',page)[1] for k in ('operation'
 product = re.search(r'<option value="(\d+)"[^>]*>Smoke Product',page)[1]
 payload = dict(keys,product=product,title='Reqintake integration request',description='Integration description',customer='Test customer',channel='test',
                category='performance', priority='2', acceptance='Acceptance criteria integration check',
-               source='market', sourceNote='Private interview notes', keywords='integration tag', estimate='2.75')
+               source='market', sourceNote='Private interview notes', keywords='integration tag', estimate='2.75', customerVersion='Customer release 2026.11')
 def submit(data):
     with opener.open(Request(base+route,urlencode(data, doseq=True).encode(), {'Referer':base+route}),timeout=10) as response:
         return response.read().decode()
@@ -85,8 +85,9 @@ assert 'Reopen evidence' in transition(3,'reopen','Reopen evidence')
 page=request('index.php?m=reqintake&f=detail&id='+id)
 assert all(text in page for text in ('Integration description', 'Test customer', 'Smoke Product',
                                      '跟进中', '性能', payload['acceptance'], '市场',
-                                     payload['sourceNote'], payload['keywords'], payload['estimate']))
+                                     payload['sourceNote'], payload['keywords'], payload['estimate'], payload['customerVersion']))
 assert '请选择有效来源' in submit(dict(payload, estimate='-1'))
+assert '客户使用版本最多填写' in submit(dict(payload, customerVersion='x' * 101))
 assert '请选择归属当前产品' in submit(dict(payload, module='999999'))
 assert '请选择有效的类别和优先级' in submit(dict(payload, category='invalid_category'))
 for scope in ('mine','assigned'):
@@ -241,7 +242,7 @@ for kind in args.conversion:
              for link in re.findall(r'href="([^"]+riOperation[^"]+)"', request(source_route)))
     native_form = next(link for link in links if f'm={kind}&' in link)
     form = request(native_form)
-    assert payload['title'] in form and payload['description'] in form and payload['sourceNote'] not in form
+    assert payload['title'] in form and payload['description'] in form and payload['sourceNote'] not in form and payload['customerVersion'] not in form
     if kind == 'story':
         assert payload['estimate'] in form and payload['keywords'] in form
         if args.native_product:
@@ -435,7 +436,7 @@ assert '<strong>description</strong>' in page and '<ol><li>First criterion</li><
 assert image in page and 'untrusted-image.png' not in page
 token = re.search(r'name="token" value="([^"]+)"', page)[1]
 revision = dict(rich, token=token, intent='revise', version=1,
-                description='<p><em>Edited and formatted</em></p>', customer='Revised client name')
+                description='<p><em>Edited and formatted</em></p>', customer='Revised client name', customerVersion='Customer release 2026.12')
 failed_revision = request(source_route, dict(revision, estimate='-1'))
 assert '请选择有效来源' in failed_revision
 assert re.search(r'<details id="reqintake-edit"\s+open', failed_revision)
@@ -444,6 +445,7 @@ assert 'Revised client name' in failed_revision and image in failed_revision
 assert 'Revised client name' not in request(source_route)
 page = request(source_route, revision)
 assert '<em>Edited and formatted</em>' in page and '<strong>description</strong>' in page
+assert revision['customerVersion'] in page
 if 'story' in args.conversion:
     rich_form = next(html.unescape(link).lstrip('/')
                      for link in re.findall(r'href="([^"]+riOperation[^"]+)"', page)

@@ -112,3 +112,6 @@ $lang->reqintake->errors['plan'] = 'Select a plan for the current product and pr
 
 $lang->reqintake->fields['mailto'] = 'CC';
 $lang->reqintake->errors['mailto'] = 'Select valid CC accounts.';
+
+$lang->reqintake->fields['customerVersion'] = 'Customer product version';
+$lang->reqintake->errors['customerVersion'] = 'Enter a customer product version of at most 100 characters.';

@@ -181,14 +181,14 @@ class reqintakeModel extends model
     public function attributeDefaults(): array
     {
         return array('category' => 'feature', 'priority' => '3', 'acceptance' => '',
-            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'branchModules' => array());
+            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'customerVersion' => '', 'branchModules' => array());
     }
 
     public function attributes(int $id, ?int $version = null): array
     {
         $defaults = $this->attributeDefaults();
         $prefix = $this->config->db->prefix;
-        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto') as $table => $fields)
+        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto', 'reqintakeCustomerVersion' => 'customerVersion') as $table => $fields)
         {
             $query = $this->dao->select($fields)->from($prefix . $table)->where('feedback')->eq($id);
             if($version !== null) $query->andWhere('version')->le($version);
@@ -264,6 +264,9 @@ class reqintakeModel extends model
             if(array_diff($added, array_keys($this->mailtoOptions()))) throw new InvalidArgumentException('mailto');
         }
 
+        $fields['customerVersion'] = trim($fields['customerVersion']);
+        if(mb_strlen($fields['customerVersion']) > 100) throw new InvalidArgumentException('customerVersion');
+
         $validated = array_replace($this->attributeDefaults(), $fields);
         $validated['priority'] = (string)$validated['priority'];
         return $validated;
@@ -290,6 +293,10 @@ class reqintakeModel extends model
         $table = $this->config->db->prefix . 'reqintakeMailto';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,mailto) VALUES (?,?,?)");
         $insert->execute([$id, $version, $fields['mailto']]);
+
+        $table = $this->config->db->prefix . 'reqintakeCustomerVersion';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,customerVersion) VALUES (?,?,?)");
+        $insert->execute([$id, $version, $fields['customerVersion']]);
 
         $table = $this->config->db->prefix . 'reqintakeBranchScope';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branchModules) VALUES (?,?,?)");

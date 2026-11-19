@@ -112,3 +112,6 @@ $lang->reqintake->errors['plan'] = '请选择当前产品及主选分支的计�
 
 $lang->reqintake->fields['mailto'] = '抄送给';
 $lang->reqintake->errors['mailto'] = '请选择有效的抄送账号。';
+
+$lang->reqintake->fields['customerVersion'] = '客户使用版本';
+$lang->reqintake->errors['customerVersion'] = '客户使用版本最多填写 100 个字符。';

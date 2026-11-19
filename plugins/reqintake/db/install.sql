@@ -170,3 +170,10 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeMailto` (
   `mailto` text NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeCustomerVersion` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `customerVersion` varchar(100) NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;
