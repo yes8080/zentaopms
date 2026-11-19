@@ -999,7 +999,7 @@ class reqintakeModel extends model
 
         $next = match($action)
         {
-            'start'  => $feedback->status === 'pending' ? 'tracking' : null,
+            'start', 'accept' => $feedback->status === 'pending' ? 'tracking' : null,
             'close'  => in_array($feedback->status, array('pending', 'tracking'), true) ? 'closed' : null,
             'reopen' => $feedback->status === 'closed' ? 'tracking' : null,
             default  => null,

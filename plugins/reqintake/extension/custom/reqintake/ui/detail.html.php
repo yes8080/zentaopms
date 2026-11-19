@@ -244,7 +244,7 @@ ob_start();
                 <input type="hidden" name="version" value="<?= (int)$item->version ?>">
                 <label><?= $escape($labels->transitionReason) ?> <input name="reason" maxlength="500"></label>
                 <?php if($item->status !== 'closed') require __DIR__ . '/closure-fields.php'; ?>
-                <?php foreach(match($item->status) {'pending' => ['start', 'close'], 'tracking' => ['close'], 'closed' => ['reopen'], default => []} as $action): ?>
+                <?php foreach(match($item->status) {'pending' => ['start', 'accept', 'close'], 'tracking' => ['close'], 'closed' => ['reopen'], default => []} as $action): ?>
                     <button type="submit" class="btn" name="action" value="<?= $escape($action) ?>"><?= $escape($labels->actions[$action]) ?></button>
                 <?php endforeach; ?>
             </form>

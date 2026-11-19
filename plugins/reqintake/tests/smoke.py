@@ -77,14 +77,15 @@ dashboard = html.unescape(request('index.php?m=my&f=index'))
 assert '待处理反馈' in dashboard and f'm=reqintake&f=detail&id={id}' in dashboard
 def transition(version,action,reason=''):
     return submit(dict(keys,intent='transition',feedbackID=id,version=version,action=action,reason=reason))
-assert '跟进中' in transition(1,'start')
+assert '采纳、关闭或重开时请填写原因' in transition(1,'accept')
+assert '跟进中' in transition(1,'accept','Approved after product review')
 assert '反馈状态已变化' in transition(1,'close','stale')
-assert '关闭或重开时请填写原因' in transition(2,'close')
+assert '采纳、关闭或重开时请填写原因' in transition(2,'close')
 assert 'Closure evidence' in transition(2,'close','Closure evidence')
 assert 'Reopen evidence' in transition(3,'reopen','Reopen evidence')
 page=request('index.php?m=reqintake&f=detail&id='+id)
 assert all(text in page for text in ('Integration description', 'Test customer', 'Smoke Product',
-                                     '跟进中', '性能', payload['acceptance'], '市场',
+                                     '跟进中', '性能', '· 采纳 · Approved after product review', payload['acceptance'], '市场',
                                      payload['sourceNote'], payload['keywords'], payload['estimate'], payload['customerVersion']))
 assert '请选择有效来源' in submit(dict(payload, estimate='-1'))
 assert '客户使用版本最多填写' in submit(dict(payload, customerVersion='x' * 101))

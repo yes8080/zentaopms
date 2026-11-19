@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeHistory` (
   `feedback` int unsigned NOT NULL,
   `version` int unsigned NOT NULL,
   `actor` varchar(30) NOT NULL,
-  `action` enum('start','close','reopen') NOT NULL,
+  `action` enum('start','close','reopen','accept') NOT NULL,
   `reason` varchar(500) NOT NULL DEFAULT '',
   `createdDate` datetime NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
