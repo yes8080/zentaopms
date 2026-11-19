@@ -24,7 +24,7 @@ $app->dbh->exec("
            COALESCE(s.id,b.id,t.id) IS NOT NULL,
            COALESCE(s.status,b.status,t.status,''),
            COALESCE(s.stage,''),
-           COALESCE(s.closedReason,b.resolution,''),
+           COALESCE(s.closedReason,b.resolution,t.closedReason,''),
            CURRENT_TIMESTAMP
       FROM `{$prefix}reqintakeLink` l
       JOIN `{$prefix}reqintakeFeedback` f ON f.id = l.feedback

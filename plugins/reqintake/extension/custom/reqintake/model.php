@@ -415,7 +415,7 @@ class reqintakeModel extends model
     {
         if($type === 'task')
         {
-            $target = $this->dao->select("t.id,t.name AS title,t.status,'' AS stage,'' AS closedReason,t.execution")
+            $target = $this->dao->select("t.id,t.name AS title,t.status,'' AS stage,t.closedReason,t.execution")
                 ->from(TABLE_TASK)->alias('t')
                 ->innerJoin(TABLE_PROJECTPRODUCT)->alias('p')->on('p.project = t.execution')
                 ->innerJoin(TABLE_EXECUTION)->alias('e')->on("e.id = t.execution AND e.deleted = '0'")
