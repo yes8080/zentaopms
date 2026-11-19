@@ -27,8 +27,9 @@ ob_start();
     <ul>
         <?php foreach($linkedStories as $story): ?>
             <li>
+                <span><?= $escape($labels->storyTypes[$story->targetType]) ?></span>
                 <?php if($story->id): ?>
-                    <a href="<?= $escape(\helper::createLink('story', 'view', 'storyID=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
+                    <a href="<?= $escape(\helper::createLink($story->targetType, 'view', 'storyID=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
                     <span><?= $escape($lang->story->statusList[$story->status] ?? $story->status) ?></span>
                     <span><?= $escape($lang->story->stageList[$story->stage] ?? $story->stage) ?></span>
                     <?php if($story->closedReason): ?>
@@ -45,6 +46,11 @@ ob_start();
         <form method="post">
             <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
             <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+            <label><?= $escape($labels->storyType) ?>
+                <select name="storyType">
+                    <?php foreach($storyTypes as $type): ?><option value="<?= $escape($type) ?>"><?= $escape($labels->storyTypes[$type]) ?></option><?php endforeach; ?>
+                </select>
+            </label>
             <label><?= $escape($labels->storyID) ?> <input name="storyID" type="number" min="1" required></label>
             <label><?= $escape($labels->linkScope) ?> <input name="linkScope" maxlength="500"></label>
             <button type="submit" class="btn"><?= $escape($labels->linkStory) ?></button>

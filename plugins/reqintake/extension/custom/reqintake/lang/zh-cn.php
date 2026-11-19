@@ -26,10 +26,12 @@ $lang->reqintake->scopes = array_combine(array('all', 'mine', 'assigned'), array
 $lang->reqintake->submitter = '提报人';
 $lang->reqintake->errors['handler'] = '只有实际负责人可以办理这条反馈。';
 $lang->reqintake->allProducts = '全部产品';
-$lang->reqintake->linkedStories = '关联研发需求';
-$lang->reqintake->storyID = '研发需求编号';
+$lang->reqintake->linkedStories = '关联需求';
+$lang->reqintake->storyID = '需求编号';
 $lang->reqintake->linkScope = '承接范围';
 $lang->reqintake->linkStory = '关联已有需求';
-$lang->reqintake->errors['linkTarget'] = '请选择同一产品下的有效研发需求。';
+$lang->reqintake->errors['linkTarget'] = '请选择同一产品下该类型的有效需求。';
 $lang->reqintake->errors['linkScope'] = '承接范围超长，或此需求已用不同范围关联。';
 $lang->reqintake->storyUnavailable = '原生需求不可用，请复核关联。';
+$lang->reqintake->storyType = '需求类型';
+$lang->reqintake->storyTypes = array('story' => '研发需求', 'requirement' => '用户需求', 'epic' => '业务需求');

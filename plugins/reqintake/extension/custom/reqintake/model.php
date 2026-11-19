@@ -44,25 +44,31 @@ class reqintakeModel extends model
             && (!empty($this->app->user->admin) || (!$feedback->assignmentPending && $feedback->assignedTo === $this->app->user->account));
     }
 
+    public function visibleStoryTypes(): array
+    {
+        return array_values(array_filter(array('story', 'requirement', 'epic'), static fn($type) => common::hasPriv($type, 'view')));
+    }
+
     public function linkedStories(object $feedback): array
     {
-        if(!$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product) || !common::hasPriv('story', 'view')) return array();
+        $types = $this->visibleStoryTypes();
+        if(!$types || !$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
 
         $product = (int)$feedback->product;
-        return $this->dao->select('l.target,s.id,s.title,s.status,s.stage,s.closedReason,l.scope')->from($this->config->db->prefix . 'reqintakeLink')->alias('l')
-            ->leftJoin(TABLE_STORY)->alias('s')->on("s.id = l.target AND s.product = $product AND s.type = 'story' AND s.deleted = '0'")
-            ->where('l.feedback')->eq((int)$feedback->id)->andWhere('l.targetType')->eq('story')
+        return $this->dao->select('l.target,l.targetType,s.id,s.title,s.status,s.stage,s.closedReason,l.scope')->from($this->config->db->prefix . 'reqintakeLink')->alias('l')
+            ->leftJoin(TABLE_STORY)->alias('s')->on("s.id = l.target AND s.product = $product AND s.type = l.targetType AND s.deleted = '0'")
+            ->where('l.feedback')->eq((int)$feedback->id)->andWhere('l.targetType')->in($types)
             ->orderBy('l.target_desc')->fetchAll();
     }
 
-    public function linkStory(int $feedbackID, int $version, int $storyID, string $scope): void
+    public function linkStory(int $feedbackID, int $version, int $storyID, string $scope, string $type = 'story'): void
     {
         $feedback = $this->findFeedback($feedbackID);
-        if(!$feedback || !$this->canHandle($feedback) || !common::hasPriv('story', 'view')) throw new DomainException('handler');
+        if(!$feedback || !$this->canHandle($feedback) || !in_array($type, $this->visibleStoryTypes(), true)) throw new DomainException('handler');
 
         $scope = trim($scope);
         if(mb_strlen($scope) > 500) throw new InvalidArgumentException('linkScope');
-        $story = $this->dao->select('id')->from(TABLE_STORY)->where('id')->eq($storyID)->andWhere('type')->eq('story')
+        $story = $this->dao->select('id')->from(TABLE_STORY)->where('id')->eq($storyID)->andWhere('type')->eq($type)
             ->andWhere('product')->eq((int)$feedback->product)->andWhere('deleted')->eq('0')->fetch();
         if(!$story) throw new DomainException('linkTarget');
 
@@ -75,8 +81,8 @@ class reqintakeModel extends model
             if(!$lock->fetchColumn()) throw new DomainException('staleFeedback');
             $lock->closeCursor();
 
-            $query = $this->dbh->prepare("SELECT scope FROM `{$prefix}reqintakeLink` WHERE feedback = ? AND targetType = 'story' AND target = ?");
-            $query->execute([$feedbackID, $storyID]);
+            $query = $this->dbh->prepare("SELECT scope FROM `{$prefix}reqintakeLink` WHERE feedback = ? AND targetType = ? AND target = ?");
+            $query->execute([$feedbackID, $type, $storyID]);
             $existing = $query->fetchColumn();
             if($existing !== false)
             {
@@ -90,8 +96,8 @@ class reqintakeModel extends model
             $query->execute([$now, $feedbackID, $version]);
             if($query->rowCount() !== 1) throw new DomainException('staleFeedback');
 
-            $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,'story',?,?,?,?)");
-            $query->execute([$feedbackID, $storyID, $scope, $this->app->user->account, $now]);
+            $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,?,?,?,?,?)");
+            $query->execute([$feedbackID, $type, $storyID, $scope, $this->app->user->account, $now]);
             $this->dbh->commit();
         }
         catch(Throwable $error)

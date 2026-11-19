@@ -103,7 +103,7 @@ class reqintake extends control
             }
             try
             {
-                $model->linkStory($id, (int)$this->formValue('version'), (int)$this->formValue('storyID'), $this->formValue('linkScope'));
+                $model->linkStory($id, (int)$this->formValue('version'), (int)$this->formValue('storyID'), $this->formValue('linkScope'), $this->formValue('storyType') ?: 'story');
                 $feedback = $model->findFeedback($id);
             }
             catch(InvalidArgumentException | DomainException $error)
@@ -113,7 +113,8 @@ class reqintake extends control
         }
 
         $this->view->linkToken = $token;
-        $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && common::hasPriv('story', 'view');
+        $this->view->storyTypes = $model->visibleStoryTypes();
+        $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && $this->view->storyTypes;
         $this->app->loadLang('story');
         $this->view->linkedStories = $model->linkedStories($feedback);
         $this->view->title = $feedback->title;

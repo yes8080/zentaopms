@@ -26,10 +26,12 @@ $lang->reqintake->scopes = array_combine(array('all', 'mine', 'assigned'), array
 $lang->reqintake->submitter = 'Submitter';
 $lang->reqintake->errors['handler'] = 'Only the assigned owner can handle this request.';
 $lang->reqintake->allProducts = 'All products';
-$lang->reqintake->linkedStories = 'Linked stories';
-$lang->reqintake->storyID = 'Story ID';
+$lang->reqintake->linkedStories = 'Linked requirements';
+$lang->reqintake->storyID = 'Requirement ID';
 $lang->reqintake->linkScope = 'Scope';
 $lang->reqintake->linkStory = 'Link existing story';
-$lang->reqintake->errors['linkTarget'] = 'Select an existing story in the same product.';
+$lang->reqintake->errors['linkTarget'] = 'Select an existing requirement of this type in the same product.';
 $lang->reqintake->errors['linkScope'] = 'The scope is too long or the story is already linked with a different scope.';
 $lang->reqintake->storyUnavailable = 'The story is unavailable. Review this link.';
+$lang->reqintake->storyType = 'Requirement type';
+$lang->reqintake->storyTypes = array('story' => 'Story', 'requirement' => 'User requirement', 'epic' => 'Business requirement');
