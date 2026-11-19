@@ -17,7 +17,7 @@ class reqintake extends control
                 $owner = $this->loadModel('user')->getById($account);
                 header('Content-Type: application/json; charset=utf-8');
                 header('Cache-Control: no-store');
-                echo json_encode(array('name' => $owner->realname ?? $account, 'pending' => (bool)$pending));
+                echo json_encode(array('name' => $owner->realname ?? $account, 'pending' => (bool)$pending) + $this->reqintake->productScopeOptions($previewProduct));
             }
             catch(DomainException $error)
             {
@@ -212,6 +212,11 @@ class reqintake extends control
         }
 
         $this->view->attributes = $model->attributes($id);
+        $scope = $model->productScopeOptions((int)$feedback->product);
+        $this->view->scopeOptions = $scope;
+        $this->view->scopeLabels = array(
+            'branch' => $scope['branches'], 'module' => $scope['modules'][$this->view->attributes['branch']] ?? array()
+        );
         $this->view->attributeOptions = $model->attributeOptions();
         $this->view->followups = $model->followups($feedback);
         $this->view->attachments = $model->attachments($id);
@@ -240,7 +245,9 @@ class reqintake extends control
                     $this->view->conversionLinks[$type] = helper::createLink('bug', 'create', "productID={$feedback->product}&branch=&extras=$extra");
                     continue;
                 }
-                $this->view->conversionLinks[$type] = helper::createLink($type, 'create', "productID={$feedback->product}&branch=&moduleID=0&storyID=0&objectID=0&bugID=0&planID=0&todoID=0&extra=$extra&storyType=$type");
+                $branch = isset($scope['branches'][$this->view->attributes['branch']]) ? (int)$this->view->attributes['branch'] : 0;
+                $module = isset($scope['modules'][$branch][$this->view->attributes['module']]) ? (int)$this->view->attributes['module'] : 0;
+                $this->view->conversionLinks[$type] = helper::createLink($type, 'create', "productID={$feedback->product}&branch=$branch&moduleID=$module&storyID=0&objectID=0&bugID=0&planID=0&todoID=0&extra=$extra&storyType=$type");
             }
         }
         $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && $this->view->storyTypes;

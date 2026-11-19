@@ -165,15 +165,22 @@ ob_start();
 <?php
 html(ob_get_clean());
 
+require __DIR__ . '/product-scope-js.php';
 context::js(<<<'JS'
 const receiveForm = document.querySelector('#reqintake-receive');
 if (receiveForm) {
     const product = receiveForm.elements.product;
     const preview = receiveForm.querySelector('output');
+    const branch = receiveForm.elements.branch;
     let sequence = 0;
     const updatePreview = async () => {
         const requestNumber = ++sequence;
         preview.textContent = '';
+        const initial = requestNumber === 1;
+        const selectedBranch = initial ? branch.dataset.initial : '0';
+        const selectedModule = initial ? receiveForm.elements.module.dataset.initial : '0';
+        reqintakeOptions(branch, {0: ''}, '0');
+        reqintakeOptions(receiveForm.elements.module, {0: ''}, '0');
         if (!product.value) return;
 
         try {
@@ -181,6 +188,8 @@ if (receiveForm) {
             if (!response.ok) throw new Error('Assignment preview failed');
             const data = await response.json();
             if (requestNumber !== sequence) return;
+            reqintakeOptions(branch, data.branches, selectedBranch);
+            reqintakeScope(receiveForm, data.modules, selectedModule);
             const label = data.pending ? preview.dataset.pending : preview.dataset.owner;
             preview.textContent = label + ' · ' + data.name;
         } catch {

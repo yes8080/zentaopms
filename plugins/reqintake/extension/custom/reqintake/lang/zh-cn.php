@@ -81,3 +81,6 @@ $lang->reqintake->fields['sourceNote'] = '来源备注';
 $lang->reqintake->fields['keywords'] = '关键词';
 $lang->reqintake->fields['estimate'] = '预计工时（小时）';
 $lang->reqintake->errors['demandFields'] = '请选择有效来源，并填写最多两位小数的非负预计工时。';
+$lang->reqintake->fields['branch'] = '分支／平台';
+$lang->reqintake->fields['module'] = '模块';
+$lang->reqintake->errors['productScope'] = '请选择归属当前产品的分支及模块。';

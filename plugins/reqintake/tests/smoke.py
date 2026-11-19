@@ -79,6 +79,7 @@ assert all(text in page for text in ('Integration description', 'Test customer',
                                      '跟进中', '性能', payload['acceptance'], '市场',
                                      payload['sourceNote'], payload['keywords'], payload['estimate']))
 assert '请选择有效来源' in submit(dict(payload, estimate='-1'))
+assert '请选择归属当前产品' in submit(dict(payload, module='999999'))
 assert '请选择有效的类别和优先级' in submit(dict(payload, category='invalid_category'))
 for scope in ('mine','assigned'):
     assert 'Reqintake integration request' in request(route+'&scope='+scope)

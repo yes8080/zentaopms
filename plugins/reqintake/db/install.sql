@@ -121,3 +121,11 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeDemandFields` (
   `estimate` varchar(11) NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeProductScope` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `branch` mediumint unsigned NOT NULL,
+  `module` mediumint unsigned NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

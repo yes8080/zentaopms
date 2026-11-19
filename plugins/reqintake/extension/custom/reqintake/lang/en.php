@@ -81,3 +81,6 @@ $lang->reqintake->fields['sourceNote'] = 'Source note';
 $lang->reqintake->fields['keywords'] = 'Keywords';
 $lang->reqintake->fields['estimate'] = 'Estimate (hours)';
 $lang->reqintake->errors['demandFields'] = 'Enter a valid source and nonnegative estimate with at most two decimal places.';
+$lang->reqintake->fields['branch'] = 'Branch / platform';
+$lang->reqintake->fields['module'] = 'Module';
+$lang->reqintake->errors['productScope'] = 'Choose a branch and module that belong to the selected product.';

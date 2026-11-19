@@ -26,7 +26,7 @@ ob_start();
         <?php endforeach; ?>
         <?php foreach($attributes as $field => $value): ?>
             <dt><?= $escape($labels->fields[$field]) ?></dt>
-            <dd style="white-space: pre-wrap"><?= $field === 'acceptance' && $rich ? $value : $escape($attributeOptions[$field][$value] ?? $value) ?></dd>
+            <dd style="white-space: pre-wrap"><?= $field === 'acceptance' && $rich ? $value : $escape($scopeLabels[$field][$value] ?? $attributeOptions[$field][$value] ?? $value) ?></dd>
         <?php endforeach; ?>
     </dl>
     <?php if($canRevise): ?>
@@ -182,3 +182,6 @@ ob_start();
 </section>
 <?php
 html(ob_get_clean());
+require __DIR__ . '/product-scope-js.php';
+context::js('document.querySelectorAll("form:has(input[name=intent][value=revise])").forEach(form => reqintakeScope(form, ' .
+    json_encode($scopeOptions['modules'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) . '));');
