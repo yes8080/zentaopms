@@ -19,8 +19,10 @@ class reqintakeModel extends model
     {
         if(empty($this->app->user->admin) || $id < 1) return false;
 
-        $feedback = $this->dao->select('id,product,title,description,customer,channel,openedBy,assignedTo,status')
-            ->from($this->config->db->prefix . 'reqintakeFeedback')->where('id')->eq($id)->fetch();
+        $feedback = $this->dao->select('f.id,f.product,f.title,f.description,f.customer,f.channel,f.openedBy,f.assignedTo,f.status,f.assignmentPending,p.name AS productName')
+            ->from($this->config->db->prefix . 'reqintakeFeedback')->alias('f')
+            ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
+            ->where('f.id')->eq($id)->andWhere('p.deleted')->eq('0')->fetch();
         return $feedback && $this->canReadProduct((int)$feedback->product) ? $feedback : false;
     }
 
