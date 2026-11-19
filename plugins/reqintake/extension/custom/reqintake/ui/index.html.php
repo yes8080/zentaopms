@@ -98,6 +98,8 @@ ob_start();
                 <?php if($batchTypes): ?><th scope="col"><?= $escape($labels->batchSelect) ?></th><?php endif; ?>
                 <?php foreach($labels->listColumns as $column): ?><th scope="col"><?= $escape($column) ?></th><?php endforeach; ?>
                 <th scope="col"><?= $escape($labels->handlingNext) ?></th>
+                <th scope="col"><?= $escape($labels->fields['customer']) ?></th>
+                <th scope="col"><?= $escape($labels->updatedDate) ?></th>
                 <th scope="col"><?= $escape($labels->actionsLabel) ?></th>
             </tr></thead>
             <tbody>
@@ -131,6 +133,8 @@ ob_start();
                         <td><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></td>
                         <td><?= $escape($labels->states[$item->status] ?? $item->status) ?></td>
                         <td><?= $escape($item->nextStep) ?></td>
+                        <td><?= $escape($item->customer) ?></td>
+                        <td><time datetime="<?= $escape(str_replace(' ', 'T', $item->updatedDate)) ?>"><?= $escape($item->updatedDate) ?></time></td>
                         <td>
                             <?php if($isAdmin || ($item->assignedTo === $currentAccount && !$item->assignmentPending)): ?>
                             <form method="post">

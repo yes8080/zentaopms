@@ -99,3 +99,4 @@ $lang->reqintake->duplicateReason = '结案原因';
 $lang->reqintake->errors['duplicateTarget'] = '请选择同产品下的另一条反馈，并确保关联不会形成循环。';
 $lang->reqintake->additionalBranches = '其他适用分支／平台';
 $lang->reqintake->branchNotSelected = '不适用';
+$lang->reqintake->updatedDate = '最近业务更新';

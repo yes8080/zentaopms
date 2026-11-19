@@ -326,9 +326,11 @@ assert '<strong>description</strong>' in page and '<ol><li>First criterion</li><
 assert image in page and 'untrusted-image.png' not in page
 token = re.search(r'name="token" value="([^"]+)"', page)[1]
 revision = dict(rich, token=token, intent='revise', version=1,
-                description='<p><em>Edited and formatted</em></p>')
+                description='<p><em>Edited and formatted</em></p>', customer='Revised client name')
 page = request(source_route, revision)
 assert '<em>Edited and formatted</em>' in page and '<strong>description</strong>' in page
+listing = request(route)
+assert 'Revised client name' in listing and '最近业务更新' in listing
 print('Rich description and acceptance round-trip, preserve history, and support replay')
 
 

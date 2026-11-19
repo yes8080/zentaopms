@@ -99,3 +99,4 @@ $lang->reqintake->duplicateReason = 'Closure reason';
 $lang->reqintake->errors['duplicateTarget'] = 'Select a different feedback from the same product without a circular reference.';
 $lang->reqintake->additionalBranches = 'Additional branches or platforms';
 $lang->reqintake->branchNotSelected = 'Outside feedback scope';
+$lang->reqintake->updatedDate = 'Last updated';

@@ -15,7 +15,7 @@ class reqintakeModel extends model
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
-        $query = $this->dao->select('f.id,f.title,f.assignedTo,f.assignmentPending,f.status,f.version,p.name AS productName')
+        $query = $this->dao->select('f.id,f.title,f.customer,f.updatedDate,f.assignedTo,f.assignmentPending,f.status,f.version,p.name AS productName')
             ->from($this->config->db->prefix . 'reqintakeFeedback')->alias('f')
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
             ->where('p.deleted')->eq('0');
@@ -30,17 +30,22 @@ class reqintakeModel extends model
         if(!$rows) return $rows;
 
         $ids = array_map(static fn($item) => (int)$item->id, $rows);
-        $changes = $this->dao->select('feedback,title')->from($this->config->db->prefix . 'reqintakeRevision')
+        $changes = $this->dao->select('feedback,title,customer')->from($this->config->db->prefix . 'reqintakeRevision')
             ->where('feedback')->in($ids)->orderBy('version_desc')->fetchAll();
-        $titles = array();
-        foreach($changes as $change) $titles[(int)$change->feedback] ??= $change->title;
+        $latestChanges = array();
+        foreach($changes as $change) $latestChanges[(int)$change->feedback] ??= $change;
         $plans = $this->dao->select('feedback,summary')->from($this->config->db->prefix . 'reqintakeHandling')
             ->where('feedback')->in($ids)->andWhere('kind')->eq('plan')->orderBy('version_desc')->fetchAll();
         $next = array();
         foreach($plans as $plan) $next[(int)$plan->feedback] ??= $plan->summary;
         foreach($rows as $row)
         {
-            $row->title = $titles[(int)$row->id] ?? $row->title;
+            $change = $latestChanges[(int)$row->id] ?? null;
+            if($change)
+            {
+                $row->title = $change->title;
+                $row->customer = $change->customer;
+            }
             $row->nextStep = $next[(int)$row->id] ?? '';
         }
         return $rows;
