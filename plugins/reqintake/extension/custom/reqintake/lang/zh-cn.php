@@ -1,0 +1,23 @@
+<?php
+$lang->reqintake->common = '需求池';
+$lang->reqintake->index  = '插件加载检查';
+$lang->reqintake->ready  = '需求池插件已加载。';
+$lang->reqintake->fields = array('product' => '产品', 'title' => '标题', 'description' => '描述', 'customer' => '客户', 'channel' => '渠道');
+$lang->reqintake->submit = '提交需求';
+$lang->reqintake->saved = '已登记反馈 #%d';
+$lang->reqintake->invalid = '请检查填写内容。';
+$lang->reqintake->errors = array('product' => '请选择有权访问的产品。', 'submissionConflict' => '该提交已用于其他内容。请重新打开表单。');
+$lang->reqintake->ownerAccount = '负责人账号（留空清除配置）';
+$lang->reqintake->saveOwner = '保存负责人';
+$lang->reqintake->ownerSaved = '负责人配置已保存。';
+$lang->reqintake->errors['owner'] = '该账号无权访问此产品或已删除。';
+$lang->reqintake->recent = '最近 50 条反馈';
+$lang->reqintake->emptyList = '暂无反馈。';
+$lang->reqintake->ownerPending = '待配置负责人';
+$lang->reqintake->listColumns = array('编号', '标题', '产品', '负责人', '状态');
+$lang->reqintake->states = array('pending' => '待评估', 'tracking' => '跟进中', 'closed' => '已关闭');
+$lang->reqintake->actionsLabel = '操作';
+$lang->reqintake->actions = array('start' => '开始跟进', 'close' => '关闭', 'reopen' => '重开');
+$lang->reqintake->errors['staleFeedback'] = '反馈状态已变化，请根据当前状态重新操作。';
+$lang->reqintake->transitionReason = '原因（关闭和重开必填）';
+$lang->reqintake->errors['transitionReason'] = '关闭或重开时请填写原因，最多 500 字。';

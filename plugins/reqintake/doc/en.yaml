@@ -1,0 +1,12 @@
+name: Request Intake
+code: reqintake
+type: extension
+abstract: Request intake extension for ZenTao Open Source
+desc: |
+  Development build with an administrator-only module smoke page.
+install: |
+  Install the ZIP from local extension management.
+releases:
+  0.1.0:
+    zentao:
+      compatible: '22.7'

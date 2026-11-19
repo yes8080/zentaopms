@@ -1,0 +1,23 @@
+<?php
+$lang->reqintake->common = 'Request Intake';
+$lang->reqintake->index  = 'Extension smoke check';
+$lang->reqintake->ready  = 'The Request Intake extension is loaded.';
+$lang->reqintake->fields = array('product' => 'Product', 'title' => 'Title', 'description' => 'Description', 'customer' => 'Customer', 'channel' => 'Channel');
+$lang->reqintake->submit = 'Submit request';
+$lang->reqintake->saved = 'Feedback #%d was saved.';
+$lang->reqintake->invalid = 'Check the form values.';
+$lang->reqintake->errors = array('product' => 'Select a product you can access.', 'submissionConflict' => 'This submission was used for different content. Reopen the form.');
+$lang->reqintake->ownerAccount = 'Owner account (leave blank to clear)';
+$lang->reqintake->saveOwner = 'Save owner';
+$lang->reqintake->ownerSaved = 'The owner configuration was saved.';
+$lang->reqintake->errors['owner'] = 'This account is deleted or cannot access the product.';
+$lang->reqintake->recent = 'Latest 50 requests';
+$lang->reqintake->emptyList = 'No requests yet.';
+$lang->reqintake->ownerPending = 'Owner configuration pending';
+$lang->reqintake->listColumns = array('ID', 'Title', 'Product', 'Owner', 'Status');
+$lang->reqintake->states = array('pending' => 'Pending review', 'tracking' => 'In progress', 'closed' => 'Closed');
+$lang->reqintake->actionsLabel = 'Actions';
+$lang->reqintake->actions = array('start' => 'Start', 'close' => 'Close', 'reopen' => 'Reopen');
+$lang->reqintake->errors['staleFeedback'] = 'The request changed. Review its current status and try again.';
+$lang->reqintake->transitionReason = 'Reason (required to close or reopen)';
+$lang->reqintake->errors['transitionReason'] = 'For closing or reopening, enter a reason of up to 500 characters.';
