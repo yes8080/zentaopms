@@ -5,7 +5,8 @@ $labels = $lang->reqintake;
 $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $renderEditor = require __DIR__ . '/rich-editor.php';
 $rich = $inputRich;
-$baseParams = "previewProduct=0&beforeID=0&sort=$sort";
+$filters = "&beforeUpdate=&filterOwner=" . rawurlencode($filterOwner) . "&filterStatus=" . rawurlencode($filterStatus);
+$baseParams = "previewProduct=0&beforeID=0&sort=$sort$filters";
 $columns = array(
     'product' => $labels->listColumns[2], 'owner' => $labels->listColumns[3], 'status' => $labels->listColumns[4],
     'next' => $labels->handlingNext, 'customer' => $labels->fields['customer'], 'updated' => $labels->updatedDate
@@ -83,6 +84,26 @@ ob_start();
             <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=" . (int)$productID . "&$baseParams")) ?>" <?= (int)$productID === $filterProduct ? 'aria-current="page"' : '' ?>><?= $escape($productName) ?></a>
         <?php endforeach; ?>
     </nav>
+    <form method="post" class="mb-2">
+        <input type="hidden" name="intent" value="filter">
+        <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
+        <input type="hidden" name="token" value="<?= $escape($token) ?>">
+        <label><?= $escape($labels->listColumns[3]) ?>
+            <select name="filterOwner">
+                <?php foreach(array('' => $labels->anyFilter) + $mailtoOptions as $account => $name): ?>
+                    <option value="<?= $escape($account) ?>" <?= (string)$account === $filterOwner ? 'selected' : '' ?>><?= $escape($name) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <label><?= $escape($labels->listColumns[4]) ?>
+            <select name="filterStatus">
+                <?php foreach(array('' => $labels->anyFilter) + $labels->states as $status => $name): ?>
+                    <option value="<?= $escape($status) ?>" <?= $status === $filterStatus ? 'selected' : '' ?>><?= $escape($name) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <button class="btn" type="submit"><?= $escape($labels->filterFeedback) ?></button>
+    </form>
     <?php if(!$feedback): ?>
         <p><?= $escape($labels->emptyList) ?></p>
     <?php else: ?>
@@ -107,7 +128,7 @@ ob_start();
         <div class="mb-2">
             <nav aria-label="<?= $escape($labels->sortFeedback) ?>">
                 <?php foreach(array('id' => $labels->sortRecent, 'updated' => $labels->updatedDate) as $key => $label): ?>
-                    <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=0&sort=$key")) ?>" <?= $sort === $key ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
+                    <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=0&sort=$key$filters")) ?>" <?= $sort === $key ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
                 <?php endforeach; ?>
             </nav>
             <details id="reqintake-column-settings" data-account="<?= $escape($currentAccount) ?>">
@@ -189,7 +210,7 @@ ob_start();
                 <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&$baseParams")) ?>"><?= $escape($labels->firstPage) ?></a>
             <?php endif; ?>
             <?php if($nextBefore): ?>
-                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=$nextBefore&sort=$sort&beforeUpdate=" . rawurlencode($nextUpdate))) ?>"><?= $escape($labels->nextPage) ?></a>
+                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=$nextBefore&sort=$sort&beforeUpdate=" . rawurlencode($nextUpdate) . "&filterOwner=" . rawurlencode($filterOwner) . "&filterStatus=" . rawurlencode($filterStatus))) ?>"><?= $escape($labels->nextPage) ?></a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>

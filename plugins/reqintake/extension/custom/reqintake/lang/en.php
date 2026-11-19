@@ -129,3 +129,6 @@ $lang->reqintake->errors['closeVerification'] = 'Verify remaining work and the a
 $lang->reqintake->reselectAttachment = 'Select the attachment again after correcting the form.';
 
 $lang->reqintake->reviewTarget = array('canceled' => 'The linked item was canceled or rejected. Review the feedback.', 'reopened' => 'The linked item was reopened. Review the feedback.');
+
+$lang->reqintake->anyFilter = 'All';
+$lang->reqintake->filterFeedback = 'Filter feedback';

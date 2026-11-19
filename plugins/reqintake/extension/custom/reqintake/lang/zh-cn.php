@@ -129,3 +129,6 @@ $lang->reqintake->errors['closeVerification'] = '客户确认结案前，请核�
 $lang->reqintake->reselectAttachment = '修正表单后请重新选择附件。';
 
 $lang->reqintake->reviewTarget = array('canceled' => '承接单据已取消或不再处理，请复核。', 'reopened' => '承接单据已重开，请复核。');
+
+$lang->reqintake->anyFilter = '全部';
+$lang->reqintake->filterFeedback = '筛选反馈';

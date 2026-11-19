@@ -1,7 +1,7 @@
 <?php
 class reqintake extends control
 {
-    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '')
+    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '', string $filterOwner = '', string $filterStatus = '')
     {
         if(!$this->loadModel('reqintake')->canAccess('index'))
         {
@@ -35,6 +35,9 @@ class reqintake extends control
         $operation = bin2hex(random_bytes(16));
         $fields = array('product' => '', 'title' => '', 'description' => '', 'customer' => '', 'channel' => '');
 
+        $ownerOptions = $this->reqintake->mailtoOptions();
+        $states = $this->lang->reqintake->states;
+
         if($_SERVER['REQUEST_METHOD'] === 'POST')
         {
             foreach($fields as $name => $default) $fields[$name] = $this->formValue($name);
@@ -50,7 +53,22 @@ class reqintake extends control
             try
             {
                 $model = $this->loadModel('reqintake');
-                if($intent === 'owner')
+                if($intent === 'filter')
+                {
+                    $owner = $this->formValue('filterOwner');
+                    $status = $this->formValue('filterStatus');
+                    if(!isset($ownerOptions[$owner])) $owner = '';
+                    if(!isset($states[$status])) $status = '';
+                    $url = helper::createLink('reqintake', 'index', http_build_query(array(
+                        'scope' => in_array($scope, array_keys($this->lang->reqintake->scopes), true) ? $scope : 'all',
+                        'filterProduct' => max(0, $filterProduct), 'previewProduct' => 0, 'beforeID' => 0,
+                        'sort' => $sort === 'updated' ? 'updated' : 'id', 'beforeUpdate' => '',
+                        'filterOwner' => $owner, 'filterStatus' => $status
+                    )));
+                    header('Location: ' . $url, true, 303);
+                    return;
+                }
+                elseif($intent === 'owner')
                 {
                     $model->setOwner((int)$fields['product'], trim($this->formValue('owner')));
                     $this->view->ownerSaved = true;
@@ -106,7 +124,7 @@ class reqintake extends control
         }
         $this->view->fields = $fields + $inputAttributes + $this->reqintake->attributeDefaults();
         $this->view->attributeOptions = $this->reqintake->attributeOptions();
-        $this->view->mailtoOptions = $this->reqintake->mailtoOptions();
+        $this->view->mailtoOptions = $ownerOptions;
         $this->view->inputRich = isset($this->view->formError) && $this->formValue('bodyFormat') === 'rich';
         if($this->view->inputRich)
         {
@@ -127,7 +145,9 @@ class reqintake extends control
         $this->view->canBatchCreate = (bool)array_filter($this->view->batchTypes, static fn($type) => common::hasPriv($type, 'create'));
         $this->view->beforeID = max(0, $beforeID);
         $this->view->sort = $sort === 'updated' ? 'updated' : 'id';
-        $feedback = $model->recent($this->view->scope, $this->view->filterProduct, $this->view->beforeID, $this->view->sort, $beforeUpdate);
+        $this->view->filterOwner = isset($ownerOptions[$filterOwner]) ? $filterOwner : '';
+        $this->view->filterStatus = isset($states[$filterStatus]) ? $filterStatus : '';
+        $feedback = $model->recent($this->view->scope, $this->view->filterProduct, $this->view->beforeID, $this->view->sort, $beforeUpdate, $this->view->filterOwner, $this->view->filterStatus);
         $this->view->feedback = array_slice($feedback, 0, 50);
         $this->view->nextBefore = count($feedback) > 50 ? (int)$feedback[49]->id : 0;
         $this->view->nextUpdate = $this->view->nextBefore && $this->view->sort === 'updated' ? str_replace(array('-', ':', ' '), '', $feedback[49]->updatedDate) : '';
