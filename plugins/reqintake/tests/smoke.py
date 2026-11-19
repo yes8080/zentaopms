@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import hashlib
+import html
 import json
 from html.parser import HTMLParser
 from pathlib import Path
@@ -10,6 +11,8 @@ from urllib.request import Request, build_opener, HTTPCookieProcessor
 parser = argparse.ArgumentParser(description='Check the administrator intake flow on a disposable ZenTao instance.')
 parser.add_argument('base_url')
 parser.add_argument('password_file', type=Path)
+parser.add_argument('--target', nargs=2, action='append', default=[], metavar=('TYPE', 'ID'),
+                    help='Existing native work on Smoke Product to check in both directions')
 args = parser.parse_args()
 base = args.base_url.rstrip('/') + '/'
 opener = build_opener(HTTPCookieProcessor())
@@ -81,3 +84,16 @@ try:
 finally:
     assert '负责人配置已保存' in submit(dict(keys, intent='owner', product=product, owner=''))
 print('Owner validation, assignment, preservation and clear passed')
+
+
+if args.target:
+    detail = 'index.php?m=reqintake&f=detail&id=' + id
+    token = re.search(r'name="token" value="([^"]+)"', request(detail))[1]
+    parameters = {'story': 'storyID', 'requirement': 'storyID', 'epic': 'storyID', 'bug': 'bugID', 'task': 'taskID'}
+    for version, (kind, target_id) in enumerate(args.target, 4):
+        assert kind in parameters and target_id.isdecimal(), (kind, target_id)
+        target_route = f'index.php?m={kind}&f=view&{parameters[kind]}={target_id}'
+        link = dict(token=token, version=version, storyID=target_id, storyType=kind, linkScope='Bidirectional smoke scope')
+        assert target_route in html.unescape(request(detail, link))
+        assert detail in html.unescape(request(target_route))
+        print(f'{kind} #{target_id} links in both directions')
