@@ -316,6 +316,7 @@ class reqintake extends control
         $this->view->richVersions = $model->richTextVersions($id);
         $this->view->original = $feedback;
         $this->view->revisions = $model->revisions($feedback);
+        $this->view->revisionDiffs = $model->revisionDiffs($feedback, $this->view->revisions, $this->view->richVersions);
         if($this->view->revisions)
         {
             $latest = reset($this->view->revisions);

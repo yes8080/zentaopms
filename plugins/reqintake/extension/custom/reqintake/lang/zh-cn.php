@@ -149,3 +149,5 @@ $lang->reqintake->fields['suggestedReviewers'] = '建议评审人';
 $lang->reqintake->errors['suggestedReviewers'] = '请选择该产品的有效评审人。';
 
 $lang->reqintake->feedbackID = '反馈编号';
+
+$lang->reqintake->richRevisionChanged = '富文本格式或内嵌图片有变更';

@@ -149,3 +149,5 @@ $lang->reqintake->fields['suggestedReviewers'] = 'Suggested reviewers';
 $lang->reqintake->errors['suggestedReviewers'] = 'Select eligible reviewers for this product.';
 
 $lang->reqintake->feedbackID = 'Feedback ID';
+
+$lang->reqintake->richRevisionChanged = 'Rich text formatting or embedded images changed';

@@ -209,11 +209,16 @@ class reqintakeModel extends model
             'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'customerVersion' => '', 'suggestedGrade' => '', 'suggestedParent' => '', 'suggestedReviewers' => '', 'branchModules' => array());
     }
 
+    private function attributeTables(): array
+    {
+        return array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto', 'reqintakeCustomerVersion' => 'customerVersion', 'reqintakeGrade' => 'suggestedGrade', 'reqintakeParent' => 'suggestedParent', 'reqintakeReviewers' => 'suggestedReviewers');
+    }
+
     public function attributes(int $id, ?int $version = null): array
     {
         $defaults = $this->attributeDefaults();
         $prefix = $this->config->db->prefix;
-        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto', 'reqintakeCustomerVersion' => 'customerVersion', 'reqintakeGrade' => 'suggestedGrade', 'reqintakeParent' => 'suggestedParent', 'reqintakeReviewers' => 'suggestedReviewers') as $table => $fields)
+        foreach($this->attributeTables() as $table => $fields)
         {
             $query = $this->dao->select($fields)->from($prefix . $table)->where('feedback')->eq($id);
             if($version !== null) $query->andWhere('version')->le($version);
@@ -415,6 +420,61 @@ class reqintakeModel extends model
             if($this->dbh->inTransaction()) $this->dbh->rollBack();
             throw $error;
         }
+    }
+
+    public function revisionDiffs(object $feedback, array $revisions, array $richVersions): array
+    {
+        if(!$revisions || !$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
+
+        $prefix = $this->config->db->prefix;
+        $rowsByVersion = array();
+        foreach($this->attributeTables() + array('reqintakeBranchScope' => 'branchModules') as $table => $fields)
+        {
+            $rows = $this->dao->select("version,$fields")->from($prefix . $table)->where('feedback')->eq($feedback->id)->fetchAll();
+            foreach($rows as $row)
+            {
+                $version = (int)$row->version;
+                unset($row->version);
+                $rowsByVersion[$version] = ($rowsByVersion[$version] ?? array()) + array_map('strval', (array)$row);
+            }
+        }
+
+        $attributes = $this->attributeDefaults();
+        $attributes['branchModules'] = '[]';
+        $previous = array();
+        $previousWasRich = false;
+        $diffs = array();
+        $this->app->loadLang('action');
+        foreach($this->lang->reqintake->fields as $name => $label) $this->lang->reqintake->$name ??= $label;
+        $this->lang->reqintake->branchModules = $this->lang->reqintake->additionalBranches;
+        $action = $this->loadModel('action');
+        $escape = static fn($text) => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        foreach(array_merge(array($feedback), array_reverse($revisions)) as $revision)
+        {
+            $version = $revision === $feedback ? 1 : (int)$revision->version;
+            $rich = isset($richVersions[$version]);
+            $attributes = array_replace($attributes, $rowsByVersion[$version] ?? array());
+            $current = array_intersect_key((array)$revision, array_flip(array('title', 'description', 'customer', 'channel'))) + $attributes;
+            $changes = array();
+            foreach($current as $field => $value)
+            {
+                if(!isset($previous[$field]) || $previous[$field] === $value) continue;
+                $before = $previous[$field];
+                $diff = '';
+                if(in_array($field, array('description', 'acceptance'), true))
+                {
+                    /* Compare the text without embedding the image data in the history. */
+                    if($previousWasRich) $before = html_entity_decode(strip_tags($before), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    if($rich) $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    if($before === $value) $diff = $this->lang->reqintake->richRevisionChanged;
+                }
+                $changes[] = (object)array('field' => $field, 'old' => $escape($before), 'new' => $escape($value), 'diff' => $diff);
+            }
+            if($changes) $diffs[$version] = $action->renderChanges('reqintake', (int)$feedback->id, $changes);
+            $previous = $current;
+            $previousWasRich = $rich;
+        }
+        return $diffs;
     }
 
     public function handling(object $feedback): array

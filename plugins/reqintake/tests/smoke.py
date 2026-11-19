@@ -461,6 +461,10 @@ assert 'Revised client name' not in request(source_route)
 page = request(source_route, revision)
 assert '<em>Edited and formatted</em>' in page and '<strong>description</strong>' in page
 assert revision['customerVersion'] in page
+revision_diffs = re.search(r'<div class="reqintake-revision-changes">(.*?)</div>', page, re.S)[1]
+assert '客户使用版本' in revision_diffs
+assert payload['customerVersion'] in revision_diffs and revision['customerVersion'] in revision_diffs
+assert image not in revision_diffs
 if 'story' in args.conversion:
     rich_form = next(html.unescape(link).lstrip('/')
                      for link in re.findall(r'href="([^"]+riOperation[^"]+)"', page)

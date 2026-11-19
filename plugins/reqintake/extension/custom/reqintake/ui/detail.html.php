@@ -74,6 +74,9 @@ ob_start();
             <?php foreach(array_merge($revisions, array($original)) as $revision): ?>
                 <p><?= $escape($revision->title) ?> <?= $escape($revision->actor ?? $original->openedBy) ?> <?= $escape($revision->createdDate ?? '') ?></p>
                 <p><?= $escape($revision->customer) ?> · <?= $escape($revision->channel) ?></p>
+                <?php if($revision !== $original && isset($revisionDiffs[(int)$revision->version])): ?>
+                    <div class="reqintake-revision-changes"><?= $revisionDiffs[(int)$revision->version] ?></div>
+                <?php endif; ?>
                 <p class="whitespace-pre-wrap"><?= isset($richVersions[(int)($revision === $original ? 1 : $revision->version)]) ? $revision->description : $escape($revision->description) ?></p>
             <?php endforeach; ?>
         </details>
