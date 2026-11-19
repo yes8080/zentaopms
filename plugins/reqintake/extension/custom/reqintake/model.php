@@ -93,6 +93,27 @@ class reqintakeModel extends model
         return $links;
     }
 
+    public function sourcesForTarget(string $type, int $targetID): array
+    {
+        if(!$this->canAccess('detail') || !in_array($type, $this->visibleTargetTypes(), true)) return array();
+
+        $query = $this->dao->select('f.id,f.product,f.title')->from($this->config->db->prefix . 'reqintakeLink')->alias('l')
+            ->innerJoin($this->config->db->prefix . 'reqintakeFeedback')->alias('f')->on('f.id = l.feedback')
+            ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
+            ->where('l.targetType')->eq($type)->andWhere('l.target')->eq($targetID)->andWhere('p.deleted')->eq('0');
+        if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
+
+        $available = array();
+        $sources = array();
+        foreach($query->orderBy('f.id_desc')->fetchAll() as $feedback)
+        {
+            $product = (int)$feedback->product;
+            $available[$product] ??= (bool)$this->targetForProduct($type, $targetID, $product);
+            if($available[$product]) $sources[] = $feedback;
+        }
+        return $sources;
+    }
+
     public function linkTarget(int $feedbackID, int $version, int $targetID, string $scope, string $type = 'story'): void
     {
         $feedback = $this->findFeedback($feedbackID);
