@@ -22,3 +22,4 @@ $lang->reqintake->errors['staleFeedback'] = '反馈状态已变化，请根据�
 $lang->reqintake->transitionReason = '原因（关闭和重开必填）';
 $lang->reqintake->errors['transitionReason'] = '关闭或重开时请填写原因，最多 500 字。';
 $lang->reqintake->history = '办理历史';
+$lang->reqintake->scopes = array_combine(array('all', 'mine', 'assigned'), array('全部', '我提交的', '待我处理'));

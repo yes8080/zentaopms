@@ -51,6 +51,11 @@ ob_start();
     </form>
     <hr>
     <h3><?= $escape($labels->recent) ?></h3>
+    <nav class="mb-2">
+        <?php foreach($labels->scopes as $key => $label): ?>
+            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$key")) ?>" <?= $key === $scope ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
+        <?php endforeach; ?>
+    </nav>
     <?php if(!$feedback): ?>
         <p><?= $escape($labels->emptyList) ?></p>
     <?php else: ?>

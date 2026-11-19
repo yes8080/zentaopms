@@ -1,7 +1,7 @@
 <?php
 class reqintake extends control
 {
-    public function index()
+    public function index(string $scope = 'all')
     {
         if(empty($this->app->user->admin))
         {
@@ -58,7 +58,8 @@ class reqintake extends control
         $this->view->fields = $fields;
         $this->view->products = $this->loadModel('product')->getPairs();
         $model = $this->loadModel('reqintake');
-        $this->view->feedback = $model->recent();
+        $this->view->scope = in_array($scope, array('all', 'mine', 'assigned'), true) ? $scope : 'all';
+        $this->view->feedback = $model->recent($this->view->scope);
         $this->view->history = $model->historyForRecent($this->view->feedback);
         $this->display();
     }

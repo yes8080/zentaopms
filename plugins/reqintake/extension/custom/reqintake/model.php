@@ -1,14 +1,18 @@
 <?php
 class reqintakeModel extends model
 {
-    public function recent(): array
+    public function recent(string $scope = 'all'): array
     {
         if(empty($this->app->user->admin)) throw new DomainException('product');
 
-        return $this->dao->select('f.id,f.title,f.assignedTo,f.assignmentPending,f.status,f.version,p.name AS productName')
+        $query = $this->dao->select('f.id,f.title,f.assignedTo,f.assignmentPending,f.status,f.version,p.name AS productName')
             ->from($this->config->db->prefix . 'reqintakeFeedback')->alias('f')
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
-            ->where('p.deleted')->eq('0')->orderBy('f.id_desc')->limit(50)->fetchAll();
+            ->where('p.deleted')->eq('0');
+        $account = $this->app->user->account;
+        if($scope === 'mine') $query->andWhere('f.openedBy')->eq($account);
+        if($scope === 'assigned') $query->andWhere('f.assignedTo')->eq($account)->andWhere('f.status')->ne('closed');
+        return $query->orderBy('f.id_desc')->limit(50)->fetchAll();
     }
 
     public function findFeedback(int $id): object|false
