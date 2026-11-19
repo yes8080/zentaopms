@@ -350,16 +350,27 @@ class reqintakeModel extends model
     {
         if(!$this->canReadProduct($product)) throw new DomainException('product');
 
-        $owner = $this->dao->select('account')->from($this->config->db->prefix . 'reqintakeOwner')
-            ->where('product')->eq($product)->fetch();
-        if($owner && $this->canAssign($product, $owner->account)) return [$owner->account, 0];
+        $account = $this->configuredOwner($product);
+        if($account !== '' && $this->canAssign($product, $account)) return [$account, 0];
 
         return [$this->app->user->account, 1];
     }
 
-    public function setOwner(int $product, string $account): void
+    public function configuredOwner(int $product): string
     {
-        if(empty($this->app->user->admin) || !$this->canReadProduct($product)) throw new DomainException('product');
+        if(!$this->canAccess('index') || !$this->canReadProduct($product)) return '';
+        $owner = $this->dao->select('account')->from($this->config->db->prefix . 'reqintakeOwner')
+            ->where('product')->eq($product)->fetch();
+        return $owner->account ?? '';
+    }
+
+    public function setOwner(int $product, string $account, string $productMethod = ''): void
+    {
+        $canMaintain = empty($productMethod)
+            ? !empty($this->app->user->admin)
+            : $this->canAccess('index') && in_array($productMethod, array('create', 'edit'), true)
+                && common::hasPriv('product', $productMethod);
+        if(!$canMaintain || !$this->canReadProduct($product)) throw new DomainException('product');
 
         $table = $this->config->db->prefix . 'reqintakeOwner';
         if($account === '')
@@ -368,7 +379,7 @@ class reqintakeModel extends model
             return;
         }
 
-        if(!$this->canAssign($product, $account)) throw new DomainException('owner');
+        if(mb_strlen($account) > 30 || !$this->canAssign($product, $account)) throw new DomainException('owner');
 
         $query = $this->dbh->prepare("INSERT INTO `$table` (product, account) VALUES (?, ?) ON DUPLICATE KEY UPDATE account = ?");
         $query->execute([$product, $account, $account]);
@@ -384,7 +395,7 @@ class reqintakeModel extends model
 
         $users = $this->loadModel('user');
         $authorization = $users->authorize($user->account);
-        if(empty($authorization['rights']['reqintake']['index'])) return false;
+        if(empty($authorization['rights']['reqintake']['index']) || empty($authorization['rights']['reqintake']['detail'])) return false;
 
         /* ZenTao stores only restricted products in the computed user view. */
         $isOpen = $this->dao->select('id')->from(TABLE_PRODUCT)

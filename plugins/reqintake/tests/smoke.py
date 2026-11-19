@@ -7,12 +7,15 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, build_opener, HTTPCookieProcessor
+from uuid import uuid4
 
 parser = argparse.ArgumentParser(description='Check the administrator intake flow on a disposable ZenTao instance.')
 parser.add_argument('base_url')
 parser.add_argument('password_file', type=Path)
 parser.add_argument('--target', nargs=2, action='append', default=[], metavar=('TYPE', 'ID'),
                     help='Existing native work on Smoke Product to check in both directions')
+parser.add_argument('--native-product', action='store_true',
+                    help='Create a disposable product to verify the native owner field')
 args = parser.parse_args()
 base = args.base_url.rstrip('/') + '/'
 opener = build_opener(HTTPCookieProcessor())
@@ -149,3 +152,24 @@ if batch_target:
         assert scope in request(base_detail + source_id)
     assert '已关联 2 条反馈' in batch_link(1)
     print('Batch linking rolls back on stale version and accepts identical retry')
+
+
+if args.native_product:
+    create = 'index.php?m=product&f=create'
+    name = 'Owner fixture '+uuid4().hex[:10]
+    assert 'reqintakeOwner' in request(create)
+    data = dict(name=name,code=name.replace(' ',''),type='normal',acl='open',program=0,
+                status='normal',shadow=0,desc='',line=0,reqintakeOwner='ri_tester')
+    result = json.loads(request(create,data))
+    assert result['result'] == 'success', result
+    product_id = result['changes']['objectList'][0]
+    detail = f'index.php?m=product&f=view&productID={product_id}'
+    edit = f'index.php?m=product&f=edit&productID={product_id}'
+    assert 'data-reqintake-owner="configured"' in request(detail)
+    assert 'reqintakeOwner' in request(edit)
+    assert json.loads(request(edit,dict(data,reqintakeOwner='')))['result'] == 'success'
+    assert 'data-reqintake-owner="pending"' in request(detail)
+    invalid = json.loads(request(edit,dict(data,reqintakeOwner='missing_account_123')))
+    assert invalid['result'] == 'fail', invalid
+    assert 'data-reqintake-owner="pending"' in request(detail)
+    print('Native product create, edit, invalid owner and clearing passed')

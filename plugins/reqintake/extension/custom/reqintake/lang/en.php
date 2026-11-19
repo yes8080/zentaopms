@@ -55,3 +55,4 @@ $lang->reqintake->transferred = 'Transferred from %s to %s';
 $lang->reqintake->errors['followupMessage'] = 'Enter a note of up to 500 characters.';
 $lang->reqintake->errors['sameAssignee'] = 'Choose a different assignee.';
 $lang->reqintake->ownerPreviewUnavailable = 'Assignment preview unavailable';
+$lang->reqintake->productOwnerSaveFailed = 'The product was saved, but its intake owner could not be saved. Choose an eligible account on the product edit page.';
