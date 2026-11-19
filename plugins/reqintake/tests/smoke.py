@@ -71,9 +71,13 @@ for scope in ('mine','assigned'):
     assert 'Reqintake integration request' in request(route+'&scope='+scope)
 print('Lifecycle, reason history, detail and personal filters passed')
 
+preview_route = f'{route}&scope=all&filterProduct=0&previewProduct={product}'
+assert 'updatePreview' in request(route)
+assert json.loads(request(preview_route))['pending'] is True
 assert '该账号无权访问此产品或已删除' in submit(dict(keys, intent='owner', product=product, owner='missing_account_123'))
 try:
     assert '负责人配置已保存' in submit(dict(keys, intent='owner', product=product, owner='admin'))
+    assert json.loads(request(preview_route))['pending'] is False
     page = request(route)
     new_keys = {k: re.search(f'name="{k}" value="([^"]+)"', page)[1] for k in ('operation', 'token')}
     assigned = submit(dict(payload, **new_keys))
@@ -83,7 +87,8 @@ try:
     assert '待配置负责人' in request('index.php?m=reqintake&f=detail&id=' + id)
 finally:
     assert '负责人配置已保存' in submit(dict(keys, intent='owner', product=product, owner=''))
-print('Owner validation, assignment, preservation and clear passed')
+assert json.loads(request(preview_route))['pending'] is True
+print('Owner validation, assignment preview, preservation and clear passed')
 
 
 detail_route = 'index.php?m=reqintake&f=detail&id='

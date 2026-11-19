@@ -9,7 +9,7 @@ ob_start();
     <h2><?= $escape($labels->common) ?></h2>
     <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
     <?php if(isset($savedID)): ?><p role="status"><?= $escape(sprintf($labels->saved, $savedID)) ?></p><?php endif; ?>
-    <form method="post">
+    <form id="reqintake-receive" method="post">
         <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
         <input type="hidden" name="token" value="<?= $escape($token) ?>">
         <label class="block mb-2"><?= $escape($labels->fields['product']) ?>
@@ -20,6 +20,11 @@ ob_start();
                 <?php endforeach; ?>
             </select>
         </label>
+        <output class="block mb-2" aria-live="polite"
+            data-url="<?= $escape(\helper::createLink('reqintake', 'index', 'scope=all&filterProduct=0&previewProduct=987654321')) ?>"
+            data-owner="<?= $escape($labels->ownerAccount) ?>"
+            data-pending="<?= $escape($labels->ownerPending) ?>"
+            data-unavailable="<?= $escape($labels->ownerPreviewUnavailable) ?>"></output>
         <?php foreach(array('title' => 255, 'customer' => 255, 'channel' => 64) as $name => $limit): ?>
             <label class="block mb-2"><?= $escape($labels->fields[$name]) ?>
                 <input class="form-control" name="<?= $name ?>" value="<?= $escape($fields[$name]) ?>" maxlength="<?= $limit ?>" <?= $name === 'title' ? 'required' : '' ?>>
@@ -143,3 +148,30 @@ ob_start();
 </section>
 <?php
 html(ob_get_clean());
+
+context::js(<<<'JS'
+const receiveForm = document.querySelector('#reqintake-receive');
+if (receiveForm) {
+    const product = receiveForm.elements.product;
+    const preview = receiveForm.querySelector('output');
+    let sequence = 0;
+    const updatePreview = async () => {
+        const requestNumber = ++sequence;
+        preview.textContent = '';
+        if (!product.value) return;
+
+        try {
+            const response = await fetch(preview.dataset.url.replace('987654321', product.value), {cache: 'no-store'});
+            if (!response.ok) throw new Error('Assignment preview failed');
+            const data = await response.json();
+            if (requestNumber !== sequence) return;
+            const label = data.pending ? preview.dataset.pending : preview.dataset.owner;
+            preview.textContent = label + ' · ' + data.name;
+        } catch {
+            if (requestNumber === sequence) preview.textContent = preview.dataset.unavailable;
+        }
+    };
+    product.addEventListener('change', updatePreview);
+    updatePreview();
+}
+JS);

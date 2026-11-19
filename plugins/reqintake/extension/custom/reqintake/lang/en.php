@@ -54,3 +54,4 @@ $lang->reqintake->followupMessage = 'Note';
 $lang->reqintake->transferred = 'Transferred from %s to %s';
 $lang->reqintake->errors['followupMessage'] = 'Enter a note of up to 500 characters.';
 $lang->reqintake->errors['sameAssignee'] = 'Choose a different assignee.';
+$lang->reqintake->ownerPreviewUnavailable = 'Assignment preview unavailable';

@@ -1,11 +1,28 @@
 <?php
 class reqintake extends control
 {
-    public function index(string $scope = 'all', int $filterProduct = 0)
+    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0)
     {
         if(!$this->loadModel('reqintake')->canAccess('index'))
         {
             http_response_code(403);
+            return;
+        }
+
+        if($previewProduct > 0 && $_SERVER['REQUEST_METHOD'] === 'GET')
+        {
+            try
+            {
+                [$account, $pending] = $this->reqintake->resolveAssignee($previewProduct);
+                $owner = $this->loadModel('user')->getById($account);
+                header('Content-Type: application/json; charset=utf-8');
+                header('Cache-Control: no-store');
+                echo json_encode(array('name' => $owner->realname ?? $account, 'pending' => (bool)$pending));
+            }
+            catch(DomainException $error)
+            {
+                http_response_code(404);
+            }
             return;
         }
 
