@@ -31,3 +31,14 @@ docker compose -f compose.yaml -f docker/compose.extensions.yaml up -d --build
 PHP 服务会将扩展安装目录、定制代码目录和扩展包目录的顶层目录设为 PHP-FPM 用户所有。自定义代码与已安装扩展包各自保存在命名卷中，管理员仍通过禅道扩展管理安装或升级插件。
 
 已有部署接入扩展卷前，先备份数据库及当前 PHP 容器内的 `extension/custom` 和 `extension/pkg`。在维护窗口把备份恢复到同一 Compose 项目的两个扩展卷，再检查 PHP-FPM 能读写原有扩展文件。创建、重建和管理服务时使用同一组 Compose 文件。
+
+### 定时核对需求池进度
+
+已安装需求池插件且启用扩展卷的实例，可启动独立的进度核对服务。
+
+```sh
+docker compose -f compose.yaml -f docker/compose.extensions.yaml \
+  -f docker/compose.reqintake-sync.yaml --profile reqintake-sync up -d --build
+```
+
+默认每 300 秒核对一次，可通过 `REQINTAKE_SYNC_INTERVAL` 修改间隔。服务以 PHP-FPM 用户运行，只读挂载禅道配置和扩展代码。插件停用时跳过写入，重新运行后对当前承接单据全量核对。查看错误可用同一组 Compose 文件执行 `logs reqintake-sync`。

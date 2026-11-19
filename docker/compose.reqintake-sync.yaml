@@ -1,0 +1,31 @@
+services:
+  reqintake-sync:
+    extends:
+      file: compose.yaml
+      service: php
+    profiles: ["reqintake-sync"]
+    user: www-data
+    volumes:
+      - app-config:/var/lib/zentao/config:ro
+      - extension-custom:/var/www/zentao/extension/custom:ro
+    restart: unless-stopped
+    environment:
+      REQINTAKE_SYNC_INTERVAL: ${REQINTAKE_SYNC_INTERVAL:-300}
+    command:
+      - sh
+      - -ec
+      - |
+        case "$$REQINTAKE_SYNC_INTERVAL" in
+          ''|*[!0-9]*|0) echo "REQINTAKE_SYNC_INTERVAL must be a positive number of seconds" >&2; exit 1 ;;
+        esac
+        script=extension/custom/reqintake/bin/sync.php
+        while :; do
+          if [ -r "$$script" ]; then
+            php "$$script" || echo "Requirement intake progress sync failed" >&2
+          fi
+          sleep "$$REQINTAKE_SYNC_INTERVAL" &
+          child=$$!
+          trap 'kill "$$child" 2>/dev/null || true; exit 0' TERM INT
+          wait "$$child"
+          trap - TERM INT
+        done
