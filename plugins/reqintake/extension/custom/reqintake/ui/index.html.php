@@ -74,7 +74,6 @@ ob_start();
         <?php if(isset($batchCount)): ?><p role="status"><?= $escape(sprintf($labels->batchSuccess, $batchCount)) ?></p><?php endif; ?>
         <?php if($batchTypes): ?>
             <form method="post" id="reqintake-batch-link" class="mb-2">
-                <input type="hidden" name="intent" value="batchLink">
                 <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
                 <input type="hidden" name="token" value="<?= $escape($token) ?>">
                 <label><?= $escape($labels->storyType) ?>
@@ -84,7 +83,10 @@ ob_start();
                 </label>
                 <label><?= $escape($labels->storyID) ?> <input name="storyID" type="number" min="1" required></label>
                 <label><?= $escape($labels->batchScope) ?> <input name="linkScope" maxlength="500"></label>
-                <button class="btn" type="submit"><?= $escape($labels->batchLink) ?></button>
+                <button class="btn" type="submit" name="intent" value="batchLink"><?= $escape($labels->batchLink) ?></button>
+                <?php if($canBatchCreate): ?>
+                    <button class="btn" type="submit" name="intent" value="batchCreate" formnovalidate><?= $escape($labels->batchCreate) ?></button>
+                <?php endif; ?>
             </form>
         <?php endif; ?>
         <table class="table">

@@ -200,3 +200,53 @@ for kind in args.conversion:
     saved = request(source_route)
     assert native_title in saved and '跟进中' in saved
     print(f'Native {kind} creation, feedback association and idempotent replay passed')
+
+
+if args.conversion:
+    kind = args.conversion[0]
+
+    def receive_source():
+        page = request(route)
+        fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
+                 for key in ('operation', 'token')}
+        return re.search(r'已登记反馈 #(\d+)', submit(dict(payload, **fresh)))[1]
+
+    def open_batch(sources):
+        data = dict(keys, intent='batchCreate', storyType=kind, linkScope='Shared follow-up',
+                    **{'sources[]': sources})
+        req = Request(base + route, urlencode(data, doseq=True).encode(), {'Referer': base + route})
+        with opener.open(req, timeout=10) as response:
+            return response.url.removeprefix(base), response.read().decode()
+
+    source_ids = [receive_source(), receive_source()]
+    native_form, page = open_batch([f'{source}:1' for source in source_ids])
+    assert 'Shared follow-up' in page and all(f'#{source}' in page for source in source_ids)
+    assert payload['description'] not in page
+    native_title = 'Batch conversion ' + uuid4().hex
+    native_fields.update(title=native_title)
+    first = json.loads(request(native_form, native_fields))
+    assert first['result'] == 'success', first
+    second = json.loads(request(native_form, native_fields))
+    assert second['changes']['objectList'] == first['changes']['objectList']
+    for source in source_ids:
+        page = request(detail_route + source)
+        assert all(text in page for text in (native_title, 'Shared follow-up', '跟进中'))
+
+    stale_ids = [receive_source(), receive_source()]
+    native_form, _ = open_batch([f'{source}:1' for source in stale_ids])
+    submit(dict(keys, intent='transition', feedbackID=stale_ids[0], version=1, action='start'))
+    native_fields.update(title='Rejected stale batch ' + uuid4().hex)
+    failure = json.loads(request(native_form, native_fields))
+    assert failure['result'] == 'fail' and '反馈状态已变化' in json.dumps(failure, ensure_ascii=False), failure
+    assert native_fields['title'] not in request(detail_route + stale_ids[1])
+    print('Batch conversion links every source, reuses the native ID, and rejects stale selections')
+    if args.native_product:
+        page = request(route)
+        fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
+                 for key in ('operation', 'token')}
+        other = submit(dict(payload, **fresh) | {'product': product_id})
+        other_source = re.search(r'已登记反馈 #(\d+)', other)[1]
+        rejected_route, rejected = open_batch([f'{stale_ids[1]}:1', f'{other_source}:1'])
+        assert 'riOperation' not in rejected_route
+        assert '同一产品' in rejected
+        print('Batch creation rejects feedback from different products')

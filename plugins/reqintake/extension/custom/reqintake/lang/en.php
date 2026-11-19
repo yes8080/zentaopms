@@ -57,3 +57,5 @@ $lang->reqintake->errors['sameAssignee'] = 'Choose a different assignee.';
 $lang->reqintake->ownerPreviewUnavailable = 'Assignment preview unavailable';
 $lang->reqintake->productOwnerSaveFailed = 'The product was saved, but its intake owner could not be saved. Choose an eligible account on the product edit page.';
 $lang->reqintake->createTarget = 'Create %s';
+$lang->reqintake->batchCreate = 'Create one requirement for selected feedback';
+$lang->reqintake->batchCreateSummary = 'Feedback #%s · Scope %s';

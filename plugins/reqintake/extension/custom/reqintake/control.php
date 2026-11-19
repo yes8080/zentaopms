@@ -55,7 +55,7 @@ class reqintake extends control
                     $model->setOwner((int)$fields['product'], trim($this->formValue('owner')));
                     $this->view->ownerSaved = true;
                 }
-                elseif($intent === 'batchLink')
+                elseif(in_array($intent, array('batchLink', 'batchCreate'), true))
                 {
                     $type = $this->formValue('storyType');
                     if(!in_array($type, array('story', 'requirement', 'epic'), true)) throw new DomainException('linkTarget');
@@ -66,6 +66,12 @@ class reqintake extends control
                     {
                         if(!is_string($source) || !preg_match('/\A([1-9][0-9]{0,9}):([1-9][0-9]{0,9})\z/', $source, $parts)) throw new DomainException('batchSelection');
                         $sources[(int)$parts[1]] = (int)$parts[2];
+                    }
+                    if($intent === 'batchCreate')
+                    {
+                        $url = $model->prepareBatchConversion($operation, $sources, $type, trim($this->formValue('linkScope')));
+                        header('Location: ' . $url, true, 303);
+                        return;
                     }
                     $model->linkTargets($sources, (int)$this->formValue('storyID'), $this->formValue('linkScope'), $type);
                     $this->view->batchCount = count($sources);
@@ -100,6 +106,7 @@ class reqintake extends control
         $this->view->filterProduct = max(0, $filterProduct);
         $this->view->batchTypes = array_intersect($model->visibleTargetTypes(), array('story', 'requirement', 'epic'));
         if(!$model->canAccess('detail')) $this->view->batchTypes = array();
+        $this->view->canBatchCreate = (bool)array_filter($this->view->batchTypes, static fn($type) => common::hasPriv($type, 'create'));
         $this->view->feedback = $model->recent($this->view->scope, $this->view->filterProduct);
         $this->view->history = $model->historyForRecent($this->view->feedback);
         $this->display();

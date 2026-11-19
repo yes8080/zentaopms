@@ -240,11 +240,63 @@ class reqintakeModel extends model
         return $feedback;
     }
 
+    public function prepareBatchConversion(string $id, array $sources, string $type, string $scope): string
+    {
+        if(!$sources || mb_strlen($scope) > 500) throw new DomainException('batchSelection');
+        $product = $this->conversionProduct($sources, $type, true);
+        ksort($sources, SORT_NUMERIC);
+        $operation = hash_hmac('sha256', json_encode(array($id, $this->app->user->account, $type, $sources, $scope), JSON_THROW_ON_ERROR), $this->session->reqintakeFormKey);
+        $operations = (array)$this->session->reqintakeBatchConversions;
+        $operations[$operation] = array('sources' => $sources, 'scope' => $scope, 'type' => $type, 'account' => $this->app->user->account);
+        $this->session->set('reqintakeBatchConversions', array_slice($operations, -32, null, true));
+        $token = 'batch.' . $operation;
+        return helper::createLink($type, 'create', "productID=$product&branch=&moduleID=0&storyID=0&objectID=0&bugID=0&planID=0&todoID=0&extra=riOperation=$token&storyType=$type");
+    }
+
+    public function batchConversion(string $token, string $type): array
+    {
+        $operation = substr($token, 6);
+        $batch = $this->session->reqintakeBatchConversions[$operation] ?? null;
+        if(!$batch || $batch['type'] !== $type || $batch['account'] !== $this->app->user->account) throw new DomainException('batchSelection');
+        $this->conversionProduct($batch['sources'], $type);
+        return $batch;
+    }
+
+    private function conversionProduct(array $sources, string $type, bool $checkVersion = false): int
+    {
+        if(!in_array($type, array('story', 'requirement', 'epic'), true)
+            || !common::hasPriv($type, 'create') || !common::hasPriv($type, 'view')) throw new DomainException('linkTarget');
+
+        $product = null;
+        foreach($sources as $id => $version)
+        {
+            $feedback = $this->findFeedback($id);
+            if(!$feedback || !$this->canHandle($feedback)) throw new DomainException('handler');
+            $product ??= (int)$feedback->product;
+            if((int)$feedback->product !== $product) throw new DomainException('batchProduct');
+            if($checkVersion && ($feedback->status === 'closed' || (int)$feedback->version !== $version))
+                throw new DomainException('staleFeedback');
+        }
+        return $product;
+    }
+
     public function convertToStory(string $token, object $story, callable $create): int|false
     {
         $type = $story->type;
-        $feedback = $this->conversionSource($token, $type);
-        if((int)$feedback->product !== (int)$story->product || !empty($story->branches)) throw new DomainException('linkTarget');
+        if(str_starts_with($token, 'batch.'))
+        {
+            $batch = $this->batchConversion($token, $type);
+            $sources = $batch['sources'];
+            $scope = $batch['scope'];
+        }
+        else
+        {
+            $feedback = $this->conversionSource($token, $type);
+            $sources = array((int)$feedback->id => $feedback->version);
+            $scope = '';
+        }
+        $product = $this->conversionProduct($sources, $type);
+        if($product !== (int)$story->product || !empty($story->branches)) throw new DomainException('linkTarget');
 
         $table = $this->config->db->prefix . 'reqintakeConversion';
         $operation = substr($token, strrpos($token, '.') + 1);
@@ -259,15 +311,13 @@ class reqintakeModel extends model
             $read->closeCursor();
             if($id)
             {
-                if(!$this->targetForProduct($type, $id, (int)$feedback->product)) throw new DomainException('linkTarget');
+                if(!$this->targetForProduct($type, $id, $product)) throw new DomainException('linkTarget');
                 unset($_POST["fileList"]);
                 $this->dbh->commit();
                 return $id;
             }
 
-            $current = $this->findFeedback((int)$feedback->id);
-            if(!$current || $current->status === 'closed' || (int)$current->version !== $feedback->version)
-                throw new DomainException('staleFeedback');
+            $this->conversionProduct($sources, $type, true);
 
             $id = $create();
             if(!$id || dao::isError())
@@ -276,7 +326,7 @@ class reqintakeModel extends model
                 return false;
             }
 
-            $this->linkTargets(array((int)$feedback->id => $feedback->version), $id, '', $type);
+            $this->linkTargets($sources, $id, $scope, $type);
             $update = $this->dbh->prepare("UPDATE `$table` SET target = ? WHERE operation = ?");
             $update->execute([$id, $operation]);
             $this->dbh->commit();
