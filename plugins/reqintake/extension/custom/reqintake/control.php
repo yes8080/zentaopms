@@ -1,7 +1,7 @@
 <?php
 class reqintake extends control
 {
-    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '', string $filterOwner = '', string $filterStatus = '', string $updatedFrom = '', string $updatedTo = '')
+    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '', string $filterOwner = '', string $filterStatus = '', string $updatedFrom = '', string $updatedTo = '', int $filterID = 0)
     {
         if(!$this->loadModel('reqintake')->canAccess('index'))
         {
@@ -65,7 +65,8 @@ class reqintake extends control
                         'sort' => $sort === 'updated' ? 'updated' : 'id', 'beforeUpdate' => '',
                         'filterOwner' => $owner, 'filterStatus' => $status,
                         'updatedFrom' => str_replace('-', '', $this->filterDate($this->formValue('updatedFrom'))),
-                        'updatedTo' => str_replace('-', '', $this->filterDate($this->formValue('updatedTo')))
+                        'updatedTo' => str_replace('-', '', $this->filterDate($this->formValue('updatedTo'))),
+                        'filterID' => max(0, (int)$this->formValue('filterID'))
                     )));
                     header('Location: ' . $url, true, 303);
                     return;
@@ -169,7 +170,8 @@ class reqintake extends control
         $this->view->filterStatus = isset($states[$filterStatus]) ? $filterStatus : '';
         $this->view->updatedFrom = $this->filterDate($updatedFrom);
         $this->view->updatedTo = $this->filterDate($updatedTo);
-        $feedback = $model->recent($this->view->scope, $this->view->filterProduct, $this->view->beforeID, $this->view->sort, $beforeUpdate, $this->view->filterOwner, $this->view->filterStatus, $this->view->updatedFrom, $this->view->updatedTo);
+        $this->view->filterID = max(0, $filterID);
+        $feedback = $model->recent($this->view->scope, $this->view->filterProduct, $this->view->beforeID, $this->view->sort, $beforeUpdate, $this->view->filterOwner, $this->view->filterStatus, $this->view->updatedFrom, $this->view->updatedTo, $this->view->filterID);
         $this->view->feedback = array_slice($feedback, 0, 50);
         $this->view->nextBefore = count($feedback) > 50 ? (int)$feedback[49]->id : 0;
         $this->view->nextUpdate = $this->view->nextBefore && $this->view->sort === 'updated' ? str_replace(array('-', ':', ' '), '', $feedback[49]->updatedDate) : '';

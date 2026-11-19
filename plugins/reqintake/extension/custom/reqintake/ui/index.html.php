@@ -6,7 +6,7 @@ $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT
 $renderEditor = require __DIR__ . '/rich-editor.php';
 $rich = $inputRich;
 $filterParams = "&filterOwner=" . rawurlencode($filterOwner) . "&filterStatus=" . rawurlencode($filterStatus)
-    . "&updatedFrom=" . str_replace('-', '', $updatedFrom) . "&updatedTo=" . str_replace('-', '', $updatedTo);
+    . "&updatedFrom=" . str_replace('-', '', $updatedFrom) . "&updatedTo=" . str_replace('-', '', $updatedTo) . '&filterID=' . $filterID;
 $filters = "&beforeUpdate=$filterParams";
 $baseParams = "previewProduct=0&beforeID=0&sort=$sort$filters";
 $columns = array(
@@ -91,6 +91,9 @@ ob_start();
         <input type="hidden" name="intent" value="filter">
         <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
         <input type="hidden" name="token" value="<?= $escape($token) ?>">
+        <label><?= $escape($labels->feedbackID) ?>
+            <input type="number" name="filterID" min="1" max="4294967295" value="<?= $filterID ?: '' ?>">
+        </label>
         <label><?= $escape($labels->listColumns[3]) ?>
             <select name="filterOwner">
                 <?php foreach(array('' => $labels->anyFilter) + $mailtoOptions as $account => $name): ?>

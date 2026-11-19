@@ -11,7 +11,7 @@ class reqintakeModel extends model
         return array_values(array_filter(array_map('intval', explode(',', (string)($this->app->user->view->products ?? '')))));
     }
 
-    public function recent(string $scope = 'all', int $product = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '', string $owner = '', string $status = '', string $updatedFrom = '', string $updatedTo = ''): array
+    public function recent(string $scope = 'all', int $product = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '', string $owner = '', string $status = '', string $updatedFrom = '', string $updatedTo = '', int $feedbackID = 0): array
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -21,6 +21,7 @@ class reqintakeModel extends model
             ->where('p.deleted')->eq('0');
         if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
         if($product > 0) $query->andWhere('f.product')->eq($product);
+        if($feedbackID > 0) $query->andWhere('f.id')->eq($feedbackID);
         if($owner !== '') $query->andWhere('f.assignedTo')->eq($owner);
         if($status !== '') $query->andWhere('f.status')->eq($status);
         if($updatedFrom !== '') $query->andWhere('f.updatedDate')->ge($updatedFrom . ' 00:00:00');

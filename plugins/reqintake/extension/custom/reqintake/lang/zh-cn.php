@@ -147,3 +147,5 @@ $lang->reqintake->errors['suggestedParent'] = '请选择同一产品中可作为
 
 $lang->reqintake->fields['suggestedReviewers'] = '建议评审人';
 $lang->reqintake->errors['suggestedReviewers'] = '请选择该产品的有效评审人。';
+
+$lang->reqintake->feedbackID = '反馈编号';
