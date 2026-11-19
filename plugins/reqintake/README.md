@@ -5,7 +5,8 @@
 在仓库根目录生成 ZIP：
 
 ```sh
-python3 plugins/reqintake/build.py /tmp/reqintake.zip
+python3 plugins/reqintake/build.py /tmp/reqintake.zip --sha256
+(cd /tmp && sha256sum -c reqintake.zip.sha256)
 unzip -t /tmp/reqintake.zip
 ```
 
