@@ -302,11 +302,11 @@ for kind in args.conversion:
 
 for kind in (kind for kind in args.conversion if kind != 'bug'):
 
-    def receive_source(customer=payload['customer']):
+    def receive_source(customer=payload['customer'], **attributes):
         page = request(route)
         fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
                  for key in ('operation', 'token')}
-        return re.search(r'已登记反馈 #(\d+)', submit(dict(payload, **fresh) | dict(customer=customer)))[1]
+        return re.search(r'已登记反馈 #(\d+)', submit(dict(payload, **fresh) | dict(customer=customer) | attributes))[1]
 
     def open_batch(sources, overrides=None):
         data = dict(keys, intent='batchCreate', storyType=kind, linkScope='Shared follow-up',
@@ -317,11 +317,18 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
         with opener.open(req, timeout=10) as response:
             return response.url.removeprefix(base), response.read().decode()
 
+    def picker_defaults(page):
+        configs = (json.loads(html.unescape(value)) for value in re.findall(r'zui-create-(?:picker|priPicker)="([^"]+)"', page))
+        return {config.get('name'): str(config.get('defaultValue')) for config in configs}
+
     source_ids = [receive_source(customer) for customer in ('Customer A', 'Customer B', 'Customer C')]
     partial = 'Exports only; leave approver column pending'
     native_form, page = open_batch([f'{source}:1' for source in source_ids], {source_ids[2]: partial})
     assert 'Shared follow-up' in page and partial in page and all(f'#{source}' in page for source in source_ids)
     assert payload['description'] not in page
+    defaults = picker_defaults(page)
+    assert defaults['category'] == payload['category'], defaults.get('category')
+    assert defaults['pri'] == payload['priority'], defaults.get('pri')
     native_title = 'Batch conversion ' + uuid4().hex
     native_fields.update(title=native_title)
     first = json.loads(request(native_form, native_fields))
@@ -374,8 +381,10 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
             assert (note in page) == (note == marker), (source, note)
     print(f'Shared {kind} #{target_id}: feedback {confirmed}, {waiting}, {extra}, {fourth} retain independent outcomes')
 
-    stale_ids = [receive_source(), receive_source()]
-    native_form, _ = open_batch([f'{source}:1' for source in stale_ids])
+    stale_ids = [receive_source(), receive_source(category='feature')]
+    native_form, mixed_page = open_batch([f'{source}:1' for source in stale_ids])
+    defaults = picker_defaults(mixed_page)
+    assert defaults['category'] == 'feature' and defaults['pri'] == payload['priority'], defaults
     submit(dict(keys, intent='transition', feedbackID=stale_ids[0], version=1, action='start'))
     native_fields.update(title='Rejected stale batch ' + uuid4().hex)
     failure = json.loads(request(native_form, native_fields))

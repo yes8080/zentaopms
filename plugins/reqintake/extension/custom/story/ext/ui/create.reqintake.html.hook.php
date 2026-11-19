@@ -24,6 +24,16 @@ try
             $rows[] = '<li>#' . (int)$id . ' · ' . $escape($scope === '' ? $labels->wholeFeedback : $scope) . '</li>';
         }
         query('formGridPanel')->before(div(setClass('panel p-3 mb-2'), html($caption . '<ul>' . implode('', $rows) . '</ul>')));
+        if($batch['product'] === (int)data('product.id'))
+        {
+            $common = $model->commonBatchFields($batch['sources']);
+            query('formGridPanel')->each(static function($node) use($common)
+            {
+                $fields = $node->prop('fields');
+                foreach($common as $name => $value) $fields->field($name === 'priority' ? 'pri' : $name)->value($value);
+                $node->setProp('fields', $fields);
+            });
+        }
         return;
     }
     $feedback = $model->conversionSource($token, data('type'));

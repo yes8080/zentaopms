@@ -7,7 +7,7 @@ desc: |
 install: |
   Install the ZIP from local extension management.
 releases:
-  0.36.0:
+  0.37.0:
     zentao:
       compatible: '22.7'
       incompatible: ''

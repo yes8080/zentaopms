@@ -725,8 +725,26 @@ class reqintakeModel extends model
         $operation = substr($token, 6);
         $batch = $this->session->reqintakeBatchConversions[$operation] ?? null;
         if(!$batch || $batch['type'] !== $type || $batch['account'] !== $this->app->user->account) throw new DomainException('batchSelection');
-        $this->conversionProduct($batch['sources'], $type);
+        $batch['product'] = $this->conversionProduct($batch['sources'], $type);
         return $batch;
+    }
+
+    public function commonBatchFields(array $sources): array
+    {
+        $rows = $this->dao->select('feedback,category,priority')->from($this->config->db->prefix . 'reqintakeAttributes')
+            ->where('feedback')->in(array_keys($sources))->orderBy('version_desc')->fetchAll();
+        $latest = array();
+        foreach($rows as $row) $latest[$row->feedback] ??= $row;
+
+        $common = array();
+        $defaults = $this->attributeDefaults();
+        $options = $this->attributeOptions();
+        foreach(array('category', 'priority') as $field)
+        {
+            $values = array_unique(array_map(static fn($id) => (string)($latest[$id]->$field ?? $defaults[$field]), array_keys($sources)));
+            if(count($values) === 1 && isset($options[$field][$values[0]])) $common[$field] = $values[0];
+        }
+        return $common;
     }
 
     private function conversionProduct(array $sources, string $type, bool $checkVersion = false): int
