@@ -528,15 +528,11 @@ class reqintakeModel extends model
            becomes durable in that same commit, even if the native call never returns an ID. */
         $operation = hash('sha256', "task:$feedback->id:$feedback->version");
         $table = $this->config->db->prefix . 'reqintakeConversion';
-        $lock = $this->dbh->prepare("SELECT target FROM `$table` WHERE operation = ? FOR UPDATE");
-        $lock->execute([$operation]);
-        $recorded = $lock->fetchColumn();
-        $lock->closeCursor();
-        if($recorded === false)
+        $reserve = $this->dbh->prepare("INSERT IGNORE INTO `$table` (operation) VALUES (?)");
+        $reserve->execute([$operation]);
+        if($reserve->rowCount() === 1)
         {
             $this->conversionProduct(array((int)$feedback->id => $feedback->version), 'task', true);
-            $reserve = $this->dbh->prepare("INSERT INTO `$table` (operation) VALUES (?)");
-            $reserve->execute([$operation]);
             $id = $create();
             if(!$id) return false;
 
@@ -546,6 +542,10 @@ class reqintakeModel extends model
         }
         else
         {
+            $lock = $this->dbh->prepare("SELECT target FROM `$table` WHERE operation = ? FOR SHARE");
+            $lock->execute([$operation]);
+            $recorded = $lock->fetchColumn();
+            $lock->closeCursor();
             if(!(int)$recorded) throw new DomainException('taskConversionUncertain');
             $id = (int)$recorded;
             unset($_POST['fileList']);
@@ -702,7 +702,7 @@ class reqintakeModel extends model
                 if(!$lock->fetchColumn()) throw new DomainException('staleFeedback');
                 $lock->closeCursor();
 
-                $query = $this->dbh->prepare("SELECT scope FROM `{$prefix}reqintakeLink` WHERE feedback = ? AND targetType = ? AND target = ?");
+                $query = $this->dbh->prepare("SELECT scope FROM `{$prefix}reqintakeLink` WHERE feedback = ? AND targetType = ? AND target = ? FOR UPDATE");
                 $query->execute([$feedbackID, $type, $targetID]);
                 $existing = $query->fetchColumn();
                 if($existing !== false)
