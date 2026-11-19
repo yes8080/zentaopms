@@ -208,6 +208,9 @@ ob_start();
                 <?php else: ?>
                     <span><?= $escape($labels->storyUnavailable) ?></span>
                 <?php endif; ?>
+                <?php if($story->reviewReason !== ''): ?>
+                    <span><?= $escape($labels->reviewTarget[$story->reviewReason]) ?></span>
+                <?php endif; ?>
                 <?php if($story->checkedDate): ?><span><?= $escape(sprintf($labels->checkedDate, $story->checkedDate)) ?></span><?php endif; ?>
                 <?php if(isset($labels->linkMethods[$story->method])): ?><span><?= $escape($labels->linkMethods[$story->method]) ?></span><?php endif; ?>
                 <?php if($story->scope !== ''): ?><span><?= $escape($story->scope) ?></span><?php endif; ?>

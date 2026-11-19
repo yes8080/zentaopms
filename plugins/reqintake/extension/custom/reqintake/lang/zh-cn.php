@@ -32,7 +32,7 @@ $lang->reqintake->linkScope = '承接范围';
 $lang->reqintake->linkStory = '关联已有需求';
 $lang->reqintake->errors['linkTarget'] = '请选择同一产品下该类型的有效单据。';
 $lang->reqintake->errors['linkScope'] = '承接范围超长，或此需求已用不同范围关联。';
-$lang->reqintake->storyUnavailable = '原生需求不可用，请复核关联。';
+$lang->reqintake->storyUnavailable = '承接单据不可用，请复核关联。';
 $lang->reqintake->storyType = '单据类型';
 $lang->reqintake->storyTypes = array('story' => '研发需求', 'requirement' => '用户需求', 'epic' => '业务需求');
 $lang->reqintake->storyTypes['bug'] = 'Bug';
@@ -127,3 +127,5 @@ $lang->reqintake->errors['closeOutcome'] = '请选择有效的结案结果。';
 $lang->reqintake->errors['closeVerification'] = '客户确认结案前，请核实剩余事项和约定的复测。';
 
 $lang->reqintake->reselectAttachment = '修正表单后请重新选择附件。';
+
+$lang->reqintake->reviewTarget = array('canceled' => '承接单据已取消或不再处理，请复核。', 'reopened' => '承接单据已重开，请复核。');

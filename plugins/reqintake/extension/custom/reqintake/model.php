@@ -489,7 +489,7 @@ class reqintakeModel extends model
         if(!$types || !$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
 
         $prefix = $this->config->db->prefix;
-        $links = $this->dao->select('l.target,l.targetType,l.scope,p.checkedDate,m.method')
+        $links = $this->dao->select('l.target,l.targetType,l.scope,l.createdDate,p.checkedDate,m.method')
             ->from($prefix . 'reqintakeLink')->alias('l')
             ->leftJoin($prefix . 'reqintakeProgress')->alias('p')->on('p.feedback = l.feedback AND p.targetType = l.targetType AND p.target = l.target')
             ->leftJoin($prefix . 'reqintakeLinkMethod')->alias('m')->on('m.feedback = l.feedback AND m.targetType = l.targetType AND m.target = l.target')
@@ -502,6 +502,22 @@ class reqintakeModel extends model
             $link->status = $target ? $target->status : '';
             $link->stage = $target ? $target->stage : '';
             $link->closedReason = $target ? $target->closedReason : '';
+            $link->reviewReason = '';
+            if($target)
+            {
+                if($target->status === 'cancel' || in_array($target->closedReason, array('cancel', 'willnotdo', 'wontfix'), true))
+                {
+                    $link->reviewReason = 'canceled';
+                }
+                elseif(in_array($target->status, array('active', 'doing', 'wait'), true))
+                {
+                    $actionType = isset($target->branch) ? 'story' : $link->targetType;
+                    $activated = $this->dao->select('id')->from(TABLE_ACTION)->where('objectType')->eq($actionType)
+                        ->andWhere('objectID')->eq($target->id)->andWhere('action')->eq('activated')
+                        ->andWhere('date')->ge($link->createdDate)->limit(1)->fetch();
+                    if($activated) $link->reviewReason = 'reopened';
+                }
+            }
             $link->branchStages = array();
             if($target && isset($target->branch) && $branches)
             {

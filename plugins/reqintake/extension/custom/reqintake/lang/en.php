@@ -32,7 +32,7 @@ $lang->reqintake->linkScope = 'Scope';
 $lang->reqintake->linkStory = 'Link existing story';
 $lang->reqintake->errors['linkTarget'] = 'Select accessible work of this type associated with the same product.';
 $lang->reqintake->errors['linkScope'] = 'The scope is too long or the story is already linked with a different scope.';
-$lang->reqintake->storyUnavailable = 'The story is unavailable. Review this link.';
+$lang->reqintake->storyUnavailable = 'The linked item is unavailable. Review this link.';
 $lang->reqintake->storyType = 'Work type';
 $lang->reqintake->storyTypes = array('story' => 'Story', 'requirement' => 'User requirement', 'epic' => 'Business requirement');
 $lang->reqintake->storyTypes['bug'] = 'Bug';
@@ -127,3 +127,5 @@ $lang->reqintake->errors['closeOutcome'] = 'Select a valid closure outcome.';
 $lang->reqintake->errors['closeVerification'] = 'Verify remaining work and the agreed customer retest before closing as confirmed.';
 
 $lang->reqintake->reselectAttachment = 'Select the attachment again after correcting the form.';
+
+$lang->reqintake->reviewTarget = array('canceled' => 'The linked item was canceled or rejected. Review the feedback.', 'reopened' => 'The linked item was reopened. Review the feedback.');
