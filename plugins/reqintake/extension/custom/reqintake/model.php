@@ -482,9 +482,10 @@ class reqintakeModel extends model
         if(!$types || !$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
 
         $prefix = $this->config->db->prefix;
-        $links = $this->dao->select('l.target,l.targetType,l.scope,p.checkedDate')
+        $links = $this->dao->select('l.target,l.targetType,l.scope,p.checkedDate,m.method')
             ->from($prefix . 'reqintakeLink')->alias('l')
             ->leftJoin($prefix . 'reqintakeProgress')->alias('p')->on('p.feedback = l.feedback AND p.targetType = l.targetType AND p.target = l.target')
+            ->leftJoin($prefix . 'reqintakeLinkMethod')->alias('m')->on('m.feedback = l.feedback AND m.targetType = l.targetType AND m.target = l.target')
             ->where('l.feedback')->eq((int)$feedback->id)->andWhere('l.targetType')->in($types)->orderBy('l.target_desc')->fetchAll();
         foreach($links as $link)
         {
@@ -616,7 +617,7 @@ class reqintakeModel extends model
 
         $target = $this->targetForProduct('task', $id, (int)$feedback->product);
         if(!$target || (int)$target->execution !== $execution) throw new DomainException('linkTarget');
-        $this->linkTarget((int)$feedback->id, $feedback->version, $id, '', 'task');
+        $this->linkTargets(array((int)$feedback->id => $feedback->version), $id, '', 'task', created: true);
         if($this->dbh->inTransaction()) $this->dbh->commit();
         return $id;
     }
@@ -721,7 +722,7 @@ class reqintakeModel extends model
                 return false;
             }
 
-            $this->linkTargets($sources, $id, $scope, $type);
+            $this->linkTargets($sources, $id, $scope, $type, created: true);
             $update = $this->dbh->prepare("UPDATE `$table` SET target = ? WHERE operation = ?");
             $update->execute([$id, $operation]);
             $this->dbh->commit();
@@ -734,7 +735,7 @@ class reqintakeModel extends model
         }
     }
 
-    public function linkTargets(array $sources, int $targetID, string $scope, string $type): void
+    public function linkTargets(array $sources, int $targetID, string $scope, string $type, bool $created = false): void
     {
         if(!$sources || count($sources) > 50) throw new DomainException('batchSelection');
         if(!in_array($type, $this->visibleTargetTypes(), true)) throw new DomainException('handler');
@@ -781,6 +782,9 @@ class reqintakeModel extends model
 
                 $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,?,?,?,?,?)");
                 $query->execute([$feedbackID, $type, $targetID, $scope, $this->app->user->account, $now]);
+
+                $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLinkMethod` (feedback,targetType,target,method) VALUES (?,?,?,?)");
+                $query->execute([$feedbackID, $type, $targetID, $created ? 'created' : 'linked']);
             }
             if($ownsTransaction) $this->dbh->commit();
         }

@@ -177,3 +177,11 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeCustomerVersion` (
   `customerVersion` varchar(100) NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeLinkMethod` (
+  `feedback` int unsigned NOT NULL,
+  `targetType` varchar(20) NOT NULL,
+  `target` int unsigned NOT NULL,
+  `method` varchar(10) NOT NULL,
+  PRIMARY KEY (`feedback`, `targetType`, `target`)
+) ENGINE=InnoDB;

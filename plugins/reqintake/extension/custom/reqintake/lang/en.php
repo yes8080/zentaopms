@@ -117,3 +117,5 @@ $lang->reqintake->fields['customerVersion'] = 'Customer product version';
 $lang->reqintake->errors['customerVersion'] = 'Enter a customer product version of at most 100 characters.';
 
 $lang->reqintake->branchStageUnknown = 'No stage recorded for this scope';
+
+$lang->reqintake->linkMethods = array('created' => 'Created from feedback', 'linked' => 'Linked existing item');

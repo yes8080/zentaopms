@@ -327,7 +327,7 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
     assert second['changes']['objectList'] == first['changes']['objectList']
     for source in source_ids:
         page = request(detail_route + source)
-        assert all(text in page for text in (native_title, 'Shared follow-up', '跟进中'))
+        assert all(text in page for text in (native_title, 'Shared follow-up', '跟进中', '<span>新建转单</span>'))
 
     target_id, = first['changes']['objectList']
     fourth = receive_source('Customer D')
@@ -335,7 +335,7 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
     token = re.search(r'name="token" value="([^"]+)"', request(fourth_route))[1]
     attached = request(fourth_route, dict(token=token, version=1, storyID=target_id,
                                           storyType=kind, linkScope='Later customer'))
-    assert native_title in attached and 'Later customer' in attached
+    assert native_title in attached and 'Later customer' in attached and '<span>关联已有单据</span>' in attached
     target_route = f'index.php?m={kind}&f=view&storyID={target_id}'
     backlinks = html.unescape(request(target_route))
     for source in (*source_ids, fourth):
