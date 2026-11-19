@@ -25,20 +25,15 @@ catch(\DomainException $error)
     return;
 }
 if((int)$feedback->product !== (int)data('product.id')) return;
-$revisions = $model->revisions($feedback);
-$title = $revisions ? reset($revisions)->title : $feedback->title;
-
-$attributes = $model->attributes((int)$feedback->id);
+[$title, $description, $acceptance, $attributes] = $model->conversionContent($feedback);
 $mailto = implode(',', array_intersect(explode(',', $attributes['mailto']), array_keys($model->mailtoOptions())));
-$richVersions = $model->richTextVersions((int)$feedback->id);
-$version = (int)($revisions[0]->version ?? 1);
-$acceptance = isset($richVersions[$version]) ? strip_tags($attributes['acceptance'], '<p><br><strong><b><em><i><u><s><ul><ol><li><blockquote><pre><code><h1><h2><h3><h4><hr>') : nl2br(htmlspecialchars($attributes['acceptance'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
-query('formGridPanel')->each(function($node) use($title, $attributes, $acceptance, $mailto)
+query('formGridPanel')->each(function($node) use($title, $description, $attributes, $acceptance, $mailto)
 {
     $fields = $node->prop('fields');
     $fields->field('title')->value($title);
     $fields->field('category')->value($attributes['category']);
     $fields->field('pri')->value($attributes['priority']);
+    $fields->field('spec')->value($description);
     $fields->field('verify')->value($acceptance);
     foreach(array('source', 'keywords', 'estimate') as $field)
     {

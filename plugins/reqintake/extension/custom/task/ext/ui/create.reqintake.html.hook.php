@@ -16,11 +16,12 @@ catch(\DomainException $error)
     return;
 }
 if(!isset($model->taskExecutions((int)$feedback->product)[(int)data('execution.id')])) return;
-$revisions = $model->revisions($feedback);
-$title = $revisions ? reset($revisions)->title : $feedback->title;
-query('formGridPanel')->each(function($node) use($title)
+[$title, $description] = $model->conversionContent($feedback);
+
+query('formGridPanel')->each(function($node) use($title, $description)
 {
     $fields = $node->prop('fields');
     $fields->field('name')->value($title);
+    $fields->field('desc')->value($description);
     $node->setProp('fields', $fields);
 });

@@ -539,6 +539,17 @@ class reqintakeModel extends model
         return $feedback;
     }
 
+    public function conversionContent(object $feedback): array
+    {
+        $revision = $this->revisions($feedback)[0] ?? $feedback;
+        $rich = isset($this->richTextVersions((int)$feedback->id)[(int)($revision === $feedback ? 1 : $revision->version)]);
+        $format = static fn(string $value): string => $rich
+            ? strip_tags($value, '<p><br><strong><b><em><i><u><s><ul><ol><li><blockquote><pre><code><h1><h2><h3><h4><hr>')
+            : nl2br(htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $attributes = $this->attributes((int)$feedback->id);
+        return array($revision->title, $format($revision->description), $format($attributes['acceptance']), $attributes);
+    }
+
     public function taskExecutions(int $product): array
     {
         if(!common::hasPriv('task', 'create') || !common::hasPriv('task', 'view') || !$this->canReadProduct($product)) return array();

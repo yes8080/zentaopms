@@ -241,7 +241,7 @@ for kind in args.conversion:
              for link in re.findall(r'href="([^"]+riOperation[^"]+)"', request(source_route)))
     native_form = next(link for link in links if f'm={kind}&' in link)
     form = request(native_form)
-    assert payload['title'] in form and payload['sourceNote'] not in form
+    assert payload['title'] in form and payload['description'] in form and payload['sourceNote'] not in form
     if kind == 'story':
         assert payload['estimate'] in form and payload['keywords'] in form
         if args.native_product:
@@ -402,7 +402,7 @@ if args.task_conversion:
     with opener.open(req, timeout=10) as response:
         native = response.url.removeprefix(base)
         form = response.read().decode()
-    assert 'riOperation' in native and payload['title'] in form
+    assert 'riOperation' in native and payload['title'] in form and payload['description'] in form
     task_name = 'Task from feedback ' + uuid4().hex
     fields = dict(execution=execution, name=task_name, type='devel', story=1, pri=3, estimate=0, module=0)
     assert json.loads(request(native, dict(fields, type='affair')))['result'] == 'fail'
@@ -435,6 +435,13 @@ revision = dict(rich, token=token, intent='revise', version=1,
                 description='<p><em>Edited and formatted</em></p>', customer='Revised client name')
 page = request(source_route, revision)
 assert '<em>Edited and formatted</em>' in page and '<strong>description</strong>' in page
+if 'story' in args.conversion:
+    rich_form = next(html.unescape(link).lstrip('/')
+                     for link in re.findall(r'href="([^"]+riOperation[^"]+)"', page)
+                     if 'm=story&' in html.unescape(link))
+    native_rich = html.unescape(request(rich_form))
+    assert '<em>Edited and formatted</em>' in native_rich and 'First criterion' in native_rich
+    assert image not in native_rich
 listing = request(route)
 assert 'Revised client name' in listing and '最近业务更新' in listing
 print('Rich description and acceptance round-trip, preserve history, and support replay')

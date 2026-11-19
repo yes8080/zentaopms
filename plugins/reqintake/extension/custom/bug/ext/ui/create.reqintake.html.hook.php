@@ -16,13 +16,14 @@ catch(\DomainException $error)
 {
     return;
 }
-$revisions = $model->revisions($feedback);
-$title = $revisions ? reset($revisions)->title : $feedback->title;
+if((int)$feedback->product !== (int)data('bug.productID')) return;
+[$title, $description] = $model->conversionContent($feedback);
 
-query('formGridPanel')->each(function($node) use($title, $token)
+query('formGridPanel')->each(function($node) use($title, $description, $token)
 {
     $fields = $node->prop('fields');
     $fields->field('title')->value($title);
+    $fields->field('steps')->value($description);
     $node->setProp('fields', $fields);
     $node->setProp('loadUrl', str_replace('allUsers={allUsers}', 'allUsers={allUsers},riOperation=' . $token, $node->prop('loadUrl')));
 });
