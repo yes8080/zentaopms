@@ -106,3 +106,6 @@ $lang->reqintake->sortRecent = '最新提报';
 $lang->reqintake->visibleColumns = '显示列';
 
 $lang->reqintake->workbench = '待处理反馈';
+
+$lang->reqintake->fields['plan'] = '所属计划';
+$lang->reqintake->errors['plan'] = '请选择当前产品及主选分支的计划。';

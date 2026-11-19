@@ -176,14 +176,14 @@ class reqintakeModel extends model
     public function attributeDefaults(): array
     {
         return array('category' => 'feature', 'priority' => '3', 'acceptance' => '',
-            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'branchModules' => array());
+            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'branchModules' => array());
     }
 
     public function attributes(int $id, ?int $version = null): array
     {
         $defaults = $this->attributeDefaults();
         $prefix = $this->config->db->prefix;
-        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module') as $table => $fields)
+        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan') as $table => $fields)
         {
             $query = $this->dao->select($fields)->from($prefix . $table)->where('feedback')->eq($id);
             if($version !== null) $query->andWhere('version')->le($version);
@@ -206,7 +206,16 @@ class reqintakeModel extends model
         if($record->type !== 'normal') $branches += $this->loadModel('branch')->getPairs($product, 'noempty');
         $modules = $this->loadModel('tree')->getOptionMenu($product, 'story', 0, array_keys($branches));
         foreach($modules as $branch => $pairs) $modules[$branch] = array(0 => '') + $pairs;
-        return array('branches' => $branches, 'modules' => $modules);
+        $plans = array();
+        foreach(array_keys($branches) as $branch) $plans[$branch] = $this->planOptions($product, (string)$branch);
+        return array('branches' => $branches, 'modules' => $modules, 'plans' => $plans);
+    }
+
+    public function planOptions(int $product, string $branch, bool $forConversion = false): array
+    {
+        if(!$this->canReadProduct($product) || !ctype_digit($branch)) return array(0 => '');
+        $filter = $forConversion ? 'unexpired|noclosed' : '';
+        return array(0 => '') + $this->loadModel('productplan')->getPairs($product, $branch, $filter, true);
     }
 
     private function validatedAttributes(int $product, array $fields, array $previous = array()): array
@@ -239,6 +248,11 @@ class reqintakeModel extends model
             }
         }
 
+        $plan = $fields['plan'];
+        if($plan !== '0' && ($plan !== ($previous['plan'] ?? '0') || $fields['branch'] !== ($previous['branch'] ?? '0'))
+            && !isset($this->planOptions($product, $fields['branch'])[$plan]))
+            throw new InvalidArgumentException('plan');
+
         $validated = array_replace($this->attributeDefaults(), $fields);
         $validated['priority'] = (string)$validated['priority'];
         return $validated;
@@ -257,6 +271,10 @@ class reqintakeModel extends model
         $table = $this->config->db->prefix . 'reqintakeProductScope';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branch,module) VALUES (?,?,?,?)");
         $insert->execute([$id, $version, $fields['branch'], $fields['module']]);
+
+        $table = $this->config->db->prefix . 'reqintakePlan';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,plan) VALUES (?,?,?)");
+        $insert->execute([$id, $version, $fields['plan']]);
 
         $table = $this->config->db->prefix . 'reqintakeBranchScope';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branchModules) VALUES (?,?,?)");

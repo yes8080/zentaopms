@@ -8,7 +8,7 @@
         </select>
     </label>
 <?php endforeach; ?>
-<?php foreach(array('branch' => $scopeOptions['branches'] ?? array(0 => ''), 'module' => $scopeOptions['modules'][$values['branch']] ?? array(0 => '')) as $field => $options): ?>
+<?php foreach(array('branch' => $scopeOptions['branches'] ?? array(0 => ''), 'module' => $scopeOptions['modules'][$values['branch']] ?? array(0 => ''), 'plan' => $scopeOptions['plans'][$values['branch']] ?? array(0 => '')) as $field => $options): ?>
     <label class="block mb-2"><?= $escape($labels->fields[$field]) ?>
         <select class="form-control" name="<?= $field ?>" data-initial="<?= $escape($values[$field]) ?>">
             <?php if(!isset($options[$values[$field]])) $options[$values[$field]] = '#' . $values[$field]; ?>

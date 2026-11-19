@@ -210,6 +210,7 @@ if (receiveForm) {
         branch.onchange = null;
         reqintakeOptions(branch, {0: ''}, '0');
         reqintakeOptions(receiveForm.elements.module, {0: ''}, '0');
+        reqintakeOptions(receiveForm.elements.plan, {0: ''}, '0');
         if (!product.value) return;
 
         try {

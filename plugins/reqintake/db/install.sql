@@ -156,3 +156,10 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeBranchScope` (
   `branchModules` json NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakePlan` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `plan` int unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

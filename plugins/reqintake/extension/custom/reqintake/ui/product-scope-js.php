@@ -7,7 +7,7 @@ const reqintakeOptions = (select, choices, selected) => {
     if (Object.hasOwn(choices, selected)) select.value = selected;
 };
 const reqintakeScope = (form, scope, selected, restore = true) => {
-    const {modules, branches} = scope;
+    const {modules, branches, plans} = scope;
     const extra = form.querySelector('[data-reqintake-extra]');
     const rows = extra.querySelector('[data-reqintake-branches]');
     const branch = form.elements.branch;
@@ -36,10 +36,18 @@ const reqintakeScope = (form, scope, selected, restore = true) => {
         }
         extra.hidden = choices.length === 0;
     };
+    const plan = form.elements.plan;
+    const updatePlan = id => {
+        const options = {...(plans[branch.value] || {0: ''})};
+        if (id !== '0' && !Object.hasOwn(options, id)) options[id] = '#' + id;
+        reqintakeOptions(plan, options, id);
+    };
     branch.onchange = () => {
+        updatePlan('0');
         update('0');
         refresh();
     };
+    updatePlan(restore ? plan.dataset.initial : '0');
     if (selected !== undefined) update(selected);
     refresh();
 };

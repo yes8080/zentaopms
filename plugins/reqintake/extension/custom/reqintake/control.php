@@ -238,7 +238,8 @@ class reqintake extends control
         $scope = $model->productScopeOptions((int)$feedback->product);
         $this->view->scopeOptions = $scope;
         $this->view->scopeLabels = array(
-            'branch' => $scope['branches'], 'module' => $scope['modules'][$this->view->attributes['branch']] ?? array()
+            'branch' => $scope['branches'], 'module' => $scope['modules'][$this->view->attributes['branch']] ?? array(),
+            'plan' => $scope['plans'][$this->view->attributes['branch']] ?? array()
         );
         $this->view->attributeOptions = $model->attributeOptions();
         $this->view->handling = $model->handling($feedback);
@@ -273,7 +274,9 @@ class reqintake extends control
                 }
                 $branch = isset($scope['branches'][$this->view->attributes['branch']]) ? (int)$this->view->attributes['branch'] : 0;
                 $module = isset($scope['modules'][$branch][$this->view->attributes['module']]) ? (int)$this->view->attributes['module'] : 0;
-                $this->view->conversionLinks[$type] = helper::createLink($type, 'create', "productID={$feedback->product}&branch=$branch&moduleID=$module&storyID=0&objectID=0&bugID=0&planID=0&todoID=0&extra=$extra&storyType=$type");
+                $plan = (int)$this->view->attributes['plan'];
+                if($plan && !isset($model->planOptions((int)$feedback->product, (string)$branch, true)[$plan])) $plan = 0;
+                $this->view->conversionLinks[$type] = helper::createLink($type, 'create', "productID={$feedback->product}&branch=$branch&moduleID=$module&storyID=0&objectID=0&bugID=0&planID=$plan&todoID=0&extra=$extra&storyType=$type");
             }
         }
         $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && $this->view->storyTypes;

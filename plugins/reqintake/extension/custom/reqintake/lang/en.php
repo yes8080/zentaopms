@@ -106,3 +106,6 @@ $lang->reqintake->sortRecent = 'Latest submissions';
 $lang->reqintake->visibleColumns = 'Visible columns';
 
 $lang->reqintake->workbench = 'Feedback assigned to me';
+
+$lang->reqintake->fields['plan'] = 'Plan';
+$lang->reqintake->errors['plan'] = 'Select a plan for the current product and primary branch.';
