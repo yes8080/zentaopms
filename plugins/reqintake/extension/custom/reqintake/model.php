@@ -129,7 +129,9 @@ class reqintakeModel extends model
             ->where('account')->eq($account)->andWhere('deleted')->eq('0')->fetch();
         if(!$user) return false;
 
-        $view = $this->loadModel('user')->computeUserView($user->account);
+        if(strpos($this->app->company->admins, ",{$user->account},") !== false) return true;
+
+        $view = $this->loadModel('user')->computeUserView($user->account, true);
         return in_array((string)$product, explode(',', (string)($view->products ?? '')), true);
     }
 

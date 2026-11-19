@@ -67,3 +67,17 @@ assert all(text in page for text in ('Integration description','Test customer','
 for scope in ('mine','assigned'):
     assert 'Reqintake integration request' in request(route+'&scope='+scope)
 print('Lifecycle, reason history, detail and personal filters passed')
+
+assert '该账号无权访问此产品或已删除' in submit(dict(keys, intent='owner', product=product, owner='missing_account_123'))
+try:
+    assert '负责人配置已保存' in submit(dict(keys, intent='owner', product=product, owner='admin'))
+    page = request(route)
+    new_keys = {k: re.search(f'name="{k}" value="([^"]+)"', page)[1] for k in ('operation', 'token')}
+    assigned = submit(dict(payload, **new_keys))
+    assigned_id = re.search(r'已登记反馈 #(\d+)', assigned)[1]
+    assert assigned_id != id
+    assert '待配置负责人' not in request('index.php?m=reqintake&f=detail&id=' + assigned_id)
+    assert '待配置负责人' in request('index.php?m=reqintake&f=detail&id=' + id)
+finally:
+    assert '负责人配置已保存' in submit(dict(keys, intent='owner', product=product, owner=''))
+print('Owner validation, assignment, preservation and clear passed')
