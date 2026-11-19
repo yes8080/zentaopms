@@ -5,6 +5,11 @@ $labels = $lang->reqintake;
 $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $renderEditor = require __DIR__ . '/rich-editor.php';
 $rich = $inputRich;
+$baseParams = "previewProduct=0&beforeID=0&sort=$sort";
+$columns = array(
+    'product' => $labels->listColumns[2], 'owner' => $labels->listColumns[3], 'status' => $labels->listColumns[4],
+    'next' => $labels->handlingNext, 'customer' => $labels->fields['customer'], 'updated' => $labels->updatedDate
+);
 ob_start();
 ?>
 <section class="panel p-4">
@@ -64,12 +69,12 @@ ob_start();
     <h3><?= $escape($labels->recent) ?></h3>
     <nav class="mb-2">
         <?php foreach($labels->scopes as $key => $label): ?>
-            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$key&filterProduct=$filterProduct")) ?>" <?= $key === $scope ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
+            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$key&filterProduct=$filterProduct&$baseParams")) ?>" <?= $key === $scope ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
         <?php endforeach; ?>
     </nav>
     <nav class="mb-2" aria-label="<?= $escape($labels->fields['product']) ?>">
         <?php foreach(array(0 => $labels->allProducts) + $products as $productID => $productName): ?>
-            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=" . (int)$productID)) ?>" <?= (int)$productID === $filterProduct ? 'aria-current="page"' : '' ?>><?= $escape($productName) ?></a>
+            <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=" . (int)$productID . "&$baseParams")) ?>" <?= (int)$productID === $filterProduct ? 'aria-current="page"' : '' ?>><?= $escape($productName) ?></a>
         <?php endforeach; ?>
     </nav>
     <?php if(!$feedback): ?>
@@ -93,13 +98,27 @@ ob_start();
                 <?php endif; ?>
             </form>
         <?php endif; ?>
-        <table class="table">
+        <div class="mb-2">
+            <nav aria-label="<?= $escape($labels->sortFeedback) ?>">
+                <?php foreach(array('id' => $labels->sortRecent, 'updated' => $labels->updatedDate) as $key => $label): ?>
+                    <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=0&sort=$key")) ?>" <?= $sort === $key ? 'aria-current="page"' : '' ?>><?= $escape($label) ?></a>
+                <?php endforeach; ?>
+            </nav>
+            <details id="reqintake-column-settings" data-account="<?= $escape($currentAccount) ?>">
+                <summary><?= $escape($labels->visibleColumns) ?></summary>
+                <?php foreach($columns as $key => $label): ?>
+                    <label><input type="checkbox" value="<?= $key ?>" checked> <?= $escape($label) ?></label>
+                <?php endforeach; ?>
+            </details>
+        </div>
+        <table class="table" id="reqintake-results">
             <thead><tr>
                 <?php if($batchTypes): ?><th scope="col"><?= $escape($labels->batchSelect) ?></th><?php endif; ?>
-                <?php foreach($labels->listColumns as $column): ?><th scope="col"><?= $escape($column) ?></th><?php endforeach; ?>
-                <th scope="col"><?= $escape($labels->handlingNext) ?></th>
-                <th scope="col"><?= $escape($labels->fields['customer']) ?></th>
-                <th scope="col"><?= $escape($labels->updatedDate) ?></th>
+                <th scope="col"><?= $escape($labels->listColumns[0]) ?></th>
+                <th scope="col"><?= $escape($labels->listColumns[1]) ?></th>
+                <?php foreach($columns as $key => $label): ?>
+                    <th scope="col" data-column="<?= $key ?>"><?= $escape($label) ?></th>
+                <?php endforeach; ?>
                 <th scope="col"><?= $escape($labels->actionsLabel) ?></th>
             </tr></thead>
             <tbody>
@@ -129,12 +148,12 @@ ob_start();
                                 </details>
                             <?php endif; ?>
                         </td>
-                        <td><?= $escape($item->productName) ?></td>
-                        <td><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></td>
-                        <td><?= $escape($labels->states[$item->status] ?? $item->status) ?></td>
-                        <td><?= $escape($item->nextStep) ?></td>
-                        <td><?= $escape($item->customer) ?></td>
-                        <td><time datetime="<?= $escape(str_replace(' ', 'T', $item->updatedDate)) ?>"><?= $escape($item->updatedDate) ?></time></td>
+                        <td data-column="product"><?= $escape($item->productName) ?></td>
+                        <td data-column="owner"><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></td>
+                        <td data-column="status"><?= $escape($labels->states[$item->status] ?? $item->status) ?></td>
+                        <td data-column="next"><?= $escape($item->nextStep) ?></td>
+                        <td data-column="customer"><?= $escape($item->customer) ?></td>
+                        <td data-column="updated"><time datetime="<?= $escape(str_replace(' ', 'T', $item->updatedDate)) ?>"><?= $escape($item->updatedDate) ?></time></td>
                         <td>
                             <?php if($isAdmin || ($item->assignedTo === $currentAccount && !$item->assignmentPending)): ?>
                             <form method="post">
@@ -160,10 +179,10 @@ ob_start();
     <?php if($beforeID || $nextBefore): ?>
         <nav class="mt-2" aria-label="<?= $escape($labels->pagination) ?>">
             <?php if($beforeID): ?>
-                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct")) ?>"><?= $escape($labels->firstPage) ?></a>
+                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&$baseParams")) ?>"><?= $escape($labels->firstPage) ?></a>
             <?php endif; ?>
             <?php if($nextBefore): ?>
-                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=$nextBefore")) ?>"><?= $escape($labels->nextPage) ?></a>
+                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=$nextBefore&sort=$sort&beforeUpdate=" . rawurlencode($nextUpdate))) ?>"><?= $escape($labels->nextPage) ?></a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>
@@ -208,5 +227,30 @@ if (receiveForm) {
     };
     product.addEventListener('change', updatePreview);
     updatePreview();
+}
+JS);
+
+context::js(<<<'JS'
+const columnSettings = document.querySelector('#reqintake-column-settings');
+if (columnSettings) {
+    const key = 'reqintake.columns.' + columnSettings.dataset.account;
+    const toggles = [...columnSettings.querySelectorAll('input')];
+    const table = document.querySelector('#reqintake-results');
+    let hidden = [];
+    try { hidden = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
+    if (!Array.isArray(hidden)) hidden = [];
+    const apply = () => {
+        for (const toggle of toggles) {
+            table.querySelectorAll('[data-column="' + toggle.value + '"]').forEach(cell => {
+                cell.hidden = !toggle.checked;
+            });
+        }
+    };
+    for (const toggle of toggles) toggle.checked = !hidden.includes(toggle.value);
+    columnSettings.addEventListener('change', () => {
+        apply();
+        try { localStorage.setItem(key, JSON.stringify(toggles.filter(toggle => !toggle.checked).map(toggle => toggle.value))); } catch {}
+    });
+    apply();
 }
 JS);

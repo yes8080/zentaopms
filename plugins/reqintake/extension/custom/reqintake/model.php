@@ -11,7 +11,7 @@ class reqintakeModel extends model
         return array_values(array_filter(array_map('intval', explode(',', (string)($this->app->user->view->products ?? '')))));
     }
 
-    public function recent(string $scope = 'all', int $product = 0, int $beforeID = 0): array
+    public function recent(string $scope = 'all', int $product = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = ''): array
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -21,12 +21,22 @@ class reqintakeModel extends model
             ->where('p.deleted')->eq('0');
         if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
         if($product > 0) $query->andWhere('f.product')->eq($product);
-        if($beforeID > 0) $query->andWhere('f.id')->lt($beforeID);
+        if($beforeID > 0)
+        {
+            if($sort === 'updated' && preg_match('/\A[0-9]{14}\z/', $beforeUpdate))
+            {
+                $beforeUpdate = substr($beforeUpdate, 0, 4) . '-' . substr($beforeUpdate, 4, 2) . '-' . substr($beforeUpdate, 6, 2)
+                    . ' ' . substr($beforeUpdate, 8, 2) . ':' . substr($beforeUpdate, 10, 2) . ':' . substr($beforeUpdate, 12, 2);
+                $query->andWhere('f.updatedDate', true)->lt($beforeUpdate)
+                    ->orWhere('f.updatedDate')->eq($beforeUpdate)->andWhere('f.id')->lt($beforeID)->markRight();
+            }
+            elseif($sort === 'id') $query->andWhere('f.id')->lt($beforeID);
+        }
         if($scope === 'pendingOwner') $query->andWhere('f.assignmentPending')->eq(1);
         $account = $this->app->user->account;
         if($scope === 'mine') $query->andWhere('f.openedBy')->eq($account);
         if($scope === 'assigned') $query->andWhere('f.assignedTo')->eq($account)->andWhere('f.status')->ne('closed');
-        $rows = $query->orderBy('f.id_desc')->limit(51)->fetchAll();
+        $rows = $query->orderBy($sort === 'updated' ? 'f.updatedDate_desc,f.id_desc' : 'f.id_desc')->limit(51)->fetchAll();
         if(!$rows) return $rows;
 
         $ids = array_map(static fn($item) => (int)$item->id, $rows);

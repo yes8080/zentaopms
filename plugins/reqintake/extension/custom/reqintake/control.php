@@ -1,7 +1,7 @@
 <?php
 class reqintake extends control
 {
-    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0, int $beforeID = 0)
+    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '')
     {
         if(!$this->loadModel('reqintake')->canAccess('index'))
         {
@@ -124,9 +124,11 @@ class reqintake extends control
         if(!$model->canAccess('detail')) $this->view->batchTypes = array();
         $this->view->canBatchCreate = (bool)array_filter($this->view->batchTypes, static fn($type) => common::hasPriv($type, 'create'));
         $this->view->beforeID = max(0, $beforeID);
-        $feedback = $model->recent($this->view->scope, $this->view->filterProduct, $this->view->beforeID);
+        $this->view->sort = $sort === 'updated' ? 'updated' : 'id';
+        $feedback = $model->recent($this->view->scope, $this->view->filterProduct, $this->view->beforeID, $this->view->sort, $beforeUpdate);
         $this->view->feedback = array_slice($feedback, 0, 50);
         $this->view->nextBefore = count($feedback) > 50 ? (int)$feedback[49]->id : 0;
+        $this->view->nextUpdate = $this->view->nextBefore && $this->view->sort === 'updated' ? str_replace(array('-', ':', ' '), '', $feedback[49]->updatedDate) : '';
         $this->view->history = $model->historyForRecent($this->view->feedback);
         $this->display();
     }

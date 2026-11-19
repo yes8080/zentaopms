@@ -30,6 +30,16 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await form.waitFor({timeout:8000});
         assert.equal(await page.locator('zen-editor').count(), 2);
         assert.equal(await form.locator('zen-editor').count(), 2);
+        const columns = app.locator('#reqintake-column-settings');
+        await columns.locator('summary').click();
+        await columns.locator('input[value=customer]').uncheck();
+        const customerHeader = app.locator('th[data-column=customer]');
+        assert.equal(await customerHeader.isVisible(), false);
+        await page.reload();
+        await customerHeader.waitFor({state:'hidden'});
+        await columns.locator('summary').click();
+        await columns.locator('input[value=customer]').check();
+        await customerHeader.waitFor({state:'visible'});
         await form.locator('[name=product]').selectOption({label:product});
         await page.waitForFunction(() => document.querySelector('#reqintake-receive output')?.textContent.includes('待配置负责人'),{},{timeout:5000}).catch(async e=>{console.log(await form.locator('output').textContent(),errors);throw e;});
         const branchModule = process.env.REQINTAKE_BRANCH_MODULE;

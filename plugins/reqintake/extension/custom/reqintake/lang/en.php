@@ -101,3 +101,6 @@ $lang->reqintake->additionalBranches = 'Additional branches or platforms';
 $lang->reqintake->branchNotSelected = 'Outside feedback scope';
 $lang->reqintake->updatedDate = 'Last updated';
 $lang->reqintake->basicInfo = 'Basic information';
+$lang->reqintake->sortFeedback = 'Sort feedback';
+$lang->reqintake->sortRecent = 'Latest submissions';
+$lang->reqintake->visibleColumns = 'Visible columns';

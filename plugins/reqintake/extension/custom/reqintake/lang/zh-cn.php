@@ -101,3 +101,6 @@ $lang->reqintake->additionalBranches = '其他适用分支／平台';
 $lang->reqintake->branchNotSelected = '不适用';
 $lang->reqintake->updatedDate = '最近业务更新';
 $lang->reqintake->basicInfo = '基本信息';
+$lang->reqintake->sortFeedback = '反馈排序';
+$lang->reqintake->sortRecent = '最新提报';
+$lang->reqintake->visibleColumns = '显示列';
