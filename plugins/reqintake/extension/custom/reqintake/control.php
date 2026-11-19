@@ -1,7 +1,7 @@
 <?php
 class reqintake extends control
 {
-    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0)
+    public function index(string $scope = 'all', int $filterProduct = 0, int $previewProduct = 0, int $beforeID = 0)
     {
         if(!$this->loadModel('reqintake')->canAccess('index'))
         {
@@ -103,12 +103,15 @@ class reqintake extends control
         $model = $this->loadModel('reqintake');
         $this->view->isAdmin = !empty($this->app->user->admin);
         $this->view->currentAccount = $this->app->user->account;
-        $this->view->scope = in_array($scope, array('all', 'mine', 'assigned'), true) ? $scope : 'all';
+        $this->view->scope = in_array($scope, array_keys($this->lang->reqintake->scopes), true) ? $scope : 'all';
         $this->view->filterProduct = max(0, $filterProduct);
         $this->view->batchTypes = array_intersect($model->visibleTargetTypes(), array('story', 'requirement', 'epic'));
         if(!$model->canAccess('detail')) $this->view->batchTypes = array();
         $this->view->canBatchCreate = (bool)array_filter($this->view->batchTypes, static fn($type) => common::hasPriv($type, 'create'));
-        $this->view->feedback = $model->recent($this->view->scope, $this->view->filterProduct);
+        $this->view->beforeID = max(0, $beforeID);
+        $feedback = $model->recent($this->view->scope, $this->view->filterProduct, $this->view->beforeID);
+        $this->view->feedback = array_slice($feedback, 0, 50);
+        $this->view->nextBefore = count($feedback) > 50 ? (int)$feedback[49]->id : 0;
         $this->view->history = $model->historyForRecent($this->view->feedback);
         $this->display();
     }

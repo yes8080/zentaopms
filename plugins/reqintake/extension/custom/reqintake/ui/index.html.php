@@ -148,6 +148,16 @@ ob_start();
             </tbody>
         </table>
     <?php endif; ?>
+    <?php if($beforeID || $nextBefore): ?>
+        <nav class="mt-2" aria-label="<?= $escape($labels->pagination) ?>">
+            <?php if($beforeID): ?>
+                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct")) ?>"><?= $escape($labels->firstPage) ?></a>
+            <?php endif; ?>
+            <?php if($nextBefore): ?>
+                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=$nextBefore")) ?>"><?= $escape($labels->nextPage) ?></a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
 </section>
 <?php
 html(ob_get_clean());

@@ -66,3 +66,7 @@ $lang->reqintake->fields['category'] = '类别';
 $lang->reqintake->fields['priority'] = '优先级';
 $lang->reqintake->fields['acceptance'] = '验收标准';
 $lang->reqintake->errors['attributes'] = '请选择有效的类别和优先级，并检查验收标准的长度。';
+$lang->reqintake->scopes['pendingOwner'] = '待配置负责人';
+$lang->reqintake->pagination = '反馈分页';
+$lang->reqintake->firstPage = '第一页';
+$lang->reqintake->nextPage = '下一页';

@@ -11,7 +11,7 @@ class reqintakeModel extends model
         return array_values(array_filter(array_map('intval', explode(',', (string)($this->app->user->view->products ?? '')))));
     }
 
-    public function recent(string $scope = 'all', int $product = 0): array
+    public function recent(string $scope = 'all', int $product = 0, int $beforeID = 0): array
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -21,10 +21,12 @@ class reqintakeModel extends model
             ->where('p.deleted')->eq('0');
         if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
         if($product > 0) $query->andWhere('f.product')->eq($product);
+        if($beforeID > 0) $query->andWhere('f.id')->lt($beforeID);
+        if($scope === 'pendingOwner') $query->andWhere('f.assignmentPending')->eq(1);
         $account = $this->app->user->account;
         if($scope === 'mine') $query->andWhere('f.openedBy')->eq($account);
         if($scope === 'assigned') $query->andWhere('f.assignedTo')->eq($account)->andWhere('f.status')->ne('closed');
-        $rows = $query->orderBy('f.id_desc')->limit(50)->fetchAll();
+        $rows = $query->orderBy('f.id_desc')->limit(51)->fetchAll();
         if(!$rows) return $rows;
 
         $ids = array_map(static fn($item) => (int)$item->id, $rows);

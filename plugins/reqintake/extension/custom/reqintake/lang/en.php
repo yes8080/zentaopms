@@ -66,3 +66,7 @@ $lang->reqintake->fields['category'] = 'Category';
 $lang->reqintake->fields['priority'] = 'Priority';
 $lang->reqintake->fields['acceptance'] = 'Acceptance criteria';
 $lang->reqintake->errors['attributes'] = 'Choose a valid category and priority and check the length of acceptance criteria.';
+$lang->reqintake->scopes['pendingOwner'] = 'Owner configuration pending';
+$lang->reqintake->pagination = 'Feedback pages';
+$lang->reqintake->firstPage = 'First page';
+$lang->reqintake->nextPage = 'Next page';
