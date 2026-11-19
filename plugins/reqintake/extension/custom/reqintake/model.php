@@ -11,7 +11,7 @@ class reqintakeModel extends model
         return array_values(array_filter(array_map('intval', explode(',', (string)($this->app->user->view->products ?? '')))));
     }
 
-    public function recent(string $scope = 'all', int $product = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '', string $owner = '', string $status = ''): array
+    public function recent(string $scope = 'all', int $product = 0, int $beforeID = 0, string $sort = 'id', string $beforeUpdate = '', string $owner = '', string $status = '', string $updatedFrom = '', string $updatedTo = ''): array
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -23,6 +23,8 @@ class reqintakeModel extends model
         if($product > 0) $query->andWhere('f.product')->eq($product);
         if($owner !== '') $query->andWhere('f.assignedTo')->eq($owner);
         if($status !== '') $query->andWhere('f.status')->eq($status);
+        if($updatedFrom !== '') $query->andWhere('f.updatedDate')->ge($updatedFrom . ' 00:00:00');
+        if($updatedTo !== '') $query->andWhere('f.updatedDate')->le($updatedTo . ' 23:59:59');
         if($beforeID > 0)
         {
             if($sort === 'updated' && preg_match('/\A[0-9]{14}\z/', $beforeUpdate))

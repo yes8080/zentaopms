@@ -5,7 +5,9 @@ $labels = $lang->reqintake;
 $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $renderEditor = require __DIR__ . '/rich-editor.php';
 $rich = $inputRich;
-$filters = "&beforeUpdate=&filterOwner=" . rawurlencode($filterOwner) . "&filterStatus=" . rawurlencode($filterStatus);
+$filterParams = "&filterOwner=" . rawurlencode($filterOwner) . "&filterStatus=" . rawurlencode($filterStatus)
+    . "&updatedFrom=" . str_replace('-', '', $updatedFrom) . "&updatedTo=" . str_replace('-', '', $updatedTo);
+$filters = "&beforeUpdate=$filterParams";
 $baseParams = "previewProduct=0&beforeID=0&sort=$sort$filters";
 $columns = array(
     'product' => $labels->listColumns[2], 'owner' => $labels->listColumns[3], 'status' => $labels->listColumns[4],
@@ -103,6 +105,8 @@ ob_start();
                 <?php endforeach; ?>
             </select>
         </label>
+        <label><?= $escape($labels->updatedFrom) ?> <input type="date" name="updatedFrom" value="<?= $escape($updatedFrom) ?>"></label>
+        <label><?= $escape($labels->updatedTo) ?> <input type="date" name="updatedTo" value="<?= $escape($updatedTo) ?>"></label>
         <button class="btn" type="submit"><?= $escape($labels->filterFeedback) ?></button>
     </form>
     <?php if(!$feedback): ?>
@@ -211,7 +215,7 @@ ob_start();
                 <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&$baseParams")) ?>"><?= $escape($labels->firstPage) ?></a>
             <?php endif; ?>
             <?php if($nextBefore): ?>
-                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=$nextBefore&sort=$sort&beforeUpdate=" . rawurlencode($nextUpdate) . "&filterOwner=" . rawurlencode($filterOwner) . "&filterStatus=" . rawurlencode($filterStatus))) ?>"><?= $escape($labels->nextPage) ?></a>
+                <a class="btn" href="<?= $escape(\helper::createLink('reqintake', 'index', "scope=$scope&filterProduct=$filterProduct&previewProduct=0&beforeID=$nextBefore&sort=$sort&beforeUpdate=" . rawurlencode($nextUpdate) . $filterParams)) ?>"><?= $escape($labels->nextPage) ?></a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>

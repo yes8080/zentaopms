@@ -132,3 +132,6 @@ $lang->reqintake->reviewTarget = array('canceled' => 'The linked item was cancel
 
 $lang->reqintake->anyFilter = 'All';
 $lang->reqintake->filterFeedback = 'Filter feedback';
+
+$lang->reqintake->updatedFrom = 'Updated from';
+$lang->reqintake->updatedTo = 'Updated through';

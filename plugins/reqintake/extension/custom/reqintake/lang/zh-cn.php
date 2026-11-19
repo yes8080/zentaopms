@@ -132,3 +132,6 @@ $lang->reqintake->reviewTarget = array('canceled' => '承接单据已取消或�
 
 $lang->reqintake->anyFilter = '全部';
 $lang->reqintake->filterFeedback = '筛选反馈';
+
+$lang->reqintake->updatedFrom = '更新起始日期';
+$lang->reqintake->updatedTo = '更新结束日期';
