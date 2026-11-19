@@ -19,3 +19,15 @@ docker compose up -d --build
 三个命名卷分别保存数据库、安装生成的 `config/my.php` 和上传文件。更新代码后再次执行 `docker compose up -d --build` 可以保留这些卷。备份时同时保存数据库和上传文件。原官方一体化镜像的 `/data` 目录结构不同，迁移现有站点时应导出数据库并迁移上传文件。
 
 `.env` 中的 MySQL 初始化变量只在数据库卷为空时生效。已有数据库应按 MySQL 的账号管理流程修改密码，并同步禅道配置。
+
+### 持久化本地安装的扩展
+
+首次部署需要通过后台扩展管理安装自定义插件时，加入扩展卷配置。
+
+```sh
+docker compose -f compose.yaml -f docker/compose.extensions.yaml up -d --build
+```
+
+PHP 服务会将扩展安装目录、定制代码目录和扩展包目录的顶层目录设为 PHP-FPM 用户所有。自定义代码与已安装扩展包各自保存在命名卷中，管理员仍通过禅道扩展管理安装或升级插件。
+
+已有部署接入扩展卷前，先备份数据库及当前 PHP 容器内的 `extension/custom` 和 `extension/pkg`。在维护窗口把备份恢复到同一 Compose 项目的两个扩展卷，再检查 PHP-FPM 能读写原有扩展文件。创建、重建和管理服务时使用同一组 Compose 文件。

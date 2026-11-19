@@ -1,0 +1,15 @@
+services:
+  php:
+    command:
+      - sh
+      - -ec
+      - |
+        chown www-data:www-data /var/www/zentao/extension /var/www/zentao/extension/custom /var/www/zentao/extension/pkg
+        exec php-fpm
+    volumes:
+      - extension-custom:/var/www/zentao/extension/custom
+      - extension-packages:/var/www/zentao/extension/pkg
+
+volumes:
+  extension-custom:
+  extension-packages:
