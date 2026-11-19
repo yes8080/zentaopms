@@ -173,17 +173,22 @@ class reqintakeModel extends model
         return array('category' => $this->lang->story->categoryList, 'priority' => $this->lang->story->priList, 'source' => $this->lang->story->sourceList);
     }
 
+    public function mailtoOptions(): array
+    {
+        return array_filter($this->loadModel('user')->getPairs('pdfirst|noclosed|nodeleted'), static fn($account) => $account !== '', ARRAY_FILTER_USE_KEY);
+    }
+
     public function attributeDefaults(): array
     {
         return array('category' => 'feature', 'priority' => '3', 'acceptance' => '',
-            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'branchModules' => array());
+            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'branchModules' => array());
     }
 
     public function attributes(int $id, ?int $version = null): array
     {
         $defaults = $this->attributeDefaults();
         $prefix = $this->config->db->prefix;
-        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan') as $table => $fields)
+        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto') as $table => $fields)
         {
             $query = $this->dao->select($fields)->from($prefix . $table)->where('feedback')->eq($id);
             if($version !== null) $query->andWhere('version')->le($version);
@@ -253,6 +258,12 @@ class reqintakeModel extends model
             && !isset($this->planOptions($product, $fields['branch'])[$plan]))
             throw new InvalidArgumentException('plan');
 
+        if($fields['mailto'] !== ($previous['mailto'] ?? '') && $fields['mailto'] !== '')
+        {
+            $added = array_diff(explode(',', $fields['mailto']), explode(',', $previous['mailto'] ?? ''));
+            if(array_diff($added, array_keys($this->mailtoOptions()))) throw new InvalidArgumentException('mailto');
+        }
+
         $validated = array_replace($this->attributeDefaults(), $fields);
         $validated['priority'] = (string)$validated['priority'];
         return $validated;
@@ -275,6 +286,10 @@ class reqintakeModel extends model
         $table = $this->config->db->prefix . 'reqintakePlan';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,plan) VALUES (?,?,?)");
         $insert->execute([$id, $version, $fields['plan']]);
+
+        $table = $this->config->db->prefix . 'reqintakeMailto';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,mailto) VALUES (?,?,?)");
+        $insert->execute([$id, $version, $fields['mailto']]);
 
         $table = $this->config->db->prefix . 'reqintakeBranchScope';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branchModules) VALUES (?,?,?)");

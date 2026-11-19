@@ -105,6 +105,7 @@ class reqintake extends control
         }
         $this->view->fields = $fields + $inputAttributes + $this->reqintake->attributeDefaults();
         $this->view->attributeOptions = $this->reqintake->attributeOptions();
+        $this->view->mailtoOptions = $this->reqintake->mailtoOptions();
         $this->view->inputRich = isset($this->view->formError) && $this->formValue('bodyFormat') === 'rich';
         if($this->view->inputRich)
         {
@@ -242,6 +243,7 @@ class reqintake extends control
             'plan' => $scope['plans'][$this->view->attributes['branch']] ?? array()
         );
         $this->view->attributeOptions = $model->attributeOptions();
+        $this->view->mailtoOptions = $model->mailtoOptions();
         $this->view->handling = $model->handling($feedback);
         $this->view->followups = $model->followups($feedback);
         $this->view->duplicateOriginal = $model->duplicateOriginal($feedback);
@@ -292,8 +294,20 @@ class reqintake extends control
         $attributes = array();
         foreach(array_keys($this->reqintake->attributeDefaults()) as $field)
         {
-            if($field === 'branchModules') continue;
+            if(in_array($field, array('branchModules', 'mailto'), true)) continue;
             if(isset($_POST[$field])) $attributes[$field] = $this->formValue($field);
+        }
+        if(isset($_POST['mailtoPresent']) || isset($_POST['mailto']))
+        {
+            $accounts = $_POST['mailto'] ?? array();
+            if(!is_array($accounts) || count($accounts) > 100) throw new InvalidArgumentException('mailto');
+            foreach($accounts as $account)
+            {
+                if(!is_string($account) || str_contains($account, ',') || strlen($account) > 120) throw new InvalidArgumentException('mailto');
+            }
+            $accounts = array_unique(array_filter($accounts, static fn($account) => $account !== ''));
+            sort($accounts, SORT_STRING);
+            $attributes['mailto'] = implode(',', $accounts);
         }
         if(isset($_POST['branchModules']))
         {

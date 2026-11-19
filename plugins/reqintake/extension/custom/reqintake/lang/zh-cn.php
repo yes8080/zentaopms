@@ -109,3 +109,6 @@ $lang->reqintake->workbench = '待处理反馈';
 
 $lang->reqintake->fields['plan'] = '所属计划';
 $lang->reqintake->errors['plan'] = '请选择当前产品及主选分支的计划。';
+
+$lang->reqintake->fields['mailto'] = '抄送给';
+$lang->reqintake->errors['mailto'] = '请选择有效的抄送账号。';

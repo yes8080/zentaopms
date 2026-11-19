@@ -223,10 +223,14 @@ ob_start();
             <dd style="white-space: pre-wrap"><?= $escape($item->$field) ?></dd>
         <?php endforeach; ?>
         <?php foreach($attributes as $field => $value): ?>
-            <?php if(in_array($field, array('acceptance', 'branchModules'), true)) continue; ?>
+            <?php if(in_array($field, array('acceptance', 'branchModules', 'mailto'), true)) continue; ?>
             <dt><?= $escape($labels->fields[$field]) ?></dt>
             <dd style="white-space: pre-wrap"><?= $escape($scopeLabels[$field][$value] ?? $attributeOptions[$field][$value] ?? $value) ?></dd>
         <?php endforeach; ?>
+        <?php if($attributes['mailto'] !== ''): ?>
+            <dt><?= $escape($labels->fields['mailto']) ?></dt>
+            <dd><?= $escape(implode('、', array_map(static fn($account) => $mailtoOptions[$account] ?? $account, explode(',', $attributes['mailto'])))) ?></dd>
+        <?php endif; ?>
         <?php if($attributes['branchModules']): ?>
             <dt><?= $escape($labels->additionalBranches) ?></dt>
             <dd>

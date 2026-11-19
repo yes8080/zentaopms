@@ -230,7 +230,11 @@ for kind in args.conversion:
     page = request(route)
     fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
              for key in ('operation', 'token')}
-    created = submit(dict(payload, **fresh))
+    conversion_payload = dict(payload, **fresh)
+    if args.native_product and kind == 'story':
+        assert '请选择有效的抄送账号' in submit(conversion_payload | {'mailto[]': ['unknown_account_99']})
+        conversion_payload['mailto[]'] = ['ri_tester', 'ri_product_manager', 'ri_tester']
+    created = submit(conversion_payload)
     source_id = re.search(r'已登记反馈 #(\d+)', created)[1]
     source_route = detail_route + source_id
     links = (html.unescape(link).lstrip('/')
@@ -240,6 +244,8 @@ for kind in args.conversion:
     assert payload['title'] in form and payload['sourceNote'] not in form
     if kind == 'story':
         assert payload['estimate'] in form and payload['keywords'] in form
+        if args.native_product:
+            assert 'ri_product_manager,ri_tester' in html.unescape(form)
     native_title = 'Converted feedback ' + uuid4().hex
     native_fields = dict(product=product, title=native_title, spec='Public description',
                          category='feature', pri=3, needNotReview=1, status='active', module=0,
