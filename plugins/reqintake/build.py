@@ -14,7 +14,7 @@ def main():
     with ZipFile(output, "w", ZIP_DEFLATED) as archive:
         # ZenTao derives the common extraction prefix from the first entry.
         archive.writestr(f"{root.name}/", "")
-        for directory in ("db", "doc", "extension", "hook"):
+        for directory in ("db", "doc", "extension"):
             for path in sorted((root / directory).rglob("*")):
                 if path.is_file():
                     archive.write(path, Path(root.name) / path.relative_to(root))
