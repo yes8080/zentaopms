@@ -1335,7 +1335,10 @@ eof;
          * 以下页面可以允许在非 iframe 中打开，所以要忽略这些页面。
          * The following pages can be allowed to open in non-iframe, so ignore these pages.
          */
-        $module     = $this->app->getModuleName();
+        $module = $this->app->getModuleName();
+        /* Open feedback submits native POST forms and serves downloads directly. */
+        if($module === 'feedback' && $this->config->edition === 'open'
+            && (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' || in_array($method, array('download', 'export'), true))) return;
         $whitelist  = is_string($whitelist) ? $whitelist : '|index|tutorial|install|upgrade|sso|cron|misc|user-login|user-logout|user-reset|user-forgetpassword|user-resetpassword|my-changepassword|my-preference|file-read|file-download|file-preview|file-viewdownload|file-uploadimages|file-ajaxwopifiles|doc-downloadfile|doc-previewfile|report-annualdata|misc-captcha|execution-printkanban|traincourse-ajaxuploadlargefile|traincourse-playvideo|screen-view|zanode-create|screen-ajaxgetchart|ai-chat|integration-wopi|instance-terminal|conference-getconferencepermissions|instance-logs|';
         $iframeList = '|cron-index|zanode-create|';
 

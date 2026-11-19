@@ -665,6 +665,7 @@ $config->hasBranchMenuModules   = array('product', 'story', 'release', 'bug', 't
 $config->excludeBranchMenu      = array('product-dashboard', 'product-view', 'product-whitelist', 'product-addwhitelist', 'branch-manage', 'branch-batchedit');
 $config->excludeDropmenuList    = array('program-browse', 'program-productview', 'program-kanban', 'product-all', 'product-index', 'product-kanban', 'project-kanban', 'execution-all', 'execution-executionkanban', 'project-browse', 'project-template', 'project-createtemplate', 'project-batchedit', 'product-batchedit', 'admin-index', 'product-create', 'project-create', 'execution-create', 'program-create', 'execution-batchedit', 'metric-preview', 'metric-browse', 'metric-view', 'metriclib-browse', 'qa-index', 'caselib-create', 'feedback-batchedit', 'feedback-batchclose', 'feedback-showimport', 'dimension-browse', 'dataview-browse', 'dataview-create', 'dataview-query', 'ticket-batchedit', 'ticket-batchfinish', 'ticket-batchactivate', 'ticket-showimport', 'file-download', 'feedback-products');
 $config->excludeDropmenuModules = array('reporttemplate', 'space');
+if($config->edition === 'open') $config->excludeDropmenuModules[] = 'feedback';
 $config->hasSwitcherModules     = array('design');
 $config->hasSwitcherMethods     = array('project-bug', 'project-testcase', 'execution-bug', 'execution-testcase', 'testtask-cases', 'testtask-view', 'testtask-report', 'testtask-groupcase', 'testtask-linkcase');
 $config->excludeSwitcherList    = array();

@@ -30,10 +30,11 @@ ob_start();
     <h2 class="panel-title">#<?= (int)$feedback->id ?> <?= $escape($feedback->title) ?></h2>
     <div class="flex gap-2">
       <?php if($canOperate('edit')): ?><a class="btn" href="<?= $escape($link('edit')) ?>"><?= $escape($feedbackLang->edit) ?></a><?php endif; ?>
-      <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse')) ?>"><?= $escape($feedbackLang->back) ?></a>
+      <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse', 'browseType=all')) ?>"><?= $escape($feedbackLang->back) ?></a>
     </div>
   </div>
   <div class="panel-body">
+    <?php if($justSaved): ?><p class="alert success mb-4" role="status"><?= $escape($lang->saveSuccess) ?></p><?php endif; ?>
     <dl class="feedback-summary">
       <?php foreach($fields as $field => $value): ?>
         <div><dt class="text-muted"><?= $escape($feedbackLang->$field) ?></dt><dd><?= $escape($value) ?></dd></div>
@@ -80,7 +81,7 @@ ob_start();
         <?php if(\common::hasPriv('feedback', 'download')): ?>
           <ul class="my-2">
             <?php foreach($attachments as $attachment): ?>
-              <li><a href="<?= $escape(helper::createLink('feedback', 'download', array('fileID' => $attachment->id))) ?>"><?= $escape($attachment->title) ?></a></li>
+              <li><a download="<?= $escape($attachment->title) ?>" href="<?= $escape(helper::createLink('feedback', 'download', array('fileID' => $attachment->id))) ?>"><?= $escape($attachment->title) ?></a></li>
             <?php endforeach; ?>
           </ul>
         <?php endif; ?>

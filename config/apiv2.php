@@ -317,6 +317,7 @@ $routes['/ncs/:ncID']                            = array(
 
 $routes['/feedbacks']                     = array('method' => 'admin', 'response' => 'feedbacks(array),pager', 'search' => array('enabled' => true));
 $routes['/products/:productID/feedbacks'] = array('redirect' => '/feedbacks?param=:productID', 'search' => array('enabled' => true));
+if($this->config->edition === 'open') $routes['/products/:productID/feedbacks']['redirect'] = '/feedbacks?productID=:productID';
 $routes['/feedbacks/:feedbackID/todos']   = array('post' => array('redirect' => '/todo/create?date=today&from=feedback&param=:feedbackID', 'data' => 'feedback=:feedbackID&type=feedback'));
 $routes['/feedbacks/:feedbackID/stories'] = array('post' => array('redirect' => '/story/create?productID=0&branch=0&extra=fromType=feedback,fromID=:feedbackID', 'data' => 'feedback=:feedbackID'));
 $routes['/feedbacks/:feedbackID']         = array('response' => 'feedback,actions(array)');

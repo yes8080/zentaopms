@@ -1,6 +1,8 @@
 <?php
 namespace zin;
 
+require __DIR__ . '/layout.php';
+
 $feedbackLang = $lang->feedback;
 $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $link = static fn($method, $params = '') => helper::createLink('feedback', $method, $params);
@@ -14,10 +16,10 @@ $exportLink = $link('export', http_build_query(array('template' => 0, 'productID
 ob_start();
 ?>
 <main class="panel">
-  <div class="panel-heading flex justify-between items-center">
+  <div class="panel-heading feedback-actions feedback-browse-heading">
     <h2 class="panel-title"><?= $escape($feedbackLang->browse) ?></h2>
-    <div class="flex gap-2">
-    <?php if(\common::hasPriv('feedback', 'export')): ?><a class="btn" href="<?= $escape($exportLink) ?>"><?= $escape($feedbackLang->export) ?></a><?php endif; ?>
+    <div class="feedback-actions">
+    <?php if(\common::hasPriv('feedback', 'export')): ?><a class="btn" download="feedback.xlsx" href="<?= $escape($exportLink) ?>"><?= $escape($feedbackLang->export) ?></a><?php endif; ?>
     <?php if(\common::hasPriv('feedback', 'import') && \common::hasPriv('feedback', 'create')): ?><a class="btn" href="<?= $escape($link('import')) ?>"><?= $escape($feedbackLang->import) ?></a><?php endif; ?>
     <?php if(\common::hasPriv('feedback', 'create')): ?>
       <a class="btn primary" href="<?= $escape($link('create', "productID=$productID")) ?>"><?= $escape($feedbackLang->create) ?></a>
@@ -25,20 +27,20 @@ ob_start();
     </div>
   </div>
   <div class="panel-body">
-    <nav class="flex gap-2 flex-wrap" aria-label="<?= $escape($feedbackLang->status) ?>">
+    <nav class="feedback-actions" aria-label="<?= $escape($feedbackLang->status) ?>">
       <?php foreach($feedbackLang->filters as $filter => $label): ?>
         <a class="btn <?= $filter === $browseType ? 'secondary' : 'ghost' ?>" href="<?= $escape($browseLink($filter, 1)) ?>"><?= $escape($label) ?></a>
       <?php endforeach; ?>
     </nav>
-    <form method="post" action="<?= $escape($link('browse')) ?>" class="flex gap-2 flex-wrap my-4">
-      <input class="form-control w-56" name="keyword" value="<?= $escape($keyword) ?>" placeholder="<?= $escape($feedbackLang->search) ?>" aria-label="<?= $escape($feedbackLang->search) ?>">
-      <select class="form-control w-48" name="productID" aria-label="<?= $escape($feedbackLang->product) ?>">
+    <form method="post" action="<?= $escape($link('browse')) ?>" class="feedback-search">
+      <input class="form-control" name="keyword" value="<?= $escape($keyword) ?>" placeholder="<?= $escape($feedbackLang->search) ?>" aria-label="<?= $escape($feedbackLang->search) ?>">
+      <select class="form-control" name="productID" aria-label="<?= $escape($feedbackLang->product) ?>">
         <option value="0"><?= $escape($feedbackLang->allProducts) ?></option>
         <?php foreach($products as $id => $name): ?>
           <option value="<?= (int)$id ?>" <?= $id == $productID ? 'selected' : '' ?>><?= $escape($name) ?></option>
         <?php endforeach; ?>
       </select>
-      <select class="form-control w-48" name="browseType" aria-label="<?= $escape($feedbackLang->status) ?>">
+      <select class="form-control" name="browseType" aria-label="<?= $escape($feedbackLang->status) ?>">
         <?php foreach($feedbackLang->filters + $feedbackLang->statusList as $filter => $label): ?>
           <option value="<?= $escape($filter) ?>" <?= $filter === $browseType ? 'selected' : '' ?>><?= $escape($label) ?></option>
         <?php endforeach; ?>
@@ -49,7 +51,7 @@ ob_start();
       <p class="text-muted py-6"><?= $escape($feedbackLang->empty) ?></p>
     <?php else: ?>
       <?php if($canBatch): ?><form method="post" action="<?= $escape($link('batch')) ?>"><?php endif; ?>
-      <div class="overflow-auto">
+      <div class="feedback-table">
         <table class="table table-hover">
           <thead><tr><?php if($canBatch): ?><th></th><?php endif; ?><th>ID</th>
           <?php foreach(array('title', 'product', 'status', 'pri', 'openedBy', 'assignedTo') as $column): ?>

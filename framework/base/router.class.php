@@ -1831,12 +1831,14 @@ class baseRouter
             if(strpos($line1, '<?php //') === 0) $isEncrypted = true;
         }
 
-        /* include default value for module. */
-        $defaultValueFiles = glob($this->getTmpRoot() . "defaultvalue/*.php");
-        if($defaultValueFiles) foreach($defaultValueFiles as $file) include $file;
-        /* include default type for module. */
-        $defaultTypeFiles = glob($this->getTmpRoot() . "defaulttype/*.php");
-        if($defaultTypeFiles) foreach($defaultTypeFiles as $typeFile) include $typeFile;
+        /* The unencrypted open feedback controller declares its own defaults and types. */
+        if($moduleName !== 'feedback' || $this->config->edition !== 'open' || $isEncrypted)
+        {
+            $defaultValueFiles = glob($this->getTmpRoot() . "defaultvalue/*.php");
+            if($defaultValueFiles) foreach($defaultValueFiles as $file) include $file;
+            $defaultTypeFiles = glob($this->getTmpRoot() . "defaulttype/*.php");
+            if($defaultTypeFiles) foreach($defaultTypeFiles as $file) include $file;
+        }
 
         /**
          * 使用反射机制获取函数参数的默认值。

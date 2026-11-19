@@ -13,7 +13,7 @@ ob_start();
   <div class="panel-body">
     <?php if(!empty($error)): ?><p class="alert danger" role="alert"><?= $escape($error) ?></p><?php endif; ?>
     <?php if(!$products): ?><p class="alert warning" role="status"><?= $escape($feedbackLang->noProducts) ?></p><?php endif; ?>
-    <form method="post" class="feedback-form">
+    <form method="post" action="<?= $escape($formAction) ?>" class="feedback-form">
       <label class="feedback-field"><?= $escape($feedbackLang->title) ?>
         <input class="form-control" name="title" required maxlength="255" value="<?= $escape($feedback->title ?? '') ?>">
       </label>
@@ -62,7 +62,7 @@ ob_start();
       </div>
       <div class="feedback-actions">
         <button class="btn primary" type="submit" <?= !$products ? 'disabled' : '' ?>><?= $escape($lang->save) ?></button>
-        <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse')) ?>"><?= $escape($feedbackLang->back) ?></a>
+        <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse', 'browseType=all')) ?>"><?= $escape($feedbackLang->back) ?></a>
       </div>
     </form>
   </div>

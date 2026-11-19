@@ -11,7 +11,7 @@ ob_start();
     <?php if(!empty($error)): ?><p class="alert danger" role="alert"><?= $escape($error) ?></p><?php endif; ?>
     <p><?= $escape($feedbackLang->importHelp) ?></p>
     <?php if(\common::hasPriv('feedback', 'export')): ?>
-      <a class="btn my-2" href="<?= $escape(helper::createLink('feedback', 'export', 'template=1')) ?>"><?= $escape($feedbackLang->template) ?></a>
+      <a class="btn my-2" download="feedback-template.xlsx" href="<?= $escape(helper::createLink('feedback', 'export', 'template=1')) ?>"><?= $escape($feedbackLang->template) ?></a>
     <?php endif; ?>
     <ul class="my-2">
       <?php foreach($products as $id => $name): ?><li>#<?= (int)$id ?> <?= $escape($name) ?></li><?php endforeach; ?>

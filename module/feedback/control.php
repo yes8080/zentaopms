@@ -11,8 +11,11 @@ class feedback extends control
         if($this->viewType === 'html' && $_POST)
         {
             $searchText = mb_substr(trim($this->input('keyword')), 0, 100);
+            $filter = $this->input('browseType', 'unclosed');
+            $filters = $this->lang->feedback->filters + $this->lang->feedback->statusList;
+            if(!isset($filters[$filter])) $filter = 'unclosed';
             return $this->locate($this->createLink('feedback', 'browse', array(
-                'browseType' => $this->input('browseType', 'unclosed'), 'productID' => (int)$this->input('productID'),
+                'browseType' => $filter, 'productID' => (int)$this->input('productID'),
                 'orderBy' => 'id_desc', 'recTotal' => 0, 'recPerPage' => $recPerPage, 'pageID' => 1,
                 'keyword' => $searchText === '' ? '' : helper::safe64Encode($searchText),
             )));
@@ -50,6 +53,8 @@ class feedback extends control
 
         $this->view->title = $feedback->title;
         $this->view->feedback = $feedback;
+        $this->view->justSaved = $this->viewType === 'html' && (int)$this->session->feedbackSavedID === $feedbackID;
+        if($this->view->justSaved) $this->session->set('feedbackSavedID', 0);
         $this->view->repeat = $feedback->repeatFeedback ? $this->feedback->getByID((int)$feedback->repeatFeedback) : false;
         $this->view->product = zget($this->feedback->getGrantProducts(), $feedback->product, '');
         $this->view->modulePath = $feedback->module ? $this->loadModel('tree')->getParents($feedback->module) : array();
@@ -81,6 +86,9 @@ class feedback extends control
     private function editForm(?object $feedback, int $productID)
     {
         $products = $this->feedback->getGrantProducts();
+        $action = $feedback
+            ? $this->createLink('feedback', 'edit', array('feedbackID' => (int)$feedback->id))
+            : $this->createLink('feedback', 'create', array('productID' => $productID));
         $input = array();
         foreach(array('title', 'product', 'module', 'type', 'pri', 'desc', 'public', 'feedbackBy', 'notifyEmail', 'notify') as $field)
         {
@@ -93,11 +101,13 @@ class feedback extends control
             return;
         }
 
-        if($_POST)
+        if($_POST || ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST')
         {
             try
             {
+                if(!$_POST) throw new InvalidArgumentException($this->lang->feedback->invalidFields);
                 $id = $this->feedback->saveFeedback($input, $feedback);
+                if($this->viewType === 'html') $this->session->set('feedbackSavedID', $id);
                 return $this->success($id);
             }
             catch(InvalidArgumentException|RuntimeException $error)
@@ -112,6 +122,7 @@ class feedback extends control
         if(!$productID) $productID = (int)array_key_first($products);
         $moduleOptions = $this->feedback->getModuleOptions(array_keys($products));
         $modules = $moduleOptions[$productID] ?? array();
+        $this->view->formAction = $action;
         $this->view->moduleOptions = $moduleOptions;
         $this->view->title = $this->lang->feedback->{$this->methodName === 'edit' ? 'edit' : 'create'};
         $this->view->feedback = $feedback;

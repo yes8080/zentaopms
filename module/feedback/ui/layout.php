@@ -48,7 +48,30 @@ context::css(<<<'CSS'
 .feedback-operation > button {
     justify-self: start;
 }
+.feedback-browse-heading {
+    justify-content: space-between;
+}
+.feedback-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr)) auto;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block: 1rem;
+}
+.feedback-search > .form-control {
+    min-width: 0;
+    width: 100%;
+}
+.feedback-table {
+    overflow-x: auto;
+}
+.feedback-table > .table {
+    min-width: 42rem;
+}
 @media (max-width: 640px) {
+    .feedback-search {
+        grid-template-columns: minmax(0, 1fr);
+    }
     .feedback-fields {
         grid-template-columns: minmax(0, 1fr);
     }
