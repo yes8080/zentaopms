@@ -40,7 +40,40 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await columns.locator('summary').click();
         await columns.locator('input[value=customer]').check();
         await customerHeader.waitFor({state:'visible'});
-        await form.locator('[name=product]').selectOption({label:product});
+        const previousProduct = process.env.REQINTAKE_PREVIEW_RACE_PRODUCT;
+        const productPicker = form.locator('[name=product]');
+        if (previousProduct) {
+            const options = await productPicker.locator('option').evaluateAll(items =>
+                Object.fromEntries(items.map(item => [item.label, item.value])));
+            assert.ok(options[previousProduct] && options[product] && previousProduct !== product);
+            const firstPreview = url => url.searchParams.get('previewProduct') === options[previousProduct];
+            const initialTitle = 'Draft survives product switch';
+            await form.locator('[name=title]').fill(initialTitle);
+            let releaseFirst;
+            const firstResponseGate = new Promise(resolve => { releaseFirst = resolve; });
+            let firstPreviewData;
+            await page.route(firstPreview, async route => {
+                const response = await route.fetch();
+                firstPreviewData = await response.json();
+                await firstResponseGate;
+                await route.fulfill({response});
+            }, {times:1});
+            const started = page.waitForRequest(request => firstPreview(new URL(request.url())));
+            await productPicker.selectOption({label:previousProduct});
+            await started;
+            await productPicker.selectOption({label:product});
+            const preview = form.locator('output');
+            await preview.getByText(/待配置负责人/).waitFor();
+            const selectedPreview = await preview.textContent();
+            const released = page.waitForResponse(response => firstPreview(new URL(response.url())));
+            releaseFirst();
+            await (await released).finished();
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            assert.equal(firstPreviewData.pending, false);
+            assert.equal(await preview.textContent(), selectedPreview);
+            assert.equal(await form.locator('[name=title]').inputValue(), initialTitle);
+        }
+        await productPicker.selectOption({label:product});
         await page.waitForFunction(() => document.querySelector('#reqintake-receive output')?.textContent.includes('待配置负责人'),{},{timeout:5000}).catch(async e=>{console.log(await form.locator('output').textContent(),errors);throw e;});
         const branchModule = process.env.REQINTAKE_BRANCH_MODULE;
         if (branchModule) {
