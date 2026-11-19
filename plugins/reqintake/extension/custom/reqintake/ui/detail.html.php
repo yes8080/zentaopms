@@ -45,6 +45,27 @@ ob_start();
             </form>
         </details>
     <?php endif; ?>
+    <?php if($stateHistory): ?>
+        <?php
+        $actions = array();
+        foreach(array_reverse($stateHistory) as $index => $entry)
+        {
+            $text = $entry->createdDate . ' · ' . $entry->actor . ' · ' . ($labels->actions[$entry->action] ?? $entry->action);
+            if($entry->reason !== '') $text .= ' · ' . $entry->reason;
+            $actions[] = array('id' => $index + 1, 'action' => $entry->action, 'hasRendered' => true, 'content' => $escape($text));
+        }
+        disableGlobalRender();
+        try
+        {
+            echo history(set::objectType('reqintake'), set::objectID((int)$item->id), set::actions($actions),
+                set::title($labels->history), set::commentBtn(''))->render();
+        }
+        finally
+        {
+            enableGlobalRender();
+        }
+        ?>
+    <?php endif; ?>
     <?php if($revisions): ?>
         <details>
             <summary><?= $escape($labels->revisionHistory) ?></summary>

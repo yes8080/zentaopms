@@ -262,6 +262,7 @@ class reqintake extends control
         );
         $this->view->attributeOptions = $model->attributeOptions();
         $this->view->mailtoOptions = $model->mailtoOptions();
+        $this->view->stateHistory = $model->historyForRecent(array($feedback))[$id] ?? array();
         $this->view->handling = $model->handling($feedback);
         $this->view->followups = $model->followups($feedback);
         $this->view->duplicateOriginal = $model->duplicateOriginal($feedback);

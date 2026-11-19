@@ -81,6 +81,7 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         assert.equal(await app.locator('#reqintake-edit').getAttribute('open'), '');
         await app.locator('#reqintake-workflow button[value=start]').click();
         await app.locator('.reqintake-detail-info').getByText('跟进中', {exact:true}).waitFor();
+        await app.locator('.reqintake-detail-content').getByText(/admin · 开始跟进/).waitFor();
         assert.deepEqual(errors,[]);
         if (process.env.REQINTAKE_SCREENSHOT) await page.screenshot({path:process.env.REQINTAKE_SCREENSHOT,fullPage:true});
         console.log('Browser verified product preview, editor input, clipboard PNG, submission and detail');
