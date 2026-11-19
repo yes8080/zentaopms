@@ -205,14 +205,14 @@ class reqintakeModel extends model
     public function attributeDefaults(): array
     {
         return array('category' => 'feature', 'priority' => '3', 'acceptance' => '',
-            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'customerVersion' => '', 'suggestedGrade' => '', 'branchModules' => array());
+            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'customerVersion' => '', 'suggestedGrade' => '', 'suggestedParent' => '', 'branchModules' => array());
     }
 
     public function attributes(int $id, ?int $version = null): array
     {
         $defaults = $this->attributeDefaults();
         $prefix = $this->config->db->prefix;
-        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto', 'reqintakeCustomerVersion' => 'customerVersion', 'reqintakeGrade' => 'suggestedGrade') as $table => $fields)
+        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto', 'reqintakeCustomerVersion' => 'customerVersion', 'reqintakeGrade' => 'suggestedGrade', 'reqintakeParent' => 'suggestedParent') as $table => $fields)
         {
             $query = $this->dao->select($fields)->from($prefix . $table)->where('feedback')->eq($id);
             if($version !== null) $query->andWhere('version')->le($version);
@@ -294,6 +294,25 @@ class reqintakeModel extends model
         if($fields['suggestedGrade'] !== ($previous['suggestedGrade'] ?? '') && !isset($this->gradeSuggestions()[$fields['suggestedGrade']]))
             throw new InvalidArgumentException('suggestedGrade');
 
+        $parentID = $fields['suggestedParent'];
+        if($parentID !== '' && $parentID !== ($previous['suggestedParent'] ?? ''))
+        {
+            if(!preg_match('/\A[1-9][0-9]{0,9}\z/', $parentID)) throw new InvalidArgumentException('suggestedParent');
+            $parent = $this->dao->select('type')->from(TABLE_STORY)->where('id')->eq((int)$parentID)
+                ->andWhere('product')->eq($product)->andWhere('deleted')->eq('0')->fetch();
+            if(!$parent || !in_array($parent->type, array('story', 'requirement', 'epic'), true)
+                || !common::hasPriv($parent->type, 'view')) throw new InvalidArgumentException('suggestedParent');
+            $story = $this->loadModel('story');
+            $eligible = false;
+            foreach(array('story', 'requirement', 'epic') as $type)
+            {
+                if(!isset($story->getParentStoryPairs($product, '', $type)[$parentID])) continue;
+                $eligible = true;
+                break;
+            }
+            if(!$eligible) throw new InvalidArgumentException('suggestedParent');
+        }
+
         $validated = array_replace($this->attributeDefaults(), $fields);
         $validated['priority'] = (string)$validated['priority'];
         return $validated;
@@ -328,6 +347,10 @@ class reqintakeModel extends model
         $table = $this->config->db->prefix . 'reqintakeGrade';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,suggestedGrade) VALUES (?,?,?)");
         $insert->execute([$id, $version, $fields['suggestedGrade']]);
+
+        $table = $this->config->db->prefix . 'reqintakeParent';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,suggestedParent) VALUES (?,?,?)");
+        $insert->execute([$id, $version, $fields['suggestedParent']]);
 
         $table = $this->config->db->prefix . 'reqintakeBranchScope';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branchModules) VALUES (?,?,?)");

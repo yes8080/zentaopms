@@ -46,6 +46,9 @@ query('formGridPanel')->each(function($node) use($title, $description, $attribut
     [$gradeType, $grade] = array_pad(explode(':', $attributes['suggestedGrade'], 2), 2, '');
     if($gradeType === data('type') && data('gradeRule') !== 'stepwise' && isset(data('fields.grade.options')[$grade]))
         $fields->field('grade')->value((int)$grade);
+    $parent = $attributes['suggestedParent'];
+    if($parent !== '' && !data('fields.parent.hidden') && isset(data('fields.parent.options')[$parent]))
+        $fields->field('parent')->value((int)$parent);
     foreach(array('source', 'keywords', 'estimate') as $field)
     {
         if($attributes[$field] !== '') $fields->field($field)->value($attributes[$field]);

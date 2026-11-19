@@ -141,3 +141,6 @@ $lang->reqintake->wholeFeedback = 'Entire feedback';
 
 $lang->reqintake->fields['suggestedGrade'] = 'Suggested demand grade';
 $lang->reqintake->errors['suggestedGrade'] = 'Select a valid suggested demand grade.';
+
+$lang->reqintake->fields['suggestedParent'] = 'Suggested parent demand ID';
+$lang->reqintake->errors['suggestedParent'] = 'Enter an eligible parent demand ID from the same product.';

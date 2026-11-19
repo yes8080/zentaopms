@@ -205,3 +205,10 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeGrade` (
   `suggestedGrade` varchar(40) NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeParent` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `suggestedParent` varchar(10) NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

@@ -141,3 +141,6 @@ $lang->reqintake->wholeFeedback = '整条反馈';
 
 $lang->reqintake->fields['suggestedGrade'] = '建议需求层级';
 $lang->reqintake->errors['suggestedGrade'] = '请选择有效的需求层级建议。';
+
+$lang->reqintake->fields['suggestedParent'] = '建议父需求编号';
+$lang->reqintake->errors['suggestedParent'] = '请选择同一产品中可作为父需求的单据编号。';

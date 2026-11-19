@@ -24,9 +24,9 @@
     <legend><?= $escape($labels->additionalBranches) ?></legend>
     <div data-reqintake-branches></div>
 </fieldset>
-<?php foreach(array('sourceNote' => 255, 'keywords' => 255, 'estimate' => 11, 'customerVersion' => 100) as $field => $limit): ?>
+<?php foreach(array('sourceNote' => 255, 'keywords' => 255, 'estimate' => 11, 'customerVersion' => 100, 'suggestedParent' => 10) as $field => $limit): ?>
     <label class="block mb-2"><?= $escape($labels->fields[$field]) ?>
-        <input class="form-control" name="<?= $field ?>" value="<?= $escape($values[$field]) ?>" maxlength="<?= $limit ?>" <?= $field === 'estimate' ? 'inputmode="decimal"' : '' ?>>
+        <input class="form-control" name="<?= $field ?>" value="<?= $escape($values[$field]) ?>" maxlength="<?= $limit ?>" <?= $field === 'estimate' ? 'inputmode="decimal"' : ($field === 'suggestedParent' ? 'inputmode="numeric"' : '') ?>>
     </label>
 <?php endforeach; ?>
 <label class="block mb-2"><?= $escape($labels->fields['acceptance']) ?>
