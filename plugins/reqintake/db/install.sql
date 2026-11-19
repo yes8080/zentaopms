@@ -192,3 +192,9 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeClosure` (
   `outcome` varchar(10) NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeInitialAttachment` (
+  `feedback` int unsigned NOT NULL,
+  `fingerprint` char(64) NOT NULL,
+  PRIMARY KEY (`feedback`)
+) ENGINE=InnoDB;

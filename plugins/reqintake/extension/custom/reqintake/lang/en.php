@@ -125,3 +125,5 @@ $lang->reqintake->closeOutcomes = array('other' => 'Other', 'confirmed' => 'Cust
 $lang->reqintake->closeVerification = 'Remaining work and agreed customer retest verified';
 $lang->reqintake->errors['closeOutcome'] = 'Select a valid closure outcome.';
 $lang->reqintake->errors['closeVerification'] = 'Verify remaining work and the agreed customer retest before closing as confirmed.';
+
+$lang->reqintake->reselectAttachment = 'Select the attachment again after correcting the form.';

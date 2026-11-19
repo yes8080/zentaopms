@@ -16,7 +16,7 @@ ob_start();
     <h2><?= $escape($labels->common) ?></h2>
     <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
     <?php if(isset($savedID)): ?><p role="status"><?= $escape(sprintf($labels->saved, $savedID)) ?></p><?php endif; ?>
-    <form id="reqintake-receive" method="post">
+    <form id="reqintake-receive" method="post" enctype="multipart/form-data">
         <input type="hidden" name="bodyFormat" value="rich">
         <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
         <input type="hidden" name="token" value="<?= $escape($token) ?>">
@@ -42,6 +42,12 @@ ob_start();
             <?= $renderEditor('description', $fields['description'], $rich) ?>
         </label>
         <?php $values = $fields; require __DIR__ . '/attribute-fields.php'; ?>
+        <label class="block mb-2"><?= $escape($labels->attachmentLimit) ?>
+            <input type="file" name="attachment">
+        </label>
+        <?php if(isset($formError) && isset($_FILES['attachment']) && ($_FILES['attachment']['error'] ?? null) !== UPLOAD_ERR_NO_FILE): ?>
+            <p><?= $escape($labels->reselectAttachment) ?></p>
+        <?php endif; ?>
         <button class="btn primary" type="submit"><?= $escape($labels->submit) ?></button>
     </form>
     <?php if($isAdmin): ?>

@@ -98,12 +98,20 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
             element.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true,composed:true}));
         },png);
         await editor.locator('img[src]').waitFor();
+        const attachmentBytes = Buffer.from([0, 255, 13, 10, 1]);
+        await form.locator('input[name=attachment]').setInputFiles({
+            name:'initial-attachment.bin', mimeType:'application/octet-stream', buffer:attachmentBytes
+        });
         await form.getByRole('button',{name:'提交需求'}).click();
         await app.getByText(/已登记反馈 #\d+/).waitFor();
         const detail = await app.getByRole('link',{name:title,exact:true}).getAttribute('href');
         await page.goto(new URL(detail,base).href+'&attachmentID=0&_single=1');
         await app.locator('dl').getByText('Browser acceptance',{exact:true}).waitFor();
         assert.equal(await app.locator('dd img').count(),1);
+        const attachment = app.getByRole('link',{name:'initial-attachment.bin',exact:true});
+        const download = await api.get(new URL(await attachment.getAttribute('href'),base).href);
+        assert.equal(download.status(),200);
+        assert.deepEqual(await download.body(),attachmentBytes);
         if (branchModule) await app.locator('dl').getByText(branchModule, {exact:false}).waitFor();
         const content = await app.locator('.reqintake-detail-content').boundingBox();
         const info = await app.locator('.reqintake-detail-info').boundingBox();

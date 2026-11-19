@@ -125,3 +125,5 @@ $lang->reqintake->closeOutcomes = array('other' => '其他', 'confirmed' => '客
 $lang->reqintake->closeVerification = '已核实剩余事项和约定的客户复测';
 $lang->reqintake->errors['closeOutcome'] = '请选择有效的结案结果。';
 $lang->reqintake->errors['closeVerification'] = '客户确认结案前，请核实剩余事项和约定的复测。';
+
+$lang->reqintake->reselectAttachment = '修正表单后请重新选择附件。';

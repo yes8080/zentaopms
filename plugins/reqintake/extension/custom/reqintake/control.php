@@ -83,7 +83,7 @@ class reqintake extends control
                 }
                 else
                 {
-                    $id = $model->receive((int)$fields['product'], $operation, $fields['title'], $fields['description'], $fields['customer'], $fields['channel'], $this->attributeInputs(), $this->formValue('bodyFormat') === 'rich');
+                    $id = $model->receive((int)$fields['product'], $operation, $fields['title'], $fields['description'], $fields['customer'], $fields['channel'], $this->attributeInputs(), $this->formValue('bodyFormat') === 'rich', $_FILES['attachment'] ?? null);
                     $this->view->savedID = $id;
                 }
                 $operation = bin2hex(random_bytes(16));

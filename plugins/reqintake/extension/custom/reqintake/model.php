@@ -89,22 +89,30 @@ class reqintakeModel extends model
         return $read->fetch(PDO::FETCH_OBJ);
     }
 
+    private function readAttachment(?array $upload): array
+    {
+        if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($upload['tmp_name'] ?? null)
+            || !is_uploaded_file($upload['tmp_name'])) throw new InvalidArgumentException('attachment');
+        $size = filesize($upload['tmp_name']);
+        if(!$size || $size > 5 * 1024 * 1024) throw new InvalidArgumentException('attachment');
+        $name = basename(str_replace(chr(92), '/', (string)$upload['name']));
+        if($name === '' || mb_strlen($name) > 255 || preg_match('/[[:cntrl:]]/', $name)) throw new InvalidArgumentException('attachment');
+        $data = file_get_contents($upload['tmp_name']);
+        if($data === false || strlen($data) !== $size) throw new InvalidArgumentException('attachment');
+        return array($name, $data);
+    }
+
+    private function insertAttachment(int $id, string $name, string $data): void
+    {
+        $table = $this->config->db->prefix . 'reqintakeAttachment';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,name,data) VALUES (?,?,?)");
+        $insert->execute([$id, $name, $data]);
+    }
+
     public function changeAttachment(object $feedback, int $version, ?array $upload, int $remove = 0): void
     {
         if(!$this->canHandle($feedback)) throw new DomainException('handler');
-        $name = '';
-        $data = '';
-        if(!$remove)
-        {
-            if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($upload['tmp_name'] ?? null)
-                || !is_uploaded_file($upload['tmp_name'])) throw new InvalidArgumentException('attachment');
-            $size = filesize($upload['tmp_name']);
-            if(!$size || $size > 5 * 1024 * 1024) throw new InvalidArgumentException('attachment');
-            $name = basename(str_replace(chr(92), '/', (string)$upload['name']));
-            if($name === '' || mb_strlen($name) > 255 || preg_match('/[[:cntrl:]]/', $name)) throw new InvalidArgumentException('attachment');
-            $data = file_get_contents($upload['tmp_name']);
-            if($data === false || strlen($data) !== $size) throw new InvalidArgumentException('attachment');
-        }
+        if(!$remove) [$name, $data] = $this->readAttachment($upload);
 
         $prefix = $this->config->db->prefix;
         $this->dbh->beginTransaction();
@@ -122,8 +130,7 @@ class reqintakeModel extends model
             }
             else
             {
-                $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeAttachment` (feedback,name,data) VALUES (?,?,?)");
-                $insert->execute([$feedback->id, $name, $data]);
+                $this->insertAttachment((int)$feedback->id, $name, $data);
             }
             $this->dbh->commit();
         }
@@ -982,7 +989,7 @@ class reqintakeModel extends model
         return in_array((string)$product, explode(',', (string)($view->products ?? '')), true);
     }
 
-    public function receive(int $product, string $operation, string $title, string $description, string $customer = '', string $channel = '', array $attributes = array(), bool $rich = false): int
+    public function receive(int $product, string $operation, string $title, string $description, string $customer = '', string $channel = '', array $attributes = array(), bool $rich = false, ?array $upload = null): int
     {
         $account = $this->app->user->account ?? '';
         if(!$this->canAccess('index') || !$this->canReadProduct($product)) throw new DomainException('product');
@@ -999,6 +1006,9 @@ class reqintakeModel extends model
         if(mb_strlen($customer) > 255 || mb_strlen($channel) > 64) throw new InvalidArgumentException('source');
 
         $attributes = $this->validatedAttributes($product, $attributes + $this->attributeDefaults());
+        $attachment = $upload && ($upload['error'] ?? null) !== UPLOAD_ERR_NO_FILE ? $this->readAttachment($upload) : null;
+        $fingerprint = $attachment ? hash('sha256', implode(chr(0), $attachment)) : '';
+        $attachmentTable = $this->config->db->prefix . 'reqintakeInitialAttachment';
         [$assignee, $pending] = $this->resolveAssignee($product);
         $table = $this->config->db->prefix . 'reqintakeFeedback';
         $now = helper::now();
@@ -1027,6 +1037,16 @@ class reqintakeModel extends model
             {
                 $this->saveAttributes($id, 1, $attributes);
                 if($rich) $this->saveRichTextVersion($id, 1);
+                if($attachment)
+                {
+                    $this->insertAttachment($id, ...$attachment);
+                    $this->dbh->prepare("INSERT INTO `$attachmentTable` (feedback,fingerprint) VALUES (?,?)")->execute([$id, $fingerprint]);
+                }
+            }
+            if(!$created)
+            {
+                $original = $this->dao->select('fingerprint')->from($attachmentTable)->where('feedback')->eq($id)->fetch();
+                if(($original->fingerprint ?? '') !== $fingerprint) throw new DomainException('submissionConflict');
             }
             if((bool)isset($this->richTextVersions($id)[1]) !== $rich) throw new DomainException('submissionConflict');
             if($this->attributes($id, 1) !== $attributes) throw new DomainException('submissionConflict');
