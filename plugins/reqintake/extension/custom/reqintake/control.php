@@ -57,7 +57,9 @@ class reqintake extends control
         $this->view->token = hash_hmac('sha256', $operation, $key);
         $this->view->fields = $fields;
         $this->view->products = $this->loadModel('product')->getPairs();
-        $this->view->feedback = $this->loadModel('reqintake')->recent();
+        $model = $this->loadModel('reqintake');
+        $this->view->feedback = $model->recent();
+        $this->view->history = $model->historyForRecent($this->view->feedback);
         $this->display();
     }
 

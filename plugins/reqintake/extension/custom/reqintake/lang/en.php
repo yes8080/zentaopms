@@ -21,3 +21,4 @@ $lang->reqintake->actions = array('start' => 'Start', 'close' => 'Close', 'reope
 $lang->reqintake->errors['staleFeedback'] = 'The request changed. Review its current status and try again.';
 $lang->reqintake->transitionReason = 'Reason (required to close or reopen)';
 $lang->reqintake->errors['transitionReason'] = 'For closing or reopening, enter a reason of up to 500 characters.';
+$lang->reqintake->history = 'Status history';

@@ -21,3 +21,4 @@ $lang->reqintake->actions = array('start' => '开始跟进', 'close' => '关闭'
 $lang->reqintake->errors['staleFeedback'] = '反馈状态已变化，请根据当前状态重新操作。';
 $lang->reqintake->transitionReason = '原因（关闭和重开必填）';
 $lang->reqintake->errors['transitionReason'] = '关闭或重开时请填写原因，最多 500 字。';
+$lang->reqintake->history = '办理历史';

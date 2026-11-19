@@ -63,7 +63,24 @@ ob_start();
                 <?php foreach($feedback as $item): ?>
                     <tr>
                         <td>#<?= (int)$item->id ?></td>
-                        <td><?= $escape($item->title) ?></td>
+                        <td>
+                            <?= $escape($item->title) ?>
+                            <?php if(!empty($history[$item->id])): ?>
+                                <details>
+                                    <summary><?= $escape($labels->history) ?></summary>
+                                    <ul>
+                                        <?php foreach($history[$item->id] as $entry): ?>
+                                            <li>
+                                                <time><?= $escape($entry->createdDate) ?></time>
+                                                <?= $escape($entry->actor) ?>
+                                                <?= $escape($labels->actions[$entry->action] ?? $entry->action) ?>
+                                                <?php if($entry->reason !== ''): ?>: <?= $escape($entry->reason) ?><?php endif; ?>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </details>
+                            <?php endif; ?>
+                        </td>
                         <td><?= $escape($item->productName) ?></td>
                         <td><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></td>
                         <td><?= $escape($labels->states[$item->status] ?? $item->status) ?></td>

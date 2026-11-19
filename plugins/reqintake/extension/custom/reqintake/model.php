@@ -11,6 +11,24 @@ class reqintakeModel extends model
             ->where('p.deleted')->eq('0')->orderBy('f.id_desc')->limit(50)->fetchAll();
     }
 
+    public function historyForRecent(array $recent): array
+    {
+        if(empty($this->app->user->admin)) throw new DomainException('product');
+        if(!$recent) return array();
+
+        $ids = array_map(static fn($item) => (int)$item->id, $recent);
+        $history = $this->dao->select('h.feedback,h.actor,h.action,h.reason,h.createdDate')
+            ->from($this->config->db->prefix . 'reqintakeHistory')->alias('h')
+            ->innerJoin($this->config->db->prefix . 'reqintakeFeedback')->alias('f')->on('h.feedback = f.id')
+            ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
+            ->where('p.deleted')->eq('0')->andWhere('h.feedback')->in($ids)
+            ->orderBy('h.feedback,h.version_desc')->fetchAll();
+
+        $grouped = array();
+        foreach($history as $entry) $grouped[$entry->feedback][] = $entry;
+        return $grouped;
+    }
+
     public function transition(int $id, int $version, string $action, string $reason): void
     {
         if(empty($this->app->user->admin)) throw new DomainException('product');
