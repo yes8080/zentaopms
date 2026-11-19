@@ -48,11 +48,11 @@ class reqintakeModel extends model
     {
         if(!$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product) || !common::hasPriv('story', 'view')) return array();
 
-        return $this->dao->select('s.id,s.title,s.status,s.stage,l.scope')->from($this->config->db->prefix . 'reqintakeLink')->alias('l')
-            ->innerJoin(TABLE_STORY)->alias('s')->on('s.id = l.target')
+        $product = (int)$feedback->product;
+        return $this->dao->select('l.target,s.id,s.title,s.status,s.stage,s.closedReason,l.scope')->from($this->config->db->prefix . 'reqintakeLink')->alias('l')
+            ->leftJoin(TABLE_STORY)->alias('s')->on("s.id = l.target AND s.product = $product AND s.type = 'story' AND s.deleted = '0'")
             ->where('l.feedback')->eq((int)$feedback->id)->andWhere('l.targetType')->eq('story')
-            ->andWhere('s.product')->eq((int)$feedback->product)->andWhere('s.type')->eq('story')
-            ->andWhere('s.deleted')->eq('0')->orderBy('s.id_desc')->fetchAll();
+            ->orderBy('l.target_desc')->fetchAll();
     }
 
     public function linkStory(int $feedbackID, int $version, int $storyID, string $scope): void

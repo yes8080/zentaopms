@@ -32,3 +32,4 @@ $lang->reqintake->linkScope = 'Scope';
 $lang->reqintake->linkStory = 'Link existing story';
 $lang->reqintake->errors['linkTarget'] = 'Select an existing story in the same product.';
 $lang->reqintake->errors['linkScope'] = 'The scope is too long or the story is already linked with a different scope.';
+$lang->reqintake->storyUnavailable = 'The story is unavailable. Review this link.';

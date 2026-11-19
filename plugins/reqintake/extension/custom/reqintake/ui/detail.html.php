@@ -26,8 +26,18 @@ ob_start();
     <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
     <ul>
         <?php foreach($linkedStories as $story): ?>
-            <li><a href="<?= $escape(\helper::createLink('story', 'view', 'storyID=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
-                <span><?= $escape($story->scope) ?></span>
+            <li>
+                <?php if($story->id): ?>
+                    <a href="<?= $escape(\helper::createLink('story', 'view', 'storyID=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
+                    <span><?= $escape($lang->story->statusList[$story->status] ?? $story->status) ?></span>
+                    <span><?= $escape($lang->story->stageList[$story->stage] ?? $story->stage) ?></span>
+                    <?php if($story->closedReason): ?>
+                        <span><?= $escape($lang->story->reasonList[$story->closedReason] ?? $story->closedReason) ?></span>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <span><?= $escape($labels->storyUnavailable) ?></span>
+                <?php endif; ?>
+                <?php if($story->scope !== ''): ?><span><?= $escape($story->scope) ?></span><?php endif; ?>
             </li>
         <?php endforeach; ?>
     </ul>

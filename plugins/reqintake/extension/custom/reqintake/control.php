@@ -114,6 +114,7 @@ class reqintake extends control
 
         $this->view->linkToken = $token;
         $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && common::hasPriv('story', 'view');
+        $this->app->loadLang('story');
         $this->view->linkedStories = $model->linkedStories($feedback);
         $this->view->title = $feedback->title;
         $this->view->item = $feedback;

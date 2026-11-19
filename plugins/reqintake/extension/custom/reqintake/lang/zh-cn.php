@@ -32,3 +32,4 @@ $lang->reqintake->linkScope = '承接范围';
 $lang->reqintake->linkStory = '关联已有需求';
 $lang->reqintake->errors['linkTarget'] = '请选择同一产品下的有效研发需求。';
 $lang->reqintake->errors['linkScope'] = '承接范围超长，或此需求已用不同范围关联。';
+$lang->reqintake->storyUnavailable = '原生需求不可用，请复核关联。';
