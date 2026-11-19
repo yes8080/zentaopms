@@ -86,11 +86,30 @@ finally:
 print('Owner validation, assignment, preservation and clear passed')
 
 
+detail_route = 'index.php?m=reqintake&f=detail&id='
+pending_detail = detail_route + id
+detail_token = re.search(r'name="token" value="([^"]+)"', request(pending_detail))[1]
+followup = dict(token=detail_token, intent='followup', version=4, message='Customer confirmed reproduction')
+assert 'Customer confirmed reproduction' in request(pending_detail, followup)
+assert '反馈状态已变化' in request(pending_detail, dict(followup, message='Stale duplicate note'))
+
+transfer = dict(token=detail_token, intent='transfer', version=5, assignee='admin',
+                message='Administrator took ownership of the unconfigured feedback')
+invalid = request(pending_detail, dict(transfer, assignee='missing_account_123'))
+assert '该账号无权访问此产品或已删除' in invalid
+assert transfer['message'] not in invalid
+page = request(pending_detail, transfer)
+assert all(text in page for text in (transfer['message'], '转交给 admin', '跟进中'))
+assert '待配置负责人' not in page
+assert '反馈状态已变化' in request(pending_detail, transfer)
+assert 'Stale duplicate note' not in request(pending_detail)
+print('Communication and transfer preserve workflow state and reject stale writes')
+
 if args.target:
     detail = 'index.php?m=reqintake&f=detail&id=' + id
     token = re.search(r'name="token" value="([^"]+)"', request(detail))[1]
     parameters = {'story': 'storyID', 'requirement': 'storyID', 'epic': 'storyID', 'bug': 'bugID', 'task': 'taskID'}
-    for version, (kind, target_id) in enumerate(args.target, 4):
+    for version, (kind, target_id) in enumerate(args.target, 6):
         assert kind in parameters and target_id.isdecimal(), (kind, target_id)
         target_route = f'index.php?m={kind}&f=view&{parameters[kind]}={target_id}'
         link = dict(token=token, version=version, storyID=target_id, storyType=kind, linkScope='Bidirectional smoke scope')
