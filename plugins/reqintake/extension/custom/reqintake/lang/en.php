@@ -151,3 +151,5 @@ $lang->reqintake->errors['suggestedReviewers'] = 'Select eligible reviewers for 
 $lang->reqintake->feedbackID = 'Feedback ID';
 
 $lang->reqintake->richRevisionChanged = 'Rich text formatting or embedded images changed';
+
+$lang->reqintake->submitRetry = 'The submission did not finish. Try again.';

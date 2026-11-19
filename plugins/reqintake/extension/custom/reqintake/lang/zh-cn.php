@@ -151,3 +151,5 @@ $lang->reqintake->errors['suggestedReviewers'] = '请选择该产品的有效评
 $lang->reqintake->feedbackID = '反馈编号';
 
 $lang->reqintake->richRevisionChanged = '富文本格式或内嵌图片有变更';
+
+$lang->reqintake->submitRetry = '提交未完成，请重试。';

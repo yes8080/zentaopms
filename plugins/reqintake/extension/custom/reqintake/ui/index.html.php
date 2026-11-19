@@ -22,6 +22,7 @@ ob_start();
     <form id="reqintake-receive" method="post" enctype="multipart/form-data">
         <input type="hidden" name="bodyFormat" value="rich">
         <input type="hidden" name="openDetail" value="1">
+        <p role="alert" data-reqintake-upload-error data-failed="<?= $escape($labels->submitRetry) ?>" hidden></p>
         <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
         <input type="hidden" name="token" value="<?= $escape($token) ?>">
         <label class="block mb-2"><?= $escape($labels->fields['product']) ?>
@@ -235,6 +236,35 @@ if (receiveForm) {
     const product = receiveForm.elements.product;
     const preview = receiveForm.querySelector('output');
     const branch = receiveForm.elements.branch;
+    const submitError = receiveForm.querySelector('[data-reqintake-upload-error]');
+    const submitButton = receiveForm.querySelector('button[type=submit]');
+    receiveForm.addEventListener('submit', async event => {
+        if (!receiveForm.elements.attachment.files.length) return;
+        event.preventDefault();
+        if (submitButton.disabled) return;
+
+        submitButton.disabled = true;
+        submitError.hidden = true;
+        try {
+            // Give the editor's submit listeners a chance to sync their input fields.
+            await Promise.resolve();
+            const data = new FormData(receiveForm);
+            data.set('receiveAjax', '1');
+            const response = await fetch(receiveForm.action, {
+                method: 'POST', body: data, headers: {'X-Requested-With': 'XMLHttpRequest'}
+            });
+            const result = await response.json();
+            if (response.ok && result.location) return window.location.assign(result.location);
+            if (response.ok && result.reload) return window.location.assign(receiveForm.action);
+            submitError.textContent = result.error || submitError.dataset.failed;
+            submitError.hidden = false;
+        } catch {
+            submitError.textContent = submitError.dataset.failed;
+            submitError.hidden = false;
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
     let sequence = 0;
     const updatePreview = async () => {
         const requestNumber = ++sequence;

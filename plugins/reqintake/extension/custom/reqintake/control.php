@@ -38,6 +38,12 @@ class reqintake extends control
         $ownerOptions = $this->reqintake->mailtoOptions();
         $states = $this->lang->reqintake->states;
 
+        if($_SERVER['REQUEST_METHOD'] === 'GET' && $this->session->reqintakeSavedID)
+        {
+            $this->view->savedID = (int)$this->session->reqintakeSavedID;
+            $this->session->set('reqintakeSavedID', 0);
+        }
+
         if($_SERVER['REQUEST_METHOD'] === 'POST')
         {
             foreach($fields as $name => $default) $fields[$name] = $this->formValue($name);
@@ -50,6 +56,7 @@ class reqintake extends control
             }
 
             $intent = $this->formValue('intent');
+            $receiveAjax = $intent === '' && $this->formValue('receiveAjax') === '1';
             try
             {
                 $model = $this->loadModel('reqintake');
@@ -120,7 +127,18 @@ class reqintake extends control
                     {
                         $url = helper::createLink('reqintake', 'detail', "id=$id&attachmentID=0&submitted=1");
                         if(isset($_GET['_single'])) $url .= (str_contains($url, '?') ? '&' : '?') . '_single=1';
+                        if($receiveAjax)
+                        {
+                            $this->receiveResponse(array('location' => $url));
+                            return;
+                        }
                         header('Location: ' . $url, true, 303);
+                        return;
+                    }
+                    if($receiveAjax)
+                    {
+                        $this->session->set('reqintakeSavedID', $id);
+                        $this->receiveResponse(array('reload' => true));
                         return;
                     }
                     $this->view->savedID = $id;
@@ -131,6 +149,11 @@ class reqintake extends control
             catch(InvalidArgumentException | DomainException $error)
             {
                 $this->view->formError = $this->lang->reqintake->errors[$error->getMessage()] ?? $this->lang->reqintake->invalid;
+                if($receiveAjax)
+                {
+                    $this->receiveResponse(array('error' => $this->view->formError), 422);
+                    return;
+                }
             }
         }
 
@@ -393,6 +416,14 @@ class reqintake extends control
             }
         }
         return $attributes;
+    }
+
+    private function receiveResponse(array $payload, int $status = 200): void
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Cache-Control: no-store');
+        echo json_encode($payload, JSON_THROW_ON_ERROR);
     }
 
     private function filterDate(string $value): string

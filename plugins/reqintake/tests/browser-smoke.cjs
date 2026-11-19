@@ -102,6 +102,13 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await form.locator('input[name=attachment]').setInputFiles({
             name:'initial-attachment.bin', mimeType:'application/octet-stream', buffer:attachmentBytes
         });
+        await form.locator('[name=estimate]').fill('-1');
+        await form.getByRole('button',{name:'提交需求'}).click();
+        await form.getByRole('alert').getByText(/请选择有效来源/).waitFor();
+        assert.equal(await form.locator('input[name=attachment]').evaluate(input => input.files[0].name), 'initial-attachment.bin');
+        assert.equal(await form.locator('[name=title]').inputValue(), title);
+        await editor.locator('img[src]').waitFor();
+        await form.locator('[name=estimate]').fill('1');
         await form.getByRole('button',{name:'提交需求'}).click();
         await app.getByText(/已登记反馈 #\d+/).waitFor();
         assert.match(page.url(), /[?&]f=detail(?:&|$)/);
