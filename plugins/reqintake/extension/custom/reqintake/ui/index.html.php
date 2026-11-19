@@ -33,6 +33,7 @@ ob_start();
         <label class="block mb-2"><?= $escape($labels->fields['description']) ?>
             <textarea class="form-control" name="description" required><?= $escape($fields['description']) ?></textarea>
         </label>
+        <?php $values = $fields; require __DIR__ . '/attribute-fields.php'; ?>
         <button class="btn primary" type="submit"><?= $escape($labels->submit) ?></button>
     </form>
     <?php if($isAdmin): ?>

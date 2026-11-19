@@ -86,3 +86,12 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeConversion` (
   `target` int unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`operation`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeAttributes` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `category` varchar(30) NOT NULL,
+  `priority` tinyint unsigned NOT NULL,
+  `acceptance` mediumtext NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

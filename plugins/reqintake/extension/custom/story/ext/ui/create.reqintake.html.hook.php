@@ -28,9 +28,14 @@ if((int)$feedback->product !== (int)data('product.id')) return;
 $revisions = $model->revisions($feedback);
 $title = $revisions ? reset($revisions)->title : $feedback->title;
 
-query('formGridPanel')->each(function($node) use($title)
+$attributes = $model->attributes((int)$feedback->id);
+$acceptance = nl2br(htmlspecialchars($attributes['acceptance'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+query('formGridPanel')->each(function($node) use($title, $attributes, $acceptance)
 {
     $fields = $node->prop('fields');
     $fields->field('title')->value($title);
+    $fields->field('category')->value($attributes['category']);
+    $fields->field('pri')->value($attributes['priority']);
+    $fields->field('verify')->value($acceptance);
     $node->setProp('fields', $fields);
 });

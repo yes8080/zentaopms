@@ -21,6 +21,10 @@ ob_start();
             <dt><?= $escape($labels->fields[$field]) ?></dt>
             <dd style="white-space: pre-wrap"><?= $escape($item->$field) ?></dd>
         <?php endforeach; ?>
+        <?php foreach($attributes as $field => $value): ?>
+            <dt><?= $escape($labels->fields[$field]) ?></dt>
+            <dd style="white-space: pre-wrap"><?= $escape($attributeOptions[$field][$value] ?? $value) ?></dd>
+        <?php endforeach; ?>
     </dl>
     <?php if($canRevise): ?>
         <details>
@@ -37,6 +41,7 @@ ob_start();
                 <label class="block"><?= $escape($labels->fields['description']) ?>
                     <textarea name="description" required><?= $escape($item->description) ?></textarea>
                 </label>
+                <?php $values = $attributes; require __DIR__ . '/attribute-fields.php'; ?>
                 <button class="btn" type="submit"><?= $escape($labels->editFeedback) ?></button>
             </form>
         </details>

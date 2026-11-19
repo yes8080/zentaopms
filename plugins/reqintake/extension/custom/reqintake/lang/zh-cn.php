@@ -62,3 +62,7 @@ $lang->reqintake->batchCreateSummary = '反馈 #%s · 承接范围 %s';
 $lang->reqintake->taskExecution = '所属执行';
 $lang->reqintake->errors['taskConversionUncertain'] = '任务创建结果待核对，请在执行中核对后关联已有任务。';
 $lang->reqintake->errors['taskConversionMode'] = '请使用单任务模式。';
+$lang->reqintake->fields['category'] = '类别';
+$lang->reqintake->fields['priority'] = '优先级';
+$lang->reqintake->fields['acceptance'] = '验收标准';
+$lang->reqintake->errors['attributes'] = '请选择有效的类别和优先级，并检查验收标准的长度。';

@@ -47,6 +47,39 @@ class reqintakeModel extends model
         return $feedback && $this->canReadProduct((int)$feedback->product) ? $feedback : false;
     }
 
+    public function attributeOptions(): array
+    {
+        $this->app->loadLang('story');
+        return array('category' => $this->lang->story->categoryList, 'priority' => $this->lang->story->priList);
+    }
+
+    public function attributes(int $id, ?int $version = null): array
+    {
+        $defaults = array('category' => 'feature', 'priority' => '3', 'acceptance' => '');
+        $query = $this->dao->select('category,priority,acceptance')->from($this->config->db->prefix . 'reqintakeAttributes')
+            ->where('feedback')->eq($id);
+        if($version !== null) $query->andWhere('version')->le($version);
+        $attributes = $query->orderBy('version_desc')->limit(1)->fetch();
+        if(!$attributes) return $defaults;
+        return array('category' => $attributes->category, 'priority' => (string)$attributes->priority, 'acceptance' => $attributes->acceptance);
+    }
+
+    private function validatedAttributes(array $fields): array
+    {
+        $options = $this->attributeOptions();
+        if(!array_key_exists($fields['category'], $options['category'])
+            || $fields['priority'] === '0' || !array_key_exists($fields['priority'], $options['priority'])
+            || strlen($fields['acceptance']) > 16777215) throw new InvalidArgumentException('attributes');
+        return array('category' => $fields['category'], 'priority' => (string)$fields['priority'], 'acceptance' => $fields['acceptance']);
+    }
+
+    private function saveAttributes(int $id, int $version, array $fields): void
+    {
+        $table = $this->config->db->prefix . 'reqintakeAttributes';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,category,priority,acceptance) VALUES (?,?,?,?,?)");
+        $insert->execute([$id, $version, $fields['category'], $fields['priority'], $fields['acceptance']]);
+    }
+
     public function revisions(object $feedback): array
     {
         if(!$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
@@ -65,6 +98,8 @@ class reqintakeModel extends model
         if(trim($fields['description']) === '' || strlen($fields['description']) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($fields['customer']) > 255 || mb_strlen($fields['channel']) > 64) throw new InvalidArgumentException('source');
 
+        $attributes = $this->validatedAttributes(array_intersect_key($fields, array_flip(array('category', 'priority', 'acceptance'))) + $this->attributes((int)$feedback->id));
+
         $prefix = $this->config->db->prefix;
         $now = helper::now();
         $this->dbh->beginTransaction();
@@ -76,6 +111,7 @@ class reqintakeModel extends model
 
             $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeRevision` (feedback,version,title,description,customer,channel,actor,createdDate) VALUES (?,?,?,?,?,?,?,?)");
             $insert->execute([$feedback->id, $version + 1, $title, $fields['description'], $fields['customer'], $fields['channel'], $this->app->user->account, $now]);
+            $this->saveAttributes((int)$feedback->id, $version + 1, $attributes);
             $this->dbh->commit();
         }
         catch(Throwable $error)
@@ -580,7 +616,7 @@ class reqintakeModel extends model
         return in_array((string)$product, explode(',', (string)($view->products ?? '')), true);
     }
 
-    public function receive(int $product, string $operation, string $title, string $description, string $customer = '', string $channel = ''): int
+    public function receive(int $product, string $operation, string $title, string $description, string $customer = '', string $channel = '', array $attributes = array()): int
     {
         $account = $this->app->user->account ?? '';
         if(!$this->canAccess('index') || !$this->canReadProduct($product)) throw new DomainException('product');
@@ -591,25 +627,40 @@ class reqintakeModel extends model
         if(trim($description) === '' || strlen($description) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($customer) > 255 || mb_strlen($channel) > 64) throw new InvalidArgumentException('source');
 
+        $attributes = $this->validatedAttributes($attributes + array('category' => 'feature', 'priority' => '3', 'acceptance' => ''));
         [$assignee, $pending] = $this->resolveAssignee($product);
         $table = $this->config->db->prefix . 'reqintakeFeedback';
         $now = helper::now();
 
-        /* The unique submission key handles simultaneous retries in the database. */
-        $query = $this->dbh->prepare("INSERT INTO `$table`
-            (operation, product, title, description, customer, channel, openedBy, assignedTo, assignmentPending, openedDate, updatedDate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE id = id");
-        $query->execute([$operation, $product, $title, $description, $customer, $channel, $account, $assignee, $pending, $now, $now]);
-
-        $saved = $this->dao->select('*')->from($table)
-            ->where('openedBy')->eq($account)->andWhere('operation')->eq($operation)->fetch();
-        if(!$saved || (int)$saved->product !== $product || $saved->title !== $title
-            || $saved->description !== $description || $saved->customer !== $customer || $saved->channel !== $channel)
+        $this->dbh->beginTransaction();
+        try
         {
-            throw new DomainException('submissionConflict');
-        }
+            /* The unique submission key handles simultaneous retries in the database. */
+            $query = $this->dbh->prepare("INSERT INTO `$table`
+                (operation, product, title, description, customer, channel, openedBy, assignedTo, assignmentPending, openedDate, updatedDate)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE id = id");
+            $query->execute([$operation, $product, $title, $description, $customer, $channel, $account, $assignee, $pending, $now, $now]);
 
-        return (int)$saved->id;
+            $created = $query->rowCount() === 1;
+            $saved = $this->dao->select('*')->from($table)
+                ->where('openedBy')->eq($account)->andWhere('operation')->eq($operation)->fetch();
+            if(!$saved || (int)$saved->product !== $product || $saved->title !== $title
+                || $saved->description !== $description || $saved->customer !== $customer || $saved->channel !== $channel)
+            {
+                throw new DomainException('submissionConflict');
+            }
+
+            $id = (int)$saved->id;
+            if($created) $this->saveAttributes($id, 1, $attributes);
+            if($this->attributes($id, 1) !== $attributes) throw new DomainException('submissionConflict');
+            $this->dbh->commit();
+            return $id;
+        }
+        catch(Throwable $error)
+        {
+            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            throw $error;
+        }
     }
 }

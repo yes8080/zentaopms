@@ -62,3 +62,7 @@ $lang->reqintake->batchCreateSummary = 'Feedback #%s · Scope %s';
 $lang->reqintake->taskExecution = 'Execution';
 $lang->reqintake->errors['taskConversionUncertain'] = 'Check the execution for a task created by this operation before linking it.';
 $lang->reqintake->errors['taskConversionMode'] = 'Choose a mode that creates one task.';
+$lang->reqintake->fields['category'] = 'Category';
+$lang->reqintake->fields['priority'] = 'Priority';
+$lang->reqintake->fields['acceptance'] = 'Acceptance criteria';
+$lang->reqintake->errors['attributes'] = 'Choose a valid category and priority and check the length of acceptance criteria.';
