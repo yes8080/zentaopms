@@ -28,12 +28,17 @@ ob_start();
         <?php foreach($linkedStories as $story): ?>
             <li>
                 <span><?= $escape($labels->storyTypes[$story->targetType]) ?></span>
-                <?php if($story->id): ?>
-                    <a href="<?= $escape(\helper::createLink($story->targetType, 'view', 'storyID=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
-                    <span><?= $escape($lang->story->statusList[$story->status] ?? $story->status) ?></span>
+                <?php if($story->id):
+                    $module = $story->targetType;
+                    $parameter = match($module) {'bug' => 'bugID', 'task' => 'taskID', default => 'storyID'};
+                    $targetLang = in_array($module, array('bug', 'task'), true) ? $lang->$module : $lang->story;
+                    $reasons = $module === 'bug' ? $targetLang->resolutionList : ($targetLang->reasonList ?? array());
+                ?>
+                    <a href="<?= $escape(\helper::createLink($story->targetType, 'view', $parameter . '=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
+                    <span><?= $escape($targetLang->statusList[$story->status] ?? $story->status) ?></span>
                     <span><?= $escape($lang->story->stageList[$story->stage] ?? $story->stage) ?></span>
                     <?php if($story->closedReason): ?>
-                        <span><?= $escape($lang->story->reasonList[$story->closedReason] ?? $story->closedReason) ?></span>
+                        <span><?= $escape($reasons[$story->closedReason] ?? $story->closedReason) ?></span>
                     <?php endif; ?>
                 <?php else: ?>
                     <span><?= $escape($labels->storyUnavailable) ?></span>
