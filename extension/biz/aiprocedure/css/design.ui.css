@@ -1,0 +1,69 @@
+/* Load after the host's ZUI/ZenTao and Flow styles. No Tailwind build is needed. */
+.ai-procedure-designer {--procedure-primary: var(--color-primary, #007aff);--procedure-surface: var(--color-canvas, #fff);--procedure-border: var(--color-border, #e6ecf8);--procedure-danger: var(--color-danger-500, #fc5959);display: flex;flex-direction: column;gap: 16px;width: 100%;min-width: 0;height: var(--ai-procedure-app-height, 648px);color: var(--color-fore, #222);background: var(--procedure-surface);container-type: inline-size;}
+.ai-procedure-designer .ai-procedure-app-toolbar,
+.ai-procedure-designer .toolbar-back,
+.ai-procedure-designer .toolbar-btns {display: flex;align-items: center;gap: 16px;}
+.ai-procedure-designer .ai-procedure-app-toolbar {justify-content: space-between;flex-shrink: 0;}
+.ai-procedure-designer .toolbar-back {min-width: 0;gap: 12px;}
+.ai-procedure-designer .toolbar-back .btn,
+.ai-procedure-designer .toolbar-btns {flex-shrink: 0;}
+.ai-procedure-designer .toolbar-back span {overflow: hidden;white-space: nowrap;}
+.ai-procedure-designer .ai-procedure-view {display: flex;flex: 1;min-height: 0;max-height: none;}
+.ai-procedure-designer .procedure-canvas {position: relative;flex: 1;min-width: 0;min-height: 0;}
+.ai-procedure-designer .flow,
+.ai-procedure-designer xyflow-component {display: block;width: 100%;height: 100%;}
+.ai-procedure-designer .procedure-canvas .svelte-flow,
+.ai-procedure-designer .svelte-flow__controls-button {color: inherit;background: var(--procedure-surface);}
+.ai-procedure-designer .svelte-flow__controls-button {border-color: var(--procedure-border);fill: currentColor;}
+.ai-procedure-designer .svelte-flow__node {border: 1px solid var(--procedure-border);background: var(--procedure-surface);box-shadow: 0 2px 8px 3px rgb(0 0 0 / 6%);border-radius: 8px;}
+.ai-procedure-designer .svelte-flow__node.procedure-current {box-shadow: 0 0 0 2px var(--procedure-primary);}
+.ai-procedure-designer .svelte-flow__node.procedure-invalid::after {content: '!';position: absolute;right: -26px;top: 10px;width: 20px;height: 20px;border-radius: 50%;text-align: center;font-weight: bold;color: var(--procedure-danger);border: 1px solid currentColor;}
+.ai-procedure-designer .xyflow-custom-node-content > .step-node,
+.ai-procedure-designer .xyflow-custom-node-content > .step-terminal {display: flex;align-items: center;position: relative;padding: 0;gap: 8px;}
+.ai-procedure-designer .xyflow-custom-node-content > .step-terminal {height: 40px;padding: 8px;}
+.ai-procedure-app .ai-procedure-view .xyflow-custom-node-content>div { align-items: center; display: flex; gap: 8px; padding: 8px; position: relative; }
+.ai-procedure-designer .step-edit {display: flex;align-items: center;gap: 8px;width: 100%;min-width: 0;text-align: left;border: 0;border-radius: 8px;background: transparent;color: inherit;font: inherit;}
+.ai-procedure-designer .step-head {display: flex;align-items: center;gap: 8px;min-width: 0;}
+.ai-procedure-designer .step-edit svg,
+.ai-procedure-designer .step-terminal svg {flex-shrink: 0;}
+.ai-procedure-designer .step-edit span {overflow: hidden;white-space: nowrap;}
+.ai-procedure-designer .step-edit .step-title {overflow: hidden;white-space: nowrap;}
+.ai-procedure-designer .step-edit .step-status {flex-shrink: 0;overflow: visible;text-overflow: clip;padding: 0 6px;border: 1px solid currentColor;border-radius: 999px;font-size: 12px;line-height: 16px;white-space: nowrap;}
+.ai-procedure-designer .step-status-draft,
+.ai-procedure-designer .step-status-deleted {color: var(--procedure-danger);}
+.ai-procedure-designer .step-delete {position: absolute;top: 8px;right: 6px;width: 24px;height: 24px;padding: 0;border: 0;border-radius: 4px;color: inherit;background: var(--procedure-surface);opacity: 0;transition: opacity .15s;}
+.ai-procedure-designer .step-delete .icon-close {position: static;padding: 0;color: inherit;background: transparent;opacity: 1;}
+.ai-procedure-designer .step-node:hover .step-delete,
+.ai-procedure-designer .step-node:focus-within .step-delete {opacity: 1;}
+.ai-procedure-designer .svelte-flow__handle {background: var(--procedure-primary);pointer-events: none;}
+.ai-procedure-designer .svelte-flow__edgelabel-renderer {z-index: 2;}
+.ai-procedure-designer .svelte-flow__panel:has(a[href="https://svelteflow.dev"]) {display: none;}
+.ai-procedure-designer .svelte-flow__edge-label {padding: 0;background: transparent;font-size: 0;}
+.ai-procedure-designer .button-edge__button {display: block;border: 2px solid var(--procedure-surface);border-radius: 50%;padding: 1px;color: #fff;background: var(--procedure-primary);opacity: .55;transition: opacity .15s;}
+.ai-procedure-designer .button-edge__button .icon {width: 18px;height: 18px;font-size: 18px;}
+.ai-procedure-designer button:not(:disabled) {cursor: pointer;}
+.ai-procedure-designer .button-edge__button:hover,
+.ai-procedure-designer .button-edge__button:focus-visible {opacity: 1;}
+.ai-procedure-designer button:focus-visible,
+.ai-procedure-designer .pick:focus-visible {outline: 2px solid var(--procedure-primary);outline-offset: 2px;}
+.ai-procedure-designer .procedure-busy .button-edge__button {opacity: .25;cursor: default;}
+.ai-procedure-designer .ai-procedure-view .ai-procedure-panel {--panel-width: 460px;display: flex;flex-direction: column;flex-shrink: 0;width: var(--panel-width);max-width: 50%;height: 100%;min-height: 0;position: static;border-left: 2px solid var(--procedure-border);background: var(--procedure-surface);opacity: 1;}
+.ai-procedure-designer .ai-procedure-panel hr {margin: 8px 12px;border: 0;border-bottom: 1px solid var(--procedure-border);}
+.ai-procedure-designer .ai-procedure-view .ai-procedure-panel-header {padding: 6px 12px;width: auto;font-size: 14px;line-height: 24px;text-align: center;}
+.ai-procedure-designer .ai-procedure-view .ai-procedure-panel-content {flex: 1;min-height: 0;overflow-y: auto;scrollbar-gutter: stable;box-sizing: border-box;padding: 8px 12px;width: auto;}
+.ai-procedure-designer .agent-card {padding: 6px 12px;overflow-wrap: anywhere;}
+.ai-procedure-designer .agent-card h4,
+.ai-procedure-designer .agent-card p,
+.ai-procedure-designer .agent-card li {font-size: 14px;line-height: 22px;color: inherit;}
+.ai-procedure-designer .agent-card h4 {font-weight: bold}
+.ai-procedure-designer .agent-card > div + div {margin-top: 8px;}
+.ai-procedure-designer .procedure-field-error {color: var(--procedure-danger);margin: 4px 0;}
+.ai-procedure-designer .procedure-load-error {margin: auto;padding: 24px;text-align: center;}
+.ai-procedure-designer .procedure-canvas .procedure-load-error {position: absolute;inset: 0;background: var(--procedure-surface);}
+.ai-procedure-designer .procedure-sr-only {position: absolute;width: 1px;height: 1px;padding: 0;overflow: hidden;clip-path: inset(50%);white-space: nowrap;}
+
+@container (max-width: 640px) {.ai-procedure-designer .toolbar-btns {gap: 8px;}.ai-procedure-designer .ai-procedure-view {flex-direction: column;overflow-y: auto;}.ai-procedure-designer .procedure-canvas {flex: 0 0 300px;}.ai-procedure-designer .ai-procedure-view .ai-procedure-panel {width: 100%;max-width: none;height: auto;border-left: 0;border-top: 2px solid var(--procedure-border);}}
+
+@media (hover: none) {.ai-procedure-designer .step-delete,.ai-procedure-designer .button-edge__button {opacity: 1;}}
+
+@media (prefers-reduced-motion: reduce) {.ai-procedure-designer .step-delete,.ai-procedure-designer .button-edge__button {transition: none;}}

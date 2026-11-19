@@ -1,0 +1,22 @@
+.kanban-sticky .kanban-header {z-index: 999;}
+.kanban-sticky .kanban-lane-name {z-index: 11;}
+
+.card-footer {text-align: right;}
+.card-title {color: var(--color-black-rgb);}
+.card-icon {margin-top: 2px;}
+.card-footer .status-delay { color:rgba(var(--color-danger-500-rgb),var(--tw-text-opacity));}
+
+.card-title {overflow: hidden}
+.kanban-lane-col .card-footer {padding-right: 0.75rem;}
+.card-actions .btn {height: 2rem;}
+
+.card-list.cardsize-3 .card-actions, .card-list.cardsize-4 .card-actions  {display: none}
+.card-list.cardsize-3 .card-footer,  .card-list.cardsize-4 .card-footer   {display: none}
+.card-list.cardsize-3 .card-content, .card-list.cardsize-4 .card-content  {display: none}
+.card-list.cardsize-3 .card-prefix,  .card-list.cardsize-4 .card-prefix  {display: none}
+.card-list.cardsize-3 .card-icon,    .card-list.cardsize-4 .card-icon    {display: none}
+
+.kanban-lane-col .card {position: relative; padding: 0.25rem 0rem;}
+.kanban-lane-col .card .card-actions {position: absolute; top: 0; right: 0; z-index: 1}
+
+.dropmenu-foot .toolbar .btn { padding-left: 4px; padding-right: 4px; }

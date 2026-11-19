@@ -1,0 +1,4 @@
+#effortCalendar {min-height: 300px; margin: 0;}
+#effortCalendar .list-item .item-inner,
+#effortCalendar .list-item .item-content {overflow: hidden; min-width: 0;}
+#effortCalendar .effort-event-title {display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}

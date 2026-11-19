@@ -1,0 +1,13 @@
+<?php
+$config->product->form->create['feedback']      = array('type' => 'account', 'control' => 'select', 'required' => false, 'default' => '', 'options' => array());
+$config->product->form->create['ticket']        = array('type' => 'account', 'control' => 'select', 'required' => false, 'default' => '', 'options' => array());
+$config->product->form->create['workflowGroup'] = array('type' => 'int',     'control' => 'select', 'required' => false, 'default' => '', 'options' => array());
+
+$config->product->form->edit['feedback']      = array('type' => 'account', 'control' => 'select', 'required' => false, 'default' => '', 'options' => array());
+$config->product->form->edit['ticket']        = array('type' => 'account', 'control' => 'select', 'required' => false, 'default' => '', 'options' => array());
+$config->product->form->edit['workflowGroup'] = array('type' => 'int',     'control' => 'select', 'required' => false, 'default' => '', 'options' => array());
+
+$config->product->form->batchEdit['feedback'] = array('type' => 'string', 'control' => 'select', 'width' => '128px', 'required' => false, 'default' => '', 'options' => 'users');
+$config->product->form->batchEdit['ticket']   = array('type' => 'string', 'control' => 'select', 'width' => '128px', 'required' => false, 'default' => '', 'options' => 'users');
+
+$config->product->list->customBatchEditFields = str_replace(',RD,', ',RD,feedback,ticket,', $config->product->list->customBatchEditFields);

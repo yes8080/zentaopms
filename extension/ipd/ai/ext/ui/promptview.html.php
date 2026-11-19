@@ -1,0 +1,250 @@
+<?php
+namespace zin;
+
+detailHeader
+(
+    to::prefix
+    (
+        backBtn
+        (
+            set::icon('back'),
+            setClass('primary-outline size-md'),
+            set::url(inlink('prompts')),
+            $lang->goback
+        ),
+    ),
+    to::title
+    (
+        entityLabel
+        (
+            set::entityID($prompt->id),
+            set::level(1),
+            set::text($prompt->name)
+        )
+    ),
+    to::suffix
+    (
+        $config->edition != 'open' && common::hasPriv('ai', 'createprompt') ? btn
+        (
+            setClass('primary'),
+            set::icon('plus'),
+            set::url(createLink('ai', 'promptbasicinfo')),
+            $lang->ai->prompts->create
+        ) : null
+    )
+);
+
+$actionObject = '';
+if(!empty($prompt->actionPurpose))
+{
+    $actionObject = $prompt->actionPurpose == 'empty.empty' ? $lang->ai->prompts->noRedirect : $this->ai->getTargetFormLabel($prompt->actionPurpose, true, $prompt->module);
+}
+
+$fnBuildPublishInfo = function() use ($actions, $prompt, $users, $lang)
+{
+    $lastPublishAction = null;
+    foreach(array_reverse($actions) as $action)
+    {
+        if(in_array($action->action, array('published', 'unpublished')))
+        {
+            $lastPublishAction = $action;
+            break;
+        }
+    }
+
+    $items = array();
+    if($prompt->status == 'active')
+    {
+        $items[] = item(set::name($lang->ai->prompts->publishedBy),  zget($users, empty($lastPublishAction) ? $prompt->createdBy : $lastPublishAction->actor));
+    }
+    else
+    {
+        $items[] = item
+        (
+            set::name(empty($lastPublishAction) ? $lang->ai->prompts->publishedBy : $lang->ai->prompts->draftedBy),
+            !empty($lastPublishAction) ? zget($users, $lastPublishAction->actor) : ''
+        );
+    }
+    return $items;
+};
+
+$isTimerAgent = !empty($prompt->type) && $prompt->type === $lang->ai->agentType->timer;
+if($isTimerAgent || $prompt->status != 'draft' || !$this->ai->isExecutable($prompt))
+{
+    $auditIndex = array_search('promptaudit', $config->ai->actions->promptview['mainActions']);
+    if($auditIndex !== false) unset($config->ai->actions->promptview['mainActions'][$auditIndex]);
+}
+$designAction = $this->ai->getPromptDesignAction($prompt);
+foreach($config->ai->actions->promptview as $menu => $actions)
+{
+    foreach($actions as $i => $actionName)
+    {
+        if($actionName == 'promptbasicinfo') $config->ai->actions->promptview[$menu][$i] = $designAction;
+    }
+}
+$actionList = $this->loadModel('common')->buildOperateMenu($prompt);
+
+$promptContent = $prompt->purpose;
+if(!empty($prompt->elaboration)) $promptContent .= "\n\n" . $prompt->elaboration;
+
+$skillNames = array();
+if(!empty($skills))
+{
+    foreach($skills as $skill)
+    {
+        if(!empty($skill->name)) $skillNames[] = $skill->name;
+    }
+}
+$skillName = implode($lang->ai->prompts->fieldSeparator, $skillNames);
+
+$knowledgeLibNames = array();
+if(!empty($knowledgeLibs))
+{
+    foreach($knowledgeLibs as $knowledgeLib)
+    {
+        if(!empty($knowledgeLib->name)) $knowledgeLibNames[] = $knowledgeLib->name;
+    }
+}
+$knowledgeLibText = implode($lang->ai->prompts->fieldSeparator, $knowledgeLibNames);
+$displayPosition  = isset($prompt->displayPosition) && isset($lang->ai->prompts->displayPositionList[$prompt->displayPosition]) ? $lang->ai->prompts->displayPositionList[$prompt->displayPosition] : '';
+$isFormPosition   = isset($prompt->displayPosition) && $prompt->displayPosition == 'form';
+
+$formConfigItems = array();
+if($isFormPosition && !empty($fieldConfig))
+{
+    foreach($fieldConfig as $field)
+    {
+        $fieldType    = isset($field->type) ? $field->type : '';
+        $typeLabel    = zget($lang->ai->miniPrograms->field->typeList, $fieldType, $fieldType);
+        $required     = isset($field->required) ? (string)$field->required : '0';
+        $requiredText = zget($lang->ai->requiredList, $required, zget($lang->ai->requiredList, '0'));
+        $fieldName    = isset($field->name) ? $field->name : '';
+        $fieldValue   = '';
+
+        if(in_array($fieldType, array('radio', 'checkbox')))
+        {
+            $fieldValue = !empty($field->options) ? $field->options : '-';
+        }
+        else
+        {
+            $fieldValue = !empty($field->placeholder) ? $field->placeholder : '-';
+        }
+
+        $formConfigItems[] = htmlspecialchars("{$fieldName}（{$typeLabel}, {$requiredText}）{$lang->colon} {$fieldValue}", ENT_QUOTES);
+    }
+}
+
+if($isTimerAgent)
+{
+    $notifyRule = $this->ai->parseNotifyRule($prompt->notifyRule ?? '');
+    $cycleText  = $this->ai->formatCycleConfigText($prompt);
+    $operationText = zget($lang->ai->timer->operationList, $prompt->operation ?? '', $prompt->operation ?? '');
+
+    $promptSections = array
+    (
+        section(set::title($lang->ai->prompts->processObject), set::content($processObject)),
+        section(set::title($lang->ai->timer->operation), set::content($operationText)),
+        section(set::title($lang->ai->timer->cycleType), set::content($cycleText))
+    );
+    if(($prompt->operation ?? '') === 'notify')
+    {
+        $methodText = implode($lang->comma, array_map(function($method) use ($lang) { return zget($lang->ai->timer->notifyMethodList, $method, $method); }, $notifyRule->methods));
+        $notifyText = $this->ai->formatNotifyTargetsText($notifyRule, $users);
+        $promptSections[] = section(set::title($lang->ai->timer->notifyRoles), set::content($notifyText));
+        $promptSections[] = section(set::title($lang->ai->timer->notifyMethods), set::content($methodText));
+    }
+}
+else
+{
+    $promptSections = array
+    (
+        section
+        (
+            set::title($lang->ai->prompts->processObject),
+            set::content($processObject)
+        ),
+        section(set::title($lang->ai->prompts->actionPurpose), set::content($actionObject)),
+        section(set::title($lang->ai->prompts->displayPosition), set::content($displayPosition))
+    );
+    if($isFormPosition)
+    {
+        $promptSections[] = section
+        (
+            set::title($lang->ai->miniPrograms->field->fields),
+            empty($formConfigItems) ? set::content($lang->noData) : set::content(implode('<br />', $formConfigItems)),
+            empty($formConfigItems) ? null : set::useHtml(true)
+        );
+    }
+}
+$promptSections[] = section(set::title($lang->ai->prompts->role), set::content($prompt->role));
+$promptSections[] = section(set::title($lang->ai->prompts->prompt), set::content(wg(p(setClass('pre'), $promptContent))));
+$promptSections[] = section(set::title($lang->ai->prompts->skill), set::content($skillName));
+$promptSections[] = section(set::title($lang->ai->prompts->knowledgeLib), set::content($knowledgeLibText));
+if($isTimerAgent)
+{
+    $logs = '';
+    foreach($prompt->logs as $log)
+    {
+        $logs .= htmlspecialchars("{$log->createdDate} {$log->message}") . '<br />';
+    }
+
+    $promptSections[] = section
+    (
+        set::title($lang->ai->timer->timerLog),
+        set::content(wg(html($logs)))
+    );
+}
+
+detailBody
+(
+    sectionList
+    (
+        ...$promptSections
+    ),
+    history
+    (
+        setClass('canvas shadow-none mt-2'),
+        setStyle(array('--tw-ring-color' => '#fff')),
+        set::objectType('prompt'),
+        set::objectID($prompt->id)
+    ),
+    $config->edition != 'open' ? floatToolbar
+    (
+        set::object($prompt),
+        to::prefix(backBtn(set::icon('back'), set::url(inlink('prompts')), $lang->goback)),
+        set::main($actionList['mainActions']),
+        set::suffix($actionList['suffixActions'])
+    ) : null,
+    detailSide
+    (
+        setClass('ml-2'),
+        tabs
+        (
+            set::collapse(true),
+            tabPane
+            (
+                set::key('promptBasicInfo'),
+                set::title($lang->ai->prompts->basicInfo),
+                set::active(true),
+                tableData
+                (
+                    item(set::name($lang->prompt->module), $processObject),
+                    item(set::name($lang->prompt->desc),   div(setClass('w-64 text-clip'), set::title($prompt->desc), $prompt->desc)),
+                    item(set::name($lang->prompt->status), $lang->ai->prompts->statuses[$prompt->status]),
+                    item(set::name($lang->prompt->model), zui::aiModelName($prompt->model)),
+                )
+            ),
+            tabPane
+            (
+                set::key('promptEditInfo'),
+                set::title($lang->ai->prompts->editInfo),
+                tableData
+                (
+                    item(set::name($lang->prompt->createdBy), zget($users, $prompt->createdBy) . $lang->at . $prompt->createdDate),
+                    $fnBuildPublishInfo(),
+                    item(set::name($lang->prompt->editedBy),  $prompt->editedBy ? zget($users, $prompt->editedBy) . $lang->at . $prompt->editedDate : ''),
+                )
+            )
+        )
+    )
+);

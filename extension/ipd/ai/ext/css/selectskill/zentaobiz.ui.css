@@ -1,0 +1,30 @@
+.select-skill-modal { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+.select-skill-modal .modal-title { margin: 0; color: #3C4353; }
+
+.select-skill-modal .search-box { position: relative; }
+.select-skill-modal .search-box .icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9EA3B0; z-index: 1; }
+.select-skill-modal .search-box input { width: 100%; padding-left: 32px; border-radius: 4px; }
+
+.select-skill-modal .category-filter { display: flex; align-items: flex-start; gap: 8px; }
+.select-skill-modal .category-tabs { display: flex; flex: 1; flex-wrap: wrap; gap: 8px; min-width: 0; overflow: hidden; }
+.select-skill-modal .category-filter.is-collapsed .category-tabs { max-height: var(--category-tabs-collapsed-height, 30px); }
+.select-skill-modal .category-filter.is-expanded .category-tabs { max-height: none; }
+.select-skill-modal .category-tab { border: 1px solid #D2D6E5; border-radius: 999px; background: #FFF; color: #64758B; padding: 4px 14px; font-size: 13px; line-height: 20px; cursor: pointer; }
+.select-skill-modal .category-tab.active { border-color: #2E7FFF; background: #2E7FFF; color: #FFF; }
+.select-skill-modal .category-toggle { display: flex; align-items: center; gap: 2px; flex-shrink: 0; border: 0; background: transparent; color: #2E7FFF; padding: 5px 0; font-size: 13px; line-height: 20px; cursor: pointer; }
+.select-skill-modal .category-toggle.hidden { display: none; }
+.select-skill-modal .category-toggle .icon { font-size: 12px; transition: transform .2s; }
+.select-skill-modal .category-filter.is-expanded .category-toggle .icon { transform: rotate(180deg); }
+
+.select-skill-modal .skill-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 2px; }
+.select-skill-modal .skill-empty { padding: 32px 0; text-align: center; color: #9EA3B0; }
+
+.select-skill-modal .skill-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid #E6EAF1; border-radius: 4px; padding: 12px 14px; background: #FFF; }
+.select-skill-modal .skill-card.is-selected { border-color: #2E7FFF; background: #EEF5FF; }
+.select-skill-modal .skill-card-body { min-width: 0; flex: 1; }
+.select-skill-modal .skill-card-name { font-size: 14px; font-weight: 600; color: #3C4353; line-height: 20px; }
+.select-skill-modal .skill-card-desc { margin-top: 4px; font-size: 12px; color: #838A9D; line-height: 18px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.select-skill-modal .skill-card-side { display: flex; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.select-skill-modal .skill-card-category { font-size: 12px; color: #9EA3B0; white-space: nowrap; }
+.select-skill-modal .skill-card .btn.primary-outline { color: #2E7FFF; border-color: #2E7FFF; background: #FFF; }
+.select-skill-modal .skill-card .btn.disabled { color: #9EA3B0; border-color: #D8DBDE; background: #F5F5F5; cursor: not-allowed; }

@@ -1,0 +1,10 @@
+.valueBox {
+    position: relative;
+    max-width: 250px;
+}
+
+.valueBox .copy-field-btn{
+    position: absolute;
+    top: 0;
+    right: 0;
+}

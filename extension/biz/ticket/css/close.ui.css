@@ -1,0 +1,1 @@
+#ticketCloseForm .form-row:has(> .form-group.hidden) {display: none;}

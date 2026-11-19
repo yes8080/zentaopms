@@ -1,0 +1,6 @@
+.ai-panel-suggestions .hint[data-hint=""]::before,
+.ai-panel-suggestions .hint[data-hint=""]::after {display: none!important;}
+
+.ai-workbench {left: var(--zt-menu-width); bottom: var(--zt-apps-bar-height); top: 0; right: 0; border-radius: 0;}
+.ai-panel .ai-mini-btn {bottom: calc(var(--zt-apps-bar-height) + 16px)}
+.ai-panel .ai-workbench-btn+.ai-mini-btn {bottom: calc(var(--zt-apps-bar-height) + 64px)}

@@ -1,0 +1,17 @@
+.input-group {width: 100%;}
+.only-label {min-height: 20px !important;}
+.input-group .required:after {
+    --tw-translate-y: .125rem;
+    --tw-scale-x: 1.25;
+    --tw-scale-y: 1.25;
+    --tw-text-opacity: 1;
+    color: rgba(var(--color-danger-500-rgb),var(--tw-text-opacity));
+    content: "*";
+    display: inline-block;
+    margin-left: 0.25rem;
+    transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skew(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+input[name^='begin'] { width: 150px; }
+input[name^='end'] { width: 150px; }
+
+#executions .form-row+.form-row {margin-top: 10px}

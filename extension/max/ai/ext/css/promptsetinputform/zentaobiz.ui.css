@@ -1,0 +1,68 @@
+.prompt-set-input-form {
+  margin-bottom: 0;
+}
+
+.prompt-set-input-form .section-content {
+  padding-top: 8px;
+}
+
+.prompt-set-input-form .field-empty {
+  border: dashed 1px #D8DBDE;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 12px;
+  gap: 4px;
+  cursor: pointer;
+}
+.prompt-set-input-form .field-empty .tips {
+  font-size: 12px;
+  color: #9EA3B0;
+}
+.prompt-set-input-form .field-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.prompt-set-input-form .field-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 28px 0 7px;
+  position: relative;
+}
+.prompt-set-input-form .field-item .name {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.prompt-set-input-form .field-item .asterisk {
+  width: 8px;
+  font-size: 16px;
+  color: #FC5959;
+  position: relative;
+  margin-left: 2px;
+  top: 4px;
+}
+.prompt-set-input-form .field-item > .form-control,
+.prompt-set-input-form .field-item .input-group-control {
+  flex: 1;
+}
+.prompt-set-input-form .field-item .btn {
+  box-shadow: none;
+}
+.prompt-set-input-form .field-item .icon-move {
+  margin-left: 8px;
+  cursor: move;
+}
+
+#field-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#field-options .input-group {
+  width: 100%;
+}

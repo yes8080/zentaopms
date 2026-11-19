@@ -1,0 +1,32 @@
+.filesTree .tree-item .tree-item-inner .item-actions {margin-left: 0;}
+.filesTree .tree-item .tree-item-inner .item-actions > .btn
+{
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+}
+
+.filesTree .tree-item .tree-item-inner:hover .item-actions > .btn,
+.filesTree .tree-item .tree-item-inner .item-actions:hover > .btn,
+.filesTree .tree-item .tree-item-inner .item-actions:focus-within > .btn,
+.filesTree .tree-item .tree-item-inner .item-actions > .btn.with-popover-show
+{
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.artifact-image-tip-menu
+{
+    --menu-max-width: min(90vw, 60rem);
+    width: max-content;
+    max-width: min(90vw, 60rem);
+}
+
+.artifact-image-tip-menu .form-control
+{
+    width: max-content;
+    min-width: 8rem;
+    max-width: 100%;
+}

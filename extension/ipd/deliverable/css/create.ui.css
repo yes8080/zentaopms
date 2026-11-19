@@ -1,0 +1,47 @@
+.deliverable-item-doc-picker{
+    flex: 1;
+}
+
+.deliverable-item-empty-actions{
+    flex: 1;
+}
+
+.form-group[id^="required"] {
+    position: relative;
+}
+
+.form-group[id^="required"] .btn-group{
+    position: absolute;
+    width: 100px;
+    right: -100px;
+    bottom: 5px;
+}
+
+.deliverable-item-row {
+    min-height: 2rem !important;
+    padding: 0 0.5rem;
+}
+
+.deliverable-item-doc-picker{
+    width: 32rem !important;
+}
+
+.check-step > .checkbox-primary{
+    margin-bottom: 0.5rem;
+}
+
+.check-step .check-step-config{
+    margin: 0 0 1rem 1.5rem;
+}
+
+.check-step .form-batch-table thead{
+    display: none;
+}
+
+.check-step .form-batch-table{
+    width: 100%;
+}
+
+.check-step .form-batch-table td[data-name="ACTIONS"]{
+    width: 5rem;
+}

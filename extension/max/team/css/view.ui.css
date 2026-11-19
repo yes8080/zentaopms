@@ -1,0 +1,6 @@
+#mainContent .tabs .nav-tabs > .nav-item > a {color: var(--color-black-rgb)}
+#mainContent .card {box-shadow: none;}
+#mainContent .card:hover {box-shadow: none;}
+#mainContent .card:hover .remove-btn {display: flex !important;}
+#mainContent .tabs {position: relative;}
+#mainContent .tabs .addMember {position: absolute; top: 2px; right: 0px;z-index: 2}

@@ -1,0 +1,15 @@
+.pri-low {color: #313C52;}
+.pri-middle {color: #FF9F46;}
+.pri-high {color: #FB2B2B;}
+.relative .workhour {background: #fff;}
+.relative .requirement {background: #fff;}
+.kanban-header {height: 60px;}
+.kanban-header-col-wrapper {background: #fff !important;}
+.kanban-header-lane-name {background: #fff !important;}
+.kanban {background: #F4F5F7}
+.kanban-lane-col {background: #EDEEF2}
+.kanban-sticky .kanban-header {background: #F4F5F7}
+.text-mute {color: #5E626D}
+.has-sub-cols .kanban-lane.is-first .kanban-lane-actions { margin-top: 5px; }
+
+.progress {height: 0.5rem !important;}

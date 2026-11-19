@@ -1,0 +1,59 @@
+<?php
+$config->action->objectNameFields['review']                 = 'title';
+$config->action->objectNameFields['opportunity']            = 'name';
+$config->action->objectNameFields['trainplan']              = 'name';
+$config->action->objectNameFields['gapanalysis']            = 'account';
+$config->action->objectNameFields['auditcl']                = 'title';
+$config->action->objectNameFields['auditplan']              = 'title';
+$config->action->objectNameFields['nc']                     = 'title';
+$config->action->objectNameFields['reviewissue']            = 'opinion';
+$config->action->objectNameFields['meeting']                = 'name';
+$config->action->objectNameFields['meetingroom']            = 'name';
+$config->action->objectNameFields['researchplan']           = 'name';
+$config->action->objectNameFields['researchreport']         = 'title';
+$config->action->objectNameFields['assetlib']               = 'name';
+$config->action->objectNameFields['storylib']               = 'name';
+$config->action->objectNameFields['risklib']                = 'name';
+$config->action->objectNameFields['issuelib']               = 'name';
+$config->action->objectNameFields['opportunitylib']         = 'name';
+$config->action->objectNameFields['practicelib']            = 'name';
+$config->action->objectNameFields['componentlib']           = 'name';
+$config->action->objectNameFields['nc']                     = 'title';
+$config->action->objectNameFields['auditresult']            = 'comment';
+$config->action->objectNameFields['process']                = 'name';
+$config->action->objectNameFields['activity']               = 'name';
+$config->action->objectNameFields['zoutput']                = 'name';
+$config->action->objectNameFields['basicmeas']              = 'name';
+$config->action->objectNameFields['measurement']            = 'name';
+$config->action->objectNameFields['sqlview']                = 'name';
+$config->action->objectNameFields['cmcl']                   = 'contents';
+$config->action->objectNameFields['rule']                   = 'name';
+$config->action->objectNameFields['reporttemplate']         = 'title';
+$config->action->objectNameFields['reporttemplatecategory'] = 'name';
+$config->action->objectNameFields['weekly']                 = 'title';
+$config->action->objectNameFields['reportcategory']         = 'name';
+$config->action->objectNameFields['art']                    = 'name';
+$config->action->objectNameFields['pi']                     = 'name';
+$config->action->objectNameFields['teamgroup']              = 'name';
+$config->action->objectNameFields['objective']              = 'name';
+$config->action->objectNameFields['picard']                 = 'name';
+$config->action->objectNameFields['piteam']                 = 'name';
+$config->action->objectNameFields['piplan']                 = 'name';
+
+$config->action->assetType = ',story,issue,risk,opportunity,doc,';
+
+$config->action->assetViewMethod['story']       = 'storyView';
+$config->action->assetViewMethod['issue']       = 'issueView';
+$config->action->assetViewMethod['risk']        = 'riskView';
+$config->action->assetViewMethod['opportunity'] = 'opportunityView';
+
+$config->action->multipleObjectFields['art']['manager']       = 'users';
+$config->action->multipleObjectFields['art']['PO']            = 'users';
+$config->action->multipleObjectFields['teamgroup']['manager'] = 'users';
+
+$config->action->noLinkModules      .= ',reporttemplatecategory,reporttemplate,reportcategory,teamgroup,picard,';
+$config->action->userFields         .= ',trackedBy,hangupBy,activateBy,RTE,cancelBy,';
+$config->action->multipleUserFields .= ',readUsers,architect,';
+$config->action->needGetRelateField .= ',weekly,';
+
+$config->action->objectFields['picard']['status'] = 'statusList';

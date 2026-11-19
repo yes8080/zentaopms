@@ -1,0 +1,70 @@
+#mainContainer {padding: 1rem 0;}
+#mainContent {height: calc(100vh - 5rem); padding: 0; background: var(--color-canvas); box-shadow: var(--shadow); border-radius: var(--radius-xl); border: 1px solid var(--color-border);}
+
+.ai-procedure-steps {padding-bottom: 4px;gap: 34px;flex-wrap: nowrap;overflow-x: auto;}
+.ai-procedure-steps:has(.procedure) {gap: 12px;}
+.ai-procedure-steps li {display: flex;align-items: center;gap: 6px;border: solid 1px #D2D6E5;border-radius: 20px;padding: 4px 10px;user-select: none;position: relative;flex-shrink: 0;white-space: nowrap;}
+.ai-procedure-steps li:has(.index) {padding-left: 4px;}
+.ai-procedure-steps li:has(.btn) {padding-right: 4px;}
+.ai-procedure-steps .index {box-sizing: border-box;border-radius: 50%;border: solid 1px rgba(0, 0, 0, .1);width: 22px;height: 22px;color: #353D57;background-color: #EFF1F3;font-size: 12px;line-height: 22px;text-align: center;}
+.ai-procedure-steps li:not(.procedure)::after {content: "";display: block;width: 24px;height: 1px;background-color: #CCC;position: absolute;left: -29px;top: 50%;}
+.ai-procedure-steps li:first-child::after {display: none;}
+.ai-procedure-steps .name {max-width: 160px;}
+
+.ai-workbench {background: var(--color-canvas); box-shadow: none!important;}
+.ai-workbench-body > div, .ai-workbench-panel {height: 100%}
+.ai-workbench-panel {display: flex; align-items: stretch;}
+.ai-workbench-sidebar .sidebar-gutter:before {opacity: 100%;}
+.ai-workbench-main {background-color: var(--color-surface-light); min-width: 0;}
+
+#mainContent .aiworkbench-todo-list {margin-right: -8px;}
+.aiworkbench-todo-list .listitem {border-radius: var(--radius); border: 1px solid var(--color-border); padding: 8px;}
+.aiworkbench-todo-list .listitem.selected {border: 1px solid var(--color-primary-300);}
+.aiworkbench-todo-list .listitem.multiline > .item-content {gap: 8px}
+.aiworkbench-todo-list .listitem .item-title,
+.aiworkbench-todo-list .listitem .item-subtitle {opacity: 1; display: flex; align-items: center; gap: 8px; width: 100%; gap: 4px}
+
+.aiworkbench-object-detail {height: 100%; overflow: auto; padding: 12px 16px;}
+.aiworkbench-object-detail .detail-header {margin-bottom: 4px;}
+.aiworkbench-object-detail .detail-prev-next,
+.aiworkbench-object-detail .detail-toolbar,
+.aiworkbench-object-detail .detail-header [zui-key="backBtn"],
+.aiworkbench-object-detail .detail-actions [zui-key="backBtn"],
+.aiworkbench-object-detail .detail-actions [zui-key="backBtn"] + .divider,
+.aiworkbench-object-detail .detail-header .entity-title-text + .text-link > .caret,
+.aiworkbench-object-detail .detail-section-title > .ml-auto {display: none!important;}
+
+.aiworkbench-object-detail .detail-header .entity-title > .label-id {margin-left: 0;}
+.aiworkbench-object-detail .detail-header .entity-title-text + .text-link {pointer-events: none; color: inherit;}
+.aiworkbench-object-detail .detail-actions,
+.aiworkbench-object-detail .detail-side .tab-pane [data-toggle="modal"] {display: none!important;}
+.aiworkbench-object-detail .detail-side .tabs-header {position: relative;}
+
+.ai-procedure-run .form-builder-title {font-size: 13px; margin-bottom: 0;}
+.ai-procedure-run-steps-nav .ai-procedure-steps {min-width: 0;}
+.ai-procedure-run-steps-nav .ai-procedure-steps li:has(.ai-procedure-step-btn) {padding: 0;}
+.ai-procedure-step-btn {display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit;}
+.ai-procedure-step-btn:not(:disabled) {cursor: pointer;}
+.ai-procedure-step-btn[aria-pressed="false"]:not(:disabled):hover {background: var(--color-primary-100); color: var(--color-fore);}
+.ai-procedure-step-btn:focus-visible {outline: 2px solid var(--color-fore); outline-offset: -2px;}
+.ai-procedure-step-btn:disabled {cursor: default;}
+.ai-procedure-history-chat .ai-chat-sendbox,
+.ai-procedure-history-chat .ai-message-tool-calling-actions,
+.ai-procedure-history-chat .ai-tool-call-result-actions,
+.ai-procedure-history-chat .form-actions {display: none;}
+
+.ai-agent-result-form {overflow: auto; width: 100%; position: relative;}
+.ai-agent-result-form .detail-form {min-width: 900px;}
+.ai-agent-result-form .detail-header {padding: 16px 20px 0; margin-bottom: 0;}
+.ai-agent-result-form .detail-body {height: auto!important; overflow: visible;}
+.ai-agent-result-form .form-actions {position: sticky; bottom: 0; padding: 16px; margin: 0 -12px; background: var(--color-canvas); z-index: 10;}
+.ai-agent-result-form .form-actions .btn[data-status="draft"] {display: none;}
+.ai-agent-result-form .panel-form-batch .form-actions {margin: 0;}
+.ai-agent-result-form .panel-form-batch .panel-title {text-wrap: nowrap;}
+.ai-agent-result-form .panel-form-batch .form-batch-container {max-height: calc(100vh - 290px);}
+.ai-agent-result-form .ai-agent-result-form,
+.ai-agent-result-form #moduleBox > .input-group-btn {display: none!important;}
+
+.has-workbench-show #menu .nav > li > a.active {background: inherit;}
+.ai-workbench-panel .sidebar.is-collapsed > .sidebar-gutter {margin-left: 6px;}
+.ai-workbench-panel .sidebar.is-collapsed > .sidebar-gutter .gutter-toggle {background-color: var(--color-primary-500); color: var(--color-canvas);}

@@ -1,0 +1,11 @@
+.skill-file-tree-wrapper {padding: 4px 0;}
+.skill-file-tree {list-style: none; margin: 0; padding-left: 16px;}
+.skill-file-tree-wrapper > .skill-file-tree {padding-left: 0;}
+.skill-file-dir > .skill-file-tree {margin-top: 4px;}
+.skill-file-dir-header,
+.skill-file-item {display: flex; align-items: center; gap: 6px; line-height: 24px;}
+.skill-file-item {cursor: pointer;}
+.skill-file-item:hover,
+.skill-file-dir-header:hover {color: var(--color-primary-500);}
+.skill-file-toggle {cursor: pointer; width: 14px; flex-shrink: 0;}
+.skill-file-dir.collapsed > .skill-file-tree {display: none;}

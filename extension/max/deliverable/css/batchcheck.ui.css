@@ -1,0 +1,19 @@
+.check-step > .checkbox-primary{
+    margin-bottom: 0.5rem;
+}
+
+.check-step .check-step-config{
+    margin: 0 0 0.75rem 1.25rem;
+}
+
+.check-step .form-batch-table thead{
+    display: none;
+}
+
+.check-step .form-batch-table{
+    width: 100%;
+}
+
+.check-step .form-batch-table td[data-name="ACTIONS"]{
+    width: 5rem;
+}

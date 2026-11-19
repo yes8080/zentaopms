@@ -1,0 +1,3 @@
+.pi-table th, .pi-table td {white-space: nowrap; overflow: hidden;}
+.card {box-shadow: none }
+.card:hover {box-shadow: none }

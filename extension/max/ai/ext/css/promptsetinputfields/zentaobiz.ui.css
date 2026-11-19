@@ -1,0 +1,13 @@
+.prompt-set-input-fields {margin-bottom: 0;}
+.prompt-set-input-fields .panel-body {height: calc(100vh - 116px);}
+.prompt-set-input-fields .panel-body > form {height: 100%; display: flex; flex-direction: column;}
+.prompt-set-input-fields .data-selector-container {display: flex; flex: 1; gap: 16px; min-height: 0;}
+.prompt-set-input-fields .data-properties-section {display: flex; flex: 1; flex-direction: column; gap: 10px;}
+.prompt-set-input-fields .data-properties-section .section-header {display: flex; align-items: center; gap: 6px;}
+.prompt-set-input-fields .data-properties-section .section-content {border: 1px solid #EEE; flex: 1; overflow-y: auto; padding: 20px;}
+.prompt-set-input-fields .category-groups {display: flex; flex-direction: column; gap: 40px; user-select: none;}
+.prompt-set-input-fields .category-group-body {display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 12px; padding: 0 20px;}
+.prompt-set-input-fields .data-selected-panel {display: flex; flex-direction: column; width: 400px; gap: 10px;}
+.prompt-set-input-fields .data-selected-panel .section-content {border: 1px solid #EEE; flex: 1; overflow-y: auto;}
+.prompt-set-input-fields .selected-data-sorter ol {list-style-type: none; margin: 0; padding: 0;}
+.prompt-set-input-fields .selected-data-sorter li {padding: 8px 16px; user-select: none;}

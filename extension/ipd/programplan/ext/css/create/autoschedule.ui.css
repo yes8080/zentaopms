@@ -1,0 +1,9 @@
+#dataform td[data-name="endBox"] .form-batch-ditto-wrapper {display: flex; align-items: stretch;}
+#dataform td[data-name="endBox"] .form-batch-ditto-wrapper > .input-group {flex: 1; min-width: 0; display: flex; padding-right: 0;}
+#dataform td[data-name="endBox"] .form-group-wrapper {flex: 1; min-width: 0;}
+#dataform td[data-name="endBox"] .btn-calendar {flex: none; border-top-right-radius: 0; border-bottom-right-radius: 0;}
+#dataform td[data-name="endBox"] .form-batch-ditto-btn {position: static !important; flex: none; height: auto; box-shadow: 1px 0 0 0 var(--form-control-border), 0 -1px 0 0 var(--form-control-border), 0 1px 0 0 var(--form-control-border);}
+#dataform td[data-name="endBox"] .form-batch-ditto-btn:after {content: none;}
+#dataform td[data-name="endBox"].form-batch-ditto-control .input-control > .input-control-suffix {right: 0;}
+#dataform td[data-name="endBox"].form-batch-ditto-control .form-control,
+#dataform td[data-name="endBox"].form-batch-ditto-control .input-control > .form-control {padding-right: var(--input-control-suffix, 2rem);}

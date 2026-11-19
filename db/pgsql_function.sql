@@ -1,0 +1,1072 @@
+CREATE OR REPLACE FUNCTION FIND_IN_SET(
+  target text,
+  list text
+) RETURNS boolean AS $$
+DECLARE
+  arr text[];
+  i integer;
+BEGIN
+  IF list IS NULL OR list = '' THEN
+    RETURN false;
+  END IF;
+
+  arr := string_to_array(list, ',');
+
+  FOR i IN 1..array_length(arr, 1) LOOP
+    IF arr[i] = target THEN
+      RETURN true;
+    END IF;
+  END LOOP;
+
+  RETURN false;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION FIND_IN_SET(
+  target integer,
+  list text
+) RETURNS boolean AS $$
+BEGIN
+  RETURN FIND_IN_SET(target::text, list);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+DROP AGGREGATE IF EXISTS GROUP_CONCAT(anyelement);
+
+--
+
+DROP AGGREGATE IF EXISTS GROUP_CONCAT(anyelement, text);
+
+--
+
+DROP FUNCTION IF EXISTS group_concat_trans(text, anyelement);
+
+--
+
+DROP FUNCTION IF EXISTS group_concat_trans(text, anyelement, text);
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value text)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value; END IF;
+    RETURN state || ',' || value;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value varchar)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value::text; END IF;
+    RETURN state || ',' || value::text;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value int)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value::text; END IF;
+    RETURN state || ',' || value::text;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value bigint)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value::text; END IF;
+    RETURN state || ',' || value::text;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value text, delimiter text)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value; END IF;
+    RETURN state || COALESCE(delimiter, '') || value;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value varchar, delimiter text)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value::text; END IF;
+    RETURN state || COALESCE(delimiter, '') || value::text;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value int, delimiter text)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value::text; END IF;
+    RETURN state || COALESCE(delimiter, '') || value::text;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION group_concat_trans(state text, value bigint, delimiter text)
+RETURNS text AS $$
+BEGIN
+    IF value IS NULL THEN RETURN state; END IF;
+    IF state IS NULL THEN RETURN value::text; END IF;
+    RETURN state || COALESCE(delimiter, '') || value::text;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(text)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(varchar)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(int)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(bigint)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(text, text)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(varchar, text)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(int, text)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE AGGREGATE GROUP_CONCAT(bigint, text)
+(
+    SFUNC = group_concat_trans,
+    STYPE = text
+);
+
+--
+
+CREATE OR REPLACE FUNCTION ROUND(num float)
+RETURNS numeric AS $$ BEGIN RETURN pg_catalog.ROUND(num::numeric, 0); END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ROUND(
+    num float,
+    decimals integer
+) RETURNS numeric AS $$
+BEGIN
+    RETURN pg_catalog.ROUND(num::numeric, decimals);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ROUND(num double precision)
+RETURNS numeric AS $$ BEGIN RETURN pg_catalog.ROUND(num::numeric, 0); END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ROUND(
+    num double precision,
+    decimals integer
+) RETURNS numeric AS $$
+BEGIN
+    RETURN pg_catalog.ROUND(num::numeric, decimals);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ROUND(num text)
+RETURNS numeric AS $$ BEGIN RETURN pg_catalog.ROUND(num::numeric, 0); END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ROUND(
+    num text,
+    decimals integer
+) RETURNS numeric AS $$
+BEGIN
+    RETURN pg_catalog.ROUND(num::numeric, decimals);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION TIMESTAMPDIFF(
+    unit TEXT,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP
+) RETURNS INTEGER AS $$
+DECLARE
+    diff_interval INTERVAL;
+    diff_seconds NUMERIC;
+BEGIN
+    diff_interval := end_time - start_time;
+
+    CASE lower(unit)
+        WHEN 'year' THEN
+            RETURN EXTRACT(YEAR FROM end_time) - EXTRACT(YEAR FROM start_time)
+                - CASE WHEN (EXTRACT(MONTH FROM end_time) < EXTRACT(MONTH FROM start_time))
+                        OR (EXTRACT(MONTH FROM end_time) = EXTRACT(MONTH FROM start_time)
+                            AND EXTRACT(DAY FROM end_time) < EXTRACT(DAY FROM start_time))
+                      THEN 1 ELSE 0 END;
+        WHEN 'month' THEN
+            RETURN (EXTRACT(YEAR FROM end_time) - EXTRACT(YEAR FROM start_time)) * 12
+                + (EXTRACT(MONTH FROM end_time) - EXTRACT(MONTH FROM start_time))
+                - CASE WHEN EXTRACT(DAY FROM end_time) < EXTRACT(DAY FROM start_time)
+                      THEN 1 ELSE 0 END;
+        WHEN 'day' THEN
+            RETURN EXTRACT(DAY FROM diff_interval);
+        WHEN 'hour' THEN
+            diff_seconds := EXTRACT(EPOCH FROM diff_interval);
+            RETURN floor(diff_seconds / 3600);
+        WHEN 'minute' THEN
+            diff_seconds := EXTRACT(EPOCH FROM diff_interval);
+            RETURN floor(diff_seconds / 60);
+        WHEN 'second' THEN
+            RETURN EXTRACT(EPOCH FROM diff_interval);
+        ELSE
+            RETURN NULL;
+    END CASE;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(bigint, integer)
+RETURNS bigint AS $$
+BEGIN
+  RETURN COALESCE($1, $2::bigint);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(double precision, integer)
+RETURNS double precision AS $$
+BEGIN
+  RETURN COALESCE($1, $2::double precision);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(integer, bigint)
+RETURNS bigint AS $$
+BEGIN
+  RETURN COALESCE($1::bigint, $2);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(bigint, bigint)
+RETURNS bigint AS $$
+BEGIN
+  RETURN COALESCE($1, $2);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(integer, integer)
+RETURNS integer AS $$
+BEGIN
+  RETURN COALESCE($1, $2);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(numeric, numeric)
+RETURNS numeric AS $$
+BEGIN
+  RETURN COALESCE($1, $2);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(text, text)
+RETURNS text AS $$
+BEGIN
+  RETURN COALESCE($1, $2);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE(date_val TEXT)
+RETURNS DATE AS $$
+BEGIN
+  RETURN date_val::DATE;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE_SUB(
+    date_val TIMESTAMPTZ,
+    interval_val INTERVAL
+) RETURNS TIMESTAMPTZ AS $$
+    SELECT date_val - interval_val;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE_SUB(
+    date_val TIMESTAMP,
+    interval_val INTERVAL
+) RETURNS TIMESTAMP AS $$
+    SELECT date_val - interval_val;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE_SUB(
+    date_val DATE,
+    interval_val INTERVAL
+) RETURNS DATE AS $$
+    SELECT (date_val - interval_val)::DATE;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION day(date_val DATE)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(DAY FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION day(date_val TIMESTAMP)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(DAY FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION day(date_val TIMESTAMPTZ)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(DAY FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION MONTH(date_val DATE)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(MONTH FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION MONTH(date_val TIMESTAMP)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(MONTH FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION MONTH(date_val TIMESTAMPTZ)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(MONTH FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION YEAR(date_val DATE)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(YEAR FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION YEAR(date_val TIMESTAMP)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(YEAR FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION YEAR(date_val TIMESTAMPTZ)
+RETURNS INTEGER AS $$ BEGIN RETURN EXTRACT(YEAR FROM date_val)::INTEGER; END; $$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date DATE, start_date DATE)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date - start_date; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date DATE, start_date TIMESTAMP)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date - start_date::DATE; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date DATE, start_date TIMESTAMPTZ)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date - start_date::DATE; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date TIMESTAMP, start_date DATE)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date::DATE - start_date; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date TIMESTAMP, start_date TIMESTAMP)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date::DATE - start_date::DATE; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date TIMESTAMP, start_date TIMESTAMPTZ)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date::DATE - start_date::DATE; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date TIMESTAMPTZ, start_date DATE)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date::DATE - start_date; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date TIMESTAMPTZ, start_date TIMESTAMP)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date::DATE - start_date::DATE; END; $$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATEDIFF(end_date TIMESTAMPTZ, start_date TIMESTAMPTZ)
+RETURNS INTEGER AS $$ BEGIN RETURN end_date::DATE - start_date::DATE; END; $$ LANGUAGE plpgsql IMMUTABLE;
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val BOOLEAN,
+    false_val BOOLEAN
+) RETURNS BOOLEAN AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val DOUBLE PRECISION,
+    false_val INTEGER
+) RETURNS DOUBLE PRECISION AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val::DOUBLE PRECISION;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val DOUBLE PRECISION,
+    false_val DOUBLE PRECISION
+) RETURNS DOUBLE PRECISION AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val TEXT,
+    false_val TEXT
+) RETURNS TEXT AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val INTEGER,
+    false_val INTEGER
+) RETURNS INTEGER AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val TEXT,
+    false_val DATE
+) RETURNS DATE AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val::DATE;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val DATE,
+    false_val DATE
+) RETURNS DATE AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val  timestamp without time zone,
+    false_val DATE
+) RETURNS DATE AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val::DATE;
+    ELSE
+        RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val  timestamp without time zone,
+    false_val timestamp without time zone
+) RETURNS DATE AS $$
+BEGIN
+    IF condition THEN
+        RETURN true_val;
+    ELSE
+        RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val NUMERIC,
+    false_val INTEGER
+    ) RETURNS NUMERIC AS $$
+    BEGIN
+        IF condition THEN
+            RETURN true_val;
+        ELSE
+            RETURN false_val::NUMERIC;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION "IF"(
+    condition BOOLEAN,
+    true_val NUMERIC,
+    false_val NUMERIC
+    ) RETURNS NUMERIC AS $$
+    BEGIN
+        IF condition THEN
+            RETURN true_val;
+        ELSE
+            RETURN false_val;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE_FORMAT(
+    date_val DATE,
+    format_str TEXT
+) RETURNS TEXT AS $$
+DECLARE
+    pg_format TEXT;
+BEGIN
+    pg_format := REPLACE(format_str, '%Y', 'YYYY');
+    pg_format := REPLACE(pg_format, '%y', 'YY');
+    pg_format := REPLACE(pg_format, '%m', 'MM');
+    pg_format := REPLACE(pg_format, '%c', 'FMMM');
+    pg_format := REPLACE(pg_format, '%d', 'DD');
+    pg_format := REPLACE(pg_format, '%e', 'FMDD');
+    pg_format := REPLACE(pg_format, '%H', 'HH24');
+    pg_format := REPLACE(pg_format, '%h', 'HH12');
+    pg_format := REPLACE(pg_format, '%i', 'MI');
+    pg_format := REPLACE(pg_format, '%s', 'SS');
+    pg_format := REPLACE(pg_format, '%W', 'Day');
+    pg_format := REPLACE(pg_format, '%a', 'Dy');
+    pg_format := REPLACE(pg_format, '%M', 'Month');
+    pg_format := REPLACE(pg_format, '%b', 'Mon');
+    pg_format := REPLACE(pg_format, '%w', 'D');
+    pg_format := REPLACE(pg_format, '%p', 'AM');
+    pg_format := REPLACE(pg_format, '%T', 'HH24:MI:SS');
+    pg_format := REPLACE(pg_format, '%j', 'DDD');
+    pg_format := REPLACE(pg_format, '%V', 'IW');
+    pg_format := REPLACE(pg_format, '%x', 'IYYY');
+    pg_format := REPLACE(pg_format, '%k', 'FMHH24');
+    pg_format := REPLACE(pg_format, '%l', 'FMHH12');
+    pg_format := REPLACE(pg_format, '%f', 'US');
+    pg_format := REPLACE(pg_format, '%%', '%');
+
+    RETURN TO_CHAR(date_val, pg_format);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION instr(
+    str TEXT,
+    sub_str TEXT
+)
+RETURNS INTEGER AS $$
+BEGIN
+    IF str IS NULL OR sub_str IS NULL OR sub_str = '' THEN
+        RETURN 0;
+    END IF;
+
+    RETURN strpos(LOWER(str), LOWER(sub_str));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION left(
+    str TEXT,
+    length INT
+)
+RETURNS TEXT AS $$
+BEGIN
+    IF str IS NULL OR length IS NULL THEN
+        RETURN NULL;
+    END IF;
+    IF length <= 0 THEN
+        RETURN '';
+    END IF;
+    RETURN pg_catalog.left(str, length);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION left(
+    str DATE,
+    length INT
+)
+RETURNS TEXT AS $$
+BEGIN
+    RETURN left(str::TEXT, length);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION left(
+    str NUMERIC,
+    length INT
+)
+RETURNS TEXT AS $$
+BEGIN
+    RETURN left(str::TEXT, length);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION left(
+    str TIMESTAMP,
+    length INT
+)
+RETURNS TEXT AS $$
+BEGIN
+    RETURN left(str::TEXT, length);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION date_format(
+    input_date TIMESTAMP WITHOUT TIME ZONE,
+    format_str TEXT
+) RETURNS TEXT AS $$
+DECLARE
+    mapped_format TEXT := format_str;
+BEGIN
+    mapped_format := REPLACE(mapped_format, '%Y', 'YYYY');
+    mapped_format := REPLACE(mapped_format, '%y', 'YY');
+    mapped_format := REPLACE(mapped_format, '%m', 'MM');
+    mapped_format := REPLACE(mapped_format, '%c', 'FM MM');
+    mapped_format := REPLACE(mapped_format, '%d', 'DD');
+    mapped_format := REPLACE(mapped_format, '%e', 'FM DD');
+    mapped_format := REPLACE(mapped_format, '%H', 'HH24');
+    mapped_format := REPLACE(mapped_format, '%h', 'HH12');
+    mapped_format := REPLACE(mapped_format, '%i', 'MI');
+    mapped_format := REPLACE(mapped_format, '%s', 'SS');
+    mapped_format := REPLACE(mapped_format, '%W', 'Day');
+    mapped_format := REPLACE(mapped_format, '%w', 'D');
+    mapped_format := REPLACE(mapped_format, '%M', 'Month');
+    mapped_format := REPLACE(mapped_format, '%b', 'Mon');
+    mapped_format := REPLACE(mapped_format, '%p', 'AM');
+    mapped_format := REPLACE(mapped_format, '%T', 'HH24:MI:SS');
+    mapped_format := REPLACE(mapped_format, '%j', 'DDD');
+
+    mapped_format := REPLACE(mapped_format, 'FM MM', 'FMMM');
+    mapped_format := REPLACE(mapped_format, 'FM DD', 'FMDD');
+
+    RETURN TO_CHAR(input_date, mapped_format);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION update_tables_seq ( )
+RETURNS void AS $$
+	DECLARE
+	seq_name_cursor CURSOR FOR
+	SELECT a.attname AS column_name, c.relname AS table_name, s.relname AS seq_name
+    FROM pg_class c
+    JOIN pg_depend d ON d.refobjid = c.oid
+    JOIN pg_class s ON d.objid = s.oid
+    JOIN pg_namespace n ON s.relnamespace = n.oid
+    JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = d.refobjsubid
+    WHERE d.classid = 'pg_class'::regclass
+      AND d.refclassid = 'pg_class'::regclass
+      AND s.relkind = 'S'
+      AND n.nspname = current_schema();
+
+	prepared_sql VARCHAR(255);
+
+BEGIN
+  FOR ref_record in seq_name_cursor LOOP
+	prepared_sql := 'SELECT setval( ''' || ref_record.seq_name;
+	prepared_sql := prepared_sql || ''','||'( SELECT MAX ( ' || ref_record.column_name || ' ) FROM "'||ref_record.table_name||'") );';
+	RAISE NOTICE '%', prepared_sql;
+	EXECUTE prepared_sql;
+	END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+--
+
+CREATE OR REPLACE FUNCTION TRUNCATE(
+    val numeric,
+    digits INT
+) RETURNS numeric AS $$
+BEGIN
+    RETURN pg_catalog.trunc(val, digits);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION CURDATE()
+RETURNS date AS $$
+BEGIN
+    RETURN CURRENT_DATE;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE_ADD(
+    date_val DATE,
+    interval_val INTERVAL
+) RETURNS DATE AS $$
+    SELECT (date_val + interval_val)::DATE;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE_ADD(
+    date_val TIMESTAMP,
+    interval_val INTERVAL
+) RETURNS TIMESTAMP AS $$
+    SELECT date_val + interval_val;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION DATE_ADD(
+    date_val TIMESTAMPTZ,
+    interval_val INTERVAL
+) RETURNS TIMESTAMPTZ AS $$
+    SELECT date_val + interval_val;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ADDDATE(
+    date_val DATE,
+    interval_val INTERVAL
+) RETURNS DATE AS $$
+    SELECT DATE_ADD(date_val, interval_val);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ADDDATE(
+    date_val DATE,
+    days INT
+) RETURNS DATE AS $$
+    SELECT date_val + days;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ADDDATE(
+    date_val TIMESTAMP,
+    interval_val INTERVAL
+) RETURNS TIMESTAMP AS $$
+    SELECT DATE_ADD(date_val, interval_val);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION ADDDATE(
+    date_val TIMESTAMPTZ,
+    interval_val INTERVAL
+) RETURNS TIMESTAMPTZ AS $$
+    SELECT DATE_ADD(date_val, interval_val);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION QUARTER(
+    date_val DATE
+) RETURNS INT AS $$
+    SELECT EXTRACT(QUARTER FROM date_val)::int;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION QUARTER(
+    date_val TIMESTAMP
+) RETURNS INT AS $$
+    SELECT EXTRACT(QUARTER FROM date_val)::int;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION QUARTER(
+    date_val TIMESTAMPTZ
+) RETURNS INT AS $$
+    SELECT EXTRACT(QUARTER FROM date_val)::int;
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION WEEK(
+    date_val DATE,
+    mode INT DEFAULT 0
+) RETURNS INT AS $$
+DECLARE
+    year_start DATE;
+    first_week_start DATE;
+BEGIN
+    IF date_val IS NULL THEN RETURN NULL; END IF;
+    IF mode != 0 THEN RETURN NULL; END IF;
+
+    year_start       := DATE_TRUNC('year', date_val)::DATE;
+    first_week_start := year_start + ((7 - EXTRACT(DOW FROM year_start))::int % 7);
+
+    IF date_val < first_week_start THEN
+        RETURN 0;
+    END IF;
+
+    RETURN ((date_val - first_week_start) / 7)::int + 1;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION WEEK(
+    date_val TIMESTAMP,
+    mode INT DEFAULT 0
+) RETURNS INT AS $$
+    SELECT WEEK(date_val::DATE, mode);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION WEEK(
+    date_val TIMESTAMPTZ,
+    mode INT DEFAULT 0
+) RETURNS INT AS $$
+    SELECT WEEK(date_val::DATE, mode);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION YEARWEEK(
+    date_val DATE,
+    mode INT DEFAULT 0
+) RETURNS INT AS $$
+DECLARE
+    wk INT;
+    yy INT;
+    last_day_of_prev_year DATE;
+BEGIN
+    IF date_val IS NULL THEN RETURN NULL; END IF;
+
+    wk := WEEK(date_val, mode);
+    yy := EXTRACT(YEAR FROM date_val)::int;
+
+    IF wk = 0 THEN
+        yy := yy - 1;
+        last_day_of_prev_year := (DATE_TRUNC('year', date_val) - INTERVAL '1 day')::DATE;
+        wk := WEEK(last_day_of_prev_year, mode);
+    END IF;
+
+    RETURN yy * 100 + wk;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION YEARWEEK(
+    date_val TIMESTAMP,
+    mode INT DEFAULT 0
+) RETURNS INT AS $$
+    SELECT YEARWEEK(date_val::DATE, mode);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION YEARWEEK(
+    date_val TIMESTAMPTZ,
+    mode INT DEFAULT 0
+) RETURNS INT AS $$
+    SELECT YEARWEEK(date_val::DATE, mode);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION TO_DAYS(
+    date_val DATE
+) RETURNS INT AS $$
+BEGIN
+    RETURN (date_val - DATE '0001-01-01') + 366;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION TO_DAYS(
+    date_val TEXT
+) RETURNS INT AS $$
+BEGIN
+    RETURN TO_DAYS(date_val::DATE);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION TO_DAYS(
+    date_val TIMESTAMP
+) RETURNS INT AS $$
+    SELECT TO_DAYS(date_val::DATE);
+$$ LANGUAGE SQL IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION TO_DAYS(
+    date_val TIMESTAMPTZ
+) RETURNS INT AS $$
+    SELECT TO_DAYS(date_val::DATE);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(date, date)
+RETURNS date AS $$
+  SELECT COALESCE($1, $2);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(timestamp, timestamp)
+RETURNS timestamp AS $$
+  SELECT COALESCE($1, $2);
+$$ LANGUAGE SQL IMMUTABLE;
+
+--
+
+CREATE OR REPLACE FUNCTION IFNULL(timestamptz, timestamptz)
+RETURNS timestamptz AS $$
+  SELECT COALESCE($1, $2);
+$$ LANGUAGE SQL IMMUTABLE;

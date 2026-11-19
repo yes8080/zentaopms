@@ -1,0 +1,3 @@
+.form-group:has(.btn-detail) { position: relative; }
+.form-group:has(.btn-detail) .form-label { font-weight: bold; }
+.form-group .btn-detail { position: absolute; right: 0; top: 0; }

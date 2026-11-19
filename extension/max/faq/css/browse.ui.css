@@ -1,0 +1,4 @@
+.faq-list .faq-item .faq-actions {display: none; color: var(--color-primary-500);}
+.faq-list .faq-item:hover .faq-actions {display: inline-flex;}
+.faq-list .faq-item .faq-answer {margin-top: 8px;}
+#faqToc {padding-left: 35px;}

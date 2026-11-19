@@ -1,0 +1,32 @@
+<?php
+/**
+ * The close view file of bug module of ZenTaoPMS.
+ * @copyright   Copyright 2009-2023 禅道软件（青岛）集团有限公司(ZenTao Software (Qingdao) Co., Ltd. www.zentao.net)
+ * @license     ZPL(https://zpl.pub/page/zplv12.html) or AGPL(https://www.gnu.org/licenses/agpl-3.0.en.html)
+ * @author      Yuting Wang <wangyuting@easycorp.ltd>
+ * @package     bug
+ * @link        https://www.zentao.net
+ */
+namespace zin;
+
+$fields = useFields('bug.close');
+
+modalHeader();
+formPanel
+(
+    set::fields($fields),
+    formGroup
+    (
+        set::hidden(true),
+        set::label($lang->bug->status),
+        picker
+        (
+            set::name('status'),
+            set::items($lang->bug->statusList),
+            set::value('closed')
+        )
+    )
+);
+
+hr();
+history();

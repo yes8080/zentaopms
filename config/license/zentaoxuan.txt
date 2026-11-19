@@ -1,0 +1,25 @@
+<?php die;?>
+
+
+------ LICENSE FILE DATA -------
+7739UT516VJY+xwoN8ecxkIGzSQiz6qT
+8xoVchXLeFmdCxGDvFoo4KorTFxFuYJw
+/qWs3aVv7NmxJ83c4nzd5+BvPYg3fKxE
+0/BwNmgmfBFpV34S/UbVcWFzgYvbfGaR
+B5hlf14JAFweADKdkR8UzKm49cZ0SLlH
+I4wA95yg8R+UhXMFbP2GIfnarv4ki2Ct
+Nk7gZbqqDXISCiIsH5IsYyIg0zEWSSQC
+ubE8WamTSi6ZUmG/fRIyOMsC/Y104z93
+kWUkMbyBnYaW/Ub5zCQ8VDhZfNjD+UbU
+O5wJEkqnc+QOTSykjGdg3qkF+jQjBtXe
+wY0x8XqX3Sd7cf/PlnC6VHoOF1NQOeMS
+j/UsXjR8SGWFa/AclWRxMFSWITnGsnwn
+tBLCpeS98z8l6SQU4vVyqSY4aL6da+bR
+llZ7RA2GEq4DZkqoq+q5ae1nSm+JzNCr
+Vzq+/YASsFHTPDJ/DnJfzUpIvygZ9UYO
+kzRdmZTPdMfyc5sSO9BJ6RJaFiULiB2d
+818PQJ5fqN0f+URzwWMP0/fwEQ1yYZtA
+VL2lUsrojXSgvllaGzx6O5DKfrbecw1v
+oMN8gbebaiLL970SCxyLAVenVtbjXQUV
+UR9WzSQqbhT04I==
+--------------------------------

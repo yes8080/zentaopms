@@ -1,0 +1,44 @@
+
+body {
+    background: rgba(244, 245, 247, 1);
+}
+.panel {
+    background: transparent;
+    border: none;
+}
+.panel-actions .btn-left {
+    background: #1B9AF5;
+ border-radius: 2px;
+ border: #1B9AF5;
+}
+.panel-actions .btn-right {
+    background: #3382FF;
+
+ border-radius: 2px;
+ border: #3382FF;
+}
+.panel>.panel-heading  {
+    border: none;
+    background: transparent;
+    height: 32px;
+    margin-bottom: 16px;
+}
+
+/* 空状态样式，参考设备管理模块 */
+.empty-state {
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    background: #fff;
+    width: 100%;
+    border-radius: 2px;
+}
+
+.empty-message {
+    color: #9EA3B0;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 14px;
+}

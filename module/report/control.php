@@ -1,0 +1,154 @@
+<?php
+/**
+ * The control file of report module of ZenTaoPMS.
+ *
+ * @copyright   Copyright 2009-2023 禅道软件（青岛）集团有限公司(ZenTao Software (Qingdao) Co., Ltd. www.cnezsoft.com)
+ * @license     ZPL(http://zpl.pub/page/zplv12.html) or AGPL(https://www.gnu.org/licenses/agpl-3.0.en.html)
+ * @author      Chunsheng Wang <chunsheng@cnezsoft.com>
+ * @package     report
+ * @version     $Id: control.php 4622 2013-03-28 01:09:02Z chencongzhi520@gmail.com $
+ * @link        https://www.zentao.net
+ */
+class report extends control
+{
+    /**
+     * 项目ID。
+     * The projectID.
+     *
+     * @var float
+     * @access public
+     */
+    public $projectID = 0;
+
+    /**
+     * 构造函数。
+     * Construct.
+     *
+     * @access public
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * 报告主页，跳转到年度数据。
+     * The index of report, goto aunnual data.
+     *
+     * @access public
+     * @return void
+     */
+    public function index()
+    {
+        $this->locate(inlink('annualData'));
+    }
+
+    /**
+     * 发送每日提醒邮件。
+     * Send daily reminder mail.
+     *
+     * @access public
+     * @return void
+     */
+    public function remind()
+    {
+        /* Get reminder, and send email. */
+        $reminder = $this->reportZen->getReminder();
+
+        /* Check mail turnon, if the system doesn't turn on the e-mail function, return the tip. */
+        $this->loadModel('mail');
+        if(!$this->config->mail->turnon)
+        {
+            echo "You should turn on the Email feature first.\n";
+            $this->runAlertRulesDaily();
+            return false;
+        }
+
+        foreach($reminder as $user => $mail)
+        {
+            /* Reset $this->output. */
+            $this->clear();
+
+            $mailTitle  = $this->lang->report->mailTitle->begin;
+            $mailTitle .= isset($mail->bugs)      ? sprintf($this->lang->report->mailTitle->bug,      count($mail->bugs))      : '';
+            $mailTitle .= isset($mail->tasks)     ? sprintf($this->lang->report->mailTitle->task,     count($mail->tasks))     : '';
+            $mailTitle .= isset($mail->todos)     ? sprintf($this->lang->report->mailTitle->todo,     count($mail->todos))     : '';
+            $mailTitle .= isset($mail->testTasks) ? sprintf($this->lang->report->mailTitle->testTask, count($mail->testTasks)) : '';
+            $mailTitle .= isset($mail->cards)     ? sprintf($this->lang->report->mailTitle->card,     count($mail->cards))     : '';
+            $mailTitle  = rtrim($mailTitle, ',');
+
+            /* Get email content and title.*/
+            $this->view->mail      = $mail;
+            $this->view->mailTitle = $mailTitle;
+
+            $oldViewType = $this->viewType;
+            if($oldViewType == 'json') $this->viewType = 'html';
+            $mailContent    = $this->parse('report', 'dailyreminder');
+            $this->viewType = $oldViewType;
+
+            /* Send email.*/
+            echo date('Y-m-d H:i:s') . " sending to {$user}, ";
+            $this->mail->send($user, $mailTitle, $mailContent, '', true);
+            if($this->mail->isError())
+            {
+                echo "fail: \n" ;
+                a($this->mail->getError());
+            }
+            echo "ok\n";
+        }
+
+        if($this->config->edition != 'open') $this->runAlertRulesDaily();
+    }
+
+    /**
+     * Run alert-scene rules after daily remind (biz rule engine).
+     *
+     * @access protected
+     * @return void
+     */
+    protected function runAlertRulesDaily()
+    {
+        /* 规则队列模块仅商业版提供，开源版直接返回。The rule queue module is only available in the biz edition. */
+        if($this->config->edition == 'open') return;
+
+        /* 商业版也需确认模块存在，避免加载失败时对 false 调用方法。Also check the module exists to avoid calling a method on false. */
+        $ruleQueue = $this->loadModel('rulequeue');
+        if(!$ruleQueue) return;
+
+        echo date('Y-m-d H:i:s') . " running alert rules...\n";
+        $ruleQueue->runDailyAlerts();
+        echo date('Y-m-d H:i:s') . " alert rules done.\n";
+    }
+
+    /**
+     * 展示年度数据。
+     * Show annual data.
+     *
+     * @param  string $year
+     * @param  string $dept
+     * @param  string $account
+     * @access public
+     * @return void
+     */
+    public function annualData(string $year = '', string $dept = '', string $account = '')
+    {
+        $this->app->loadLang('story');
+        $this->app->loadLang('task');
+        $this->app->loadLang('bug');
+        $this->app->loadLang('testcase');
+
+        /* Assign annual data. */
+        $this->reportZen->assignAnnualReport($year, $dept, $account);
+
+        $mode = 'company';
+        if((int)$dept && empty($account)) $mode = 'dept';
+        if($account) $mode = 'user';
+
+        $this->view->contributionCountTips = $this->report->getContributionCountTips($mode);
+
+        $this->view->mode    = $mode;
+        $this->view->account = $account;
+        $this->display();
+    }
+}

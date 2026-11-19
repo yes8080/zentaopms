@@ -1,0 +1,23 @@
+<?php
+
+
+namespace Spiral\Core\Internal\Factory;
+
+/**
+ * @template TClass of object
+ */
+final class Ctx
+{
+    /**
+     * @param class-string<TClass> $class
+     * @param null|\ReflectionClass<TClass> $reflection
+     */
+    public function __construct(
+        public readonly string $alias,
+        public string $class,
+        public ?string $parameter = null,
+        public ?bool $singleton = null,
+        public ?\ReflectionClass $reflection = null,
+    ) {
+    }
+}

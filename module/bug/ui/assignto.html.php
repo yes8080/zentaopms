@@ -1,0 +1,26 @@
+<?php
+/**
+ * The assignTo view file of bug module of ZenTaoPMS.
+ * @copyright   Copyright 2009-2023 禅道软件（青岛）集团有限公司(ZenTao Software (Qingdao) Co., Ltd. www.zentao.net)
+ * @license     ZPL(https://zpl.pub/page/zplv12.html) or AGPL(https://www.gnu.org/licenses/agpl-3.0.en.html)
+ * @author      Mengyi Liu <liumengyi@easycorp.ltd>
+ * @package     bug
+ * @link        https://www.zentao.net
+ */
+namespace zin;
+
+$fields = useFields('bug.assignTo');
+
+jsVar('page', 'assignedto');
+
+modalHeader(set::title($lang->bug->assignTo));
+
+formPanel
+(
+    set::submitBtnText($lang->bug->assignTo),
+    set::fields($fields)
+);
+hr();
+history(set::objectID($bug->id));
+
+render();

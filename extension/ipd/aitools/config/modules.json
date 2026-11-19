@@ -1,0 +1,5728 @@
+{
+  "user": {
+    "name": "user",
+    "display": "用户",
+    "description": "用户管理，支持获取用户列表、创建用户、获取用户详情、修改用户信息、删除用户",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取用户列表",
+        "type": "list",
+        "method": "get",
+        "path": "/users",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "users",
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "浏览类型",
+            "options": [
+              {
+                "value": "inside",
+                "label": "内部用户"
+              },
+              {
+                "value": "outside",
+                "label": "内部用户"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "realname_asc",
+                "label": "姓名 升序"
+              },
+              {
+                "value": "realname_desc",
+                "label": "姓名 降序"
+              },
+              {
+                "value": "account_asc",
+                "label": "用户名 升序"
+              },
+              {
+                "value": "account_desc",
+                "label": "用户名 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建用户",
+        "type": "create",
+        "method": "post",
+        "path": "/users",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "account",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "登录名"
+          },
+          {
+            "name": "realname",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "姓名"
+          },
+          {
+            "name": "password",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "密码"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取用户详情",
+        "type": "get",
+        "method": "get",
+        "path": "/users/{userID}",
+        "resultType": "object",
+        "resultGetter": "user",
+        "pathParams": {
+          "userID": "用户ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改用户信息",
+        "type": "update",
+        "method": "put",
+        "path": "/users/{userID}",
+        "resultType": "object",
+        "pathParams": {
+          "userID": "用户ID"
+        },
+        "bodyParams": [
+          {
+            "name": "realname",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "真实姓名"
+          },
+          {
+            "name": "dept",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "部门",
+            "format": "int32"
+          },
+          {
+            "name": "join",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "入职日期"
+          },
+          {
+            "name": "group",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "权限分组"
+          },
+          {
+            "name": "email",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "邮箱"
+          },
+          {
+            "name": "visions",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "界面类型(研发综合界面 rnd | 运营管理界面 lite)"
+          },
+          {
+            "name": "mobile",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "手机"
+          },
+          {
+            "name": "weixin",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "微信"
+          },
+          {
+            "name": "password",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "密码"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除用户",
+        "type": "delete",
+        "method": "delete",
+        "path": "/users/{userID}",
+        "resultType": "text",
+        "pathParams": {
+          "userID": "用户ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "program": {
+    "name": "program",
+    "display": "项目集",
+    "description": "项目集管理，支持获取项目集列表、创建项目集、获取项目集详情、修改项目集、删除项目集",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取项目集列表",
+        "type": "list",
+        "method": "get",
+        "path": "/programs",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "programs",
+        "params": [
+          {
+            "name": "status",
+            "required": false,
+            "type": "string",
+            "description": "状态",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "unclosed",
+                "label": "未关闭"
+              },
+              {
+                "value": "wait",
+                "label": "未开始"
+              },
+              {
+                "value": "doing",
+                "label": "进行中"
+              },
+              {
+                "value": "suspended",
+                "label": "已挂起"
+              },
+              {
+                "value": "delayed",
+                "label": "已延期"
+              },
+              {
+                "value": "closed",
+                "label": "已关闭"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "name_asc",
+                "label": "名称 升序"
+              },
+              {
+                "value": "name_desc",
+                "label": "名称 降序"
+              },
+              {
+                "value": "begin_asc",
+                "label": "计划开始 升序"
+              },
+              {
+                "value": "begin_desc",
+                "label": "计划开始 降序"
+              },
+              {
+                "value": "end_asc",
+                "label": "计划结束 升序"
+              },
+              {
+                "value": "end_desc",
+                "label": "计划结束 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建项目集",
+        "type": "create",
+        "method": "post",
+        "path": "/programs",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "项目集名称"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划完成日期"
+          },
+          {
+            "name": "PM",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "计划完成日期"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "项目集描述"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取项目集详情",
+        "type": "get",
+        "method": "get",
+        "path": "/programs/{programID}",
+        "resultType": "object",
+        "resultGetter": "program",
+        "pathParams": {
+          "programID": "项目集ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改项目集",
+        "type": "update",
+        "method": "put",
+        "path": "/programs/{programID}",
+        "resultType": "object",
+        "pathParams": {
+          "programID": "项目集ID"
+        },
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "项目集名称"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划完成日期"
+          },
+          {
+            "name": "PM",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "计划完成日期"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "项目集描述"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除项目集",
+        "type": "delete",
+        "method": "delete",
+        "path": "/programs/{programID}",
+        "resultType": "text",
+        "pathParams": {
+          "programID": "项目集ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "product": {
+    "name": "product",
+    "display": "产品",
+    "description": "产品管理，支持获取产品列表、创建产品、获取产品详情、修改产品、删除产品",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取产品列表",
+        "type": "list",
+        "method": "get",
+        "path": "/products",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "products",
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "浏览类型",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "noclosed",
+                "label": "未关闭"
+              },
+              {
+                "value": "closed",
+                "label": "已结束"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "名称 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "名称 降序"
+              },
+              {
+                "value": "begin_asc",
+                "label": "计划开始 升序"
+              },
+              {
+                "value": "begin_desc",
+                "label": "计划开始 降序"
+              },
+              {
+                "value": "end_asc",
+                "label": "计划结束 升序"
+              },
+              {
+                "value": "end_desc",
+                "label": "计划结束 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建产品",
+        "type": "create",
+        "method": "post",
+        "path": "/products",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "产品名称"
+          },
+          {
+            "name": "program",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目集",
+            "format": "int32"
+          },
+          {
+            "name": "line",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属产品线",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "类型(normal 正常 | branch 多分支 | platform 多平台)"
+          },
+          {
+            "name": "PO",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "产品负责人"
+          },
+          {
+            "name": "reviewer",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评审人"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "产品描述"
+          },
+          {
+            "name": "QD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "测试负责人"
+          },
+          {
+            "name": "RD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "发布负责人"
+          },
+          {
+            "name": "acl",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "访问控制(open 公开 | private 私有)",
+            "defaultValue": "open"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取产品详情",
+        "type": "get",
+        "method": "get",
+        "path": "/products/{productID}",
+        "resultType": "object",
+        "resultGetter": "product",
+        "pathParams": {
+          "productID": "产品ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改产品",
+        "type": "update",
+        "method": "put",
+        "path": "/products/{productID}",
+        "resultType": "object",
+        "pathParams": {
+          "productID": "产品ID"
+        },
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "产品名称"
+          },
+          {
+            "name": "program",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目集",
+            "format": "int32"
+          },
+          {
+            "name": "line",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属产品线",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "类型(normal 正常 | branch 多分支 | platform 多平台)"
+          },
+          {
+            "name": "PO",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "产品负责人"
+          },
+          {
+            "name": "reviewer",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评审人"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "产品描述"
+          },
+          {
+            "name": "QD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "测试负责人"
+          },
+          {
+            "name": "RD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "发布负责人"
+          },
+          {
+            "name": "acl",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "访问控制(open 公开 | private 私有)",
+            "defaultValue": "open"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除产品",
+        "type": "delete",
+        "method": "delete",
+        "path": "/products/{productID}",
+        "resultType": "text",
+        "pathParams": {
+          "productID": "产品ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "project": {
+    "name": "project",
+    "display": "项目",
+    "description": "项目管理，支持获取项目列表、创建项目、获取项目详情、修改项目、删除项目",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取项目列表",
+        "type": "list",
+        "method": "get",
+        "path": "/projects",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "projects",
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "项目状态，默认是undone",
+            "defaultValue": "undone",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "undone",
+                "label": "未完成"
+              },
+              {
+                "value": "wait",
+                "label": "未开始"
+              },
+              {
+                "value": "doing",
+                "label": "进行中"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "name_asc",
+                "label": "名称 升序"
+              },
+              {
+                "value": "name_desc",
+                "label": "名称 降序"
+              },
+              {
+                "value": "begin_asc",
+                "label": "计划开始 升序"
+              },
+              {
+                "value": "begin_desc",
+                "label": "计划开始 降序"
+              },
+              {
+                "value": "end_asc",
+                "label": "计划结束 升序"
+              },
+              {
+                "value": "end_desc",
+                "label": "计划结束 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建项目",
+        "type": "create",
+        "method": "post",
+        "path": "/projects",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "项目名称"
+          },
+          {
+            "name": "model",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "项目管理方式(scrum 敏捷 | waterfall 瀑布 | kanban 看板 | agileplus 融合敏捷 | waterfallplus 融合瀑布)"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "products",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "关联产品"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目集",
+            "format": "int32"
+          },
+          {
+            "name": "workflowGroup",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "项目流程，付费版功能，开源版可以不填",
+            "format": "int32"
+          },
+          {
+            "name": "PM",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "项目负责人"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取项目详情",
+        "type": "get",
+        "method": "get",
+        "path": "/projects/{projectID}",
+        "resultType": "object",
+        "resultGetter": "project",
+        "pathParams": {
+          "projectID": "项目ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改项目",
+        "type": "update",
+        "method": "put",
+        "path": "/projects/{projectID}",
+        "resultType": "object",
+        "pathParams": {
+          "projectID": "项目ID"
+        },
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "项目名称"
+          },
+          {
+            "name": "model",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "项目管理方式(scrum 敏捷 | waterfall 瀑布 | kanban 看板 | agileplus 融合敏捷 | waterfallplus 融合瀑布)"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "products",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "关联产品"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目集",
+            "format": "int32"
+          },
+          {
+            "name": "workflowGroup",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "项目流程，付费版功能，开源版可以不填",
+            "format": "int32"
+          },
+          {
+            "name": "PM",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "项目负责人"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除项目",
+        "type": "delete",
+        "method": "delete",
+        "path": "/projects/{projectID}",
+        "resultType": "text",
+        "pathParams": {
+          "projectID": "项目ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "execution": {
+    "name": "execution",
+    "display": "执行",
+    "description": "执行管理，支持获取执行列表、创建执行、获取执行详情、修改执行、删除执行",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取执行列表",
+        "type": "list",
+        "method": "get",
+        "path": "/executions",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "executions",
+        "params": [
+          {
+            "name": "status",
+            "required": false,
+            "type": "string",
+            "description": "执行状态，默认是undone",
+            "defaultValue": "undone",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "undone",
+                "label": "未完成"
+              },
+              {
+                "value": "wait",
+                "label": "未开始"
+              },
+              {
+                "value": "doing",
+                "label": "进行中"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "rawID_asc",
+                "label": "RAWID 升序"
+              },
+              {
+                "value": "rawID_desc",
+                "label": "RAWID 降序"
+              },
+              {
+                "value": "nameCol_asc",
+                "label": "名称 升序"
+              },
+              {
+                "value": "nameCol_desc",
+                "label": "名称 降序"
+              },
+              {
+                "value": "begin_asc",
+                "label": "计划开始 升序"
+              },
+              {
+                "value": "begin_desc",
+                "label": "计划开始 降序"
+              },
+              {
+                "value": "end_asc",
+                "label": "计划结束 升序"
+              },
+              {
+                "value": "end_desc",
+                "label": "计划结束 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建执行",
+        "type": "create",
+        "method": "post",
+        "path": "/executions",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "project",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属项目",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "迭代名称"
+          },
+          {
+            "name": "lifetime",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "执行类型(short 短期 | long 长期 | ops 运维)"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "days",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "可用工作日",
+            "format": "int32"
+          },
+          {
+            "name": "products",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "关联产品"
+          },
+          {
+            "name": "plans",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "关联计划，必须是产品+planID的二维数组"
+          },
+          {
+            "name": "PO",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "产品负责人"
+          },
+          {
+            "name": "QD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "测试负责人"
+          },
+          {
+            "name": "PM",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "执行负责人"
+          },
+          {
+            "name": "RD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "发布负责人"
+          },
+          {
+            "name": "acl",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "访问控制(open 公开 | private 私有)",
+            "defaultValue": "open"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取执行详情",
+        "type": "get",
+        "method": "get",
+        "path": "/executions/{executionID}",
+        "resultType": "object",
+        "resultGetter": "execution",
+        "pathParams": {
+          "executionID": "执行ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改执行",
+        "type": "update",
+        "method": "put",
+        "path": "/executions/{executionID}",
+        "resultType": "object",
+        "pathParams": {
+          "executionID": "执行ID"
+        },
+        "bodyParams": [
+          {
+            "name": "project",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "迭代名称"
+          },
+          {
+            "name": "lifetime",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "执行类型(short 短期 | long 长期 | ops 运维)"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "days",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "可用工作日",
+            "format": "int32"
+          },
+          {
+            "name": "products",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "关联产品"
+          },
+          {
+            "name": "plans",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "关联计划，必须是产品+planID的二维数组"
+          },
+          {
+            "name": "PO",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "产品负责人"
+          },
+          {
+            "name": "QD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "测试负责人"
+          },
+          {
+            "name": "PM",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "执行负责人"
+          },
+          {
+            "name": "RD",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "发布负责人"
+          },
+          {
+            "name": "acl",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "访问控制(open 公开 | private 私有)",
+            "defaultValue": "open"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除执行",
+        "type": "delete",
+        "method": "delete",
+        "path": "/executions/{executionID}",
+        "resultType": "text",
+        "pathParams": {
+          "executionID": "执行ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "productplan": {
+    "name": "productplan",
+    "display": "产品计划",
+    "description": "产品计划管理，支持获取产品计划列表，支持获取产品下的产品计划、创建产品计划、获取产品计划详情、修改产品计划、删除产品计划",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取产品计划列表，支持获取产品下的产品计划",
+        "type": "list",
+        "method": "get",
+        "path": "/products/{productID}/productplans",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "productplans",
+        "pathParams": {
+          "productID": "所属产品ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "执行状态，默认是undone",
+            "defaultValue": "undone",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "undone",
+                "label": "未完成"
+              },
+              {
+                "value": "wait",
+                "label": "未开始"
+              },
+              {
+                "value": "doing",
+                "label": "进行中"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "名称 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "名称 降序"
+              },
+              {
+                "value": "begin_asc",
+                "label": "开始日期 升序"
+              },
+              {
+                "value": "begin_desc",
+                "label": "开始日期 降序"
+              },
+              {
+                "value": "end_asc",
+                "label": "结束日期 升序"
+              },
+              {
+                "value": "end_desc",
+                "label": "结束日期 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建产品计划",
+        "type": "create",
+        "method": "post",
+        "path": "/productplans",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "产品ID",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划名称"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父计划ID",
+            "format": "int32"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "branchID",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "分支ID",
+            "format": "int32"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "计划描述"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取产品计划详情",
+        "type": "get",
+        "method": "get",
+        "path": "/productplans/{planID}",
+        "resultType": "object",
+        "resultGetter": "productplan",
+        "pathParams": {
+          "planID": "产品计划ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改产品计划",
+        "type": "update",
+        "method": "put",
+        "path": "/productplans/{productplanID}",
+        "resultType": "object",
+        "pathParams": {
+          "productplanID": "产品计划ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划名称"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父计划",
+            "format": "int32"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "branchID",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "分支ID",
+            "format": "int32"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "计划描述"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除产品计划",
+        "type": "delete",
+        "method": "delete",
+        "path": "/productplans/{productplanID}",
+        "resultType": "text",
+        "pathParams": {
+          "productplanID": "产品计划ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "story": {
+    "name": "story",
+    "display": "需求",
+    "description": "需求管理，支持获取需求列表，支持获取产品/项目/执行下的需求、创建需求、获取需求详情、修改需求、删除需求、激活需求、变更需求、关闭需求",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取需求列表，支持获取产品/项目/执行下的需求",
+        "type": "list",
+        "method": "get",
+        "path": "/{scope}/{scopeID}/stories",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "stories",
+        "pathParams": {
+          "scope": {
+            "description": "需求所属范围",
+            "options": [
+              {
+                "value": "products",
+                "label": "产品"
+              },
+              {
+                "value": "projects",
+                "label": "项目"
+              },
+              {
+                "value": "executions",
+                "label": "执行"
+              }
+            ]
+          },
+          "scopeID": "所属范围ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是unclosed",
+            "defaultValue": "unclosed",
+            "options": [
+              {
+                "value": "allstory",
+                "label": "全部"
+              },
+              {
+                "value": "assignedtome",
+                "label": "指派给我"
+              },
+              {
+                "value": "openedbyme",
+                "label": "我创建"
+              },
+              {
+                "value": "reviewbyme",
+                "label": "待我评审"
+              },
+              {
+                "value": "draftstory",
+                "label": "草稿"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "标题 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "标题 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建需求",
+        "type": "create",
+        "method": "post",
+        "path": "/stories",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "产品ID",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父需求",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "spec",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "需求描述"
+          },
+          {
+            "name": "category",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "类别(feature 功能 | interface 接口 | performance 性能 | safe 安全 | experience 体验 | improve 改进 | other 其他)",
+            "format": "int32"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源(customer 客户 | user 用户 | po 产品经理 | market 市场 | service 客服 | operation 运营 | support 技术支持 | competitor 竞争对手 | partner 合作伙伴 | dev 开发人员 | tester 测试人员 | bug Bug | forum 论坛 | other 其他)"
+          },
+          {
+            "name": "verify",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "验收标准"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "reviewer",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评审人，如果设置必须评审，必须填写"
+          },
+          {
+            "name": "project",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目",
+            "format": "int32"
+          },
+          {
+            "name": "execution",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属执行",
+            "format": "int32"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取需求详情",
+        "type": "get",
+        "method": "get",
+        "path": "/stories/{storyID}",
+        "resultType": "object",
+        "resultGetter": "story",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改需求",
+        "type": "update",
+        "method": "put",
+        "path": "/stories/{storyID}",
+        "resultType": "object",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父需求",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "category",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "类别"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源(customer 客户 | user 用户 | po 产品经理 | market 市场 | service 客服 | operation 运营 | support 技术支持 | competitor 竞争对手 | partner 合作伙伴 | dev 开发人员 | tester 测试人员 | bug Bug | forum 论坛 | other 其他)"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "plan",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属计划",
+            "format": "int32"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除需求",
+        "type": "delete",
+        "method": "delete",
+        "path": "/stories/{storyID}",
+        "resultType": "text",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "activate",
+        "display": "激活需求",
+        "type": "action",
+        "method": "put",
+        "path": "/stories/{storyID}/activate",
+        "resultType": "text",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "change",
+        "display": "变更需求",
+        "type": "action",
+        "method": "put",
+        "path": "/stories/{storyID}/change",
+        "resultType": "text",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "需求名称"
+          },
+          {
+            "name": "reviewer",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评审人员"
+          },
+          {
+            "name": "spec",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "需求描述"
+          },
+          {
+            "name": "verify",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "验收标准"
+          }
+        ]
+      },
+      {
+        "name": "close",
+        "display": "关闭需求",
+        "type": "action",
+        "method": "put",
+        "path": "/stories/{storyID}/close",
+        "resultType": "text",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "closedReason",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "关闭原因(done 已完成 | subdivided 已拆分 | duplicate 重复 | postponed 延期 | willnotdo 不做 | cancel 已取消 | bydesign 设计如此)"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      }
+    ]
+  },
+  "epic": {
+    "name": "epic",
+    "display": "业务需求",
+    "description": "业务需求管理，支持获取业务需求列表，支持获取产品下的业务需求、创建业务需求、获取业务需求详情、修改业务需求、删除业务需求、激活业务需求、变更业务需求、关闭业务需求",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取业务需求列表，支持获取产品下的业务需求",
+        "type": "list",
+        "method": "get",
+        "path": "/products/{productID}/epics",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "epics",
+        "pathParams": {
+          "productID": "所属产品ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是unclosed",
+            "defaultValue": "unclosed",
+            "options": [
+              {
+                "value": "allstory",
+                "label": "全部"
+              },
+              {
+                "value": "assignedtome",
+                "label": "指派给我"
+              },
+              {
+                "value": "openedbyme",
+                "label": "我创建"
+              },
+              {
+                "value": "reviewbyme",
+                "label": "待我评审"
+              },
+              {
+                "value": "draftstory",
+                "label": "草稿"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "标题 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "标题 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建业务需求",
+        "type": "create",
+        "method": "post",
+        "path": "/epics",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "产品ID",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父业务需求",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "spec",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "业务需求描述"
+          },
+          {
+            "name": "category",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "类别(feature 功能 | interface 接口 | performance 性能 | safe 安全 | experience 体验 | improve 改进 | other 其他)",
+            "format": "int32"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源(customer 客户 | user 用户 | po 产品经理 | market 市场 | service 客服 | operation 运营 | support 技术支持 | competitor 竞争对手 | partner 合作伙伴 | dev 开发人员 | tester 测试人员 | bug Bug | forum 论坛 | other 其他)"
+          },
+          {
+            "name": "verify",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "验收标准"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "reviewer",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评审人，如果设置必须评审，必须填写"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取业务需求详情",
+        "type": "get",
+        "method": "get",
+        "path": "/epics/{storyID}",
+        "resultType": "object",
+        "resultGetter": "epic",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改业务需求",
+        "type": "update",
+        "method": "put",
+        "path": "/epics/{epicID}",
+        "resultType": "object",
+        "pathParams": {
+          "epicID": "业务需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "需求名称"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父业务需求",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "category",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "类别(feature 功能 | interface 接口 | performance 性能 | safe 安全 | experience 体验 | improve 改进 | other 其他)",
+            "format": "int32"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源(customer 客户 | user 用户 | po 产品经理 | market 市场 | service 客服 | operation 运营 | support 技术支持 | competitor 竞争对手 | partner 合作伙伴 | dev 开发人员 | tester 测试人员 | bug Bug | forum 论坛 | other 其他)"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除业务需求",
+        "type": "delete",
+        "method": "delete",
+        "path": "/epics/{epicID}",
+        "resultType": "text",
+        "pathParams": {
+          "epicID": "业务需求ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "activate",
+        "display": "激活业务需求",
+        "type": "action",
+        "method": "put",
+        "path": "/epics/{epicID}/activate",
+        "resultType": "text",
+        "pathParams": {
+          "epicID": "业务需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "change",
+        "display": "变更业务需求",
+        "type": "action",
+        "method": "put",
+        "path": "/epics/{epicID}/change",
+        "resultType": "text",
+        "pathParams": {
+          "epicID": "业务需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "需求名称"
+          },
+          {
+            "name": "reviewer",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评审人员"
+          },
+          {
+            "name": "spec",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "需求描述"
+          },
+          {
+            "name": "verify",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "验收标准"
+          }
+        ]
+      },
+      {
+        "name": "close",
+        "display": "关闭业务需求",
+        "type": "action",
+        "method": "put",
+        "path": "/epics/{epicID}/close",
+        "resultType": "text",
+        "pathParams": {
+          "epicID": "业务需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "closedReason",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "关闭原因(done 已完成 | subdivided 已拆分 | duplicate 重复 | postponed 延期 | willnotdo 不做 | cancel 已取消 | bydesign 设计如此)"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      }
+    ]
+  },
+  "requirement": {
+    "name": "requirement",
+    "display": "用户需求",
+    "description": "用户需求管理，支持获取用户需求列表，支持获取产品下的用户需求、创建用户需求、获取用户需求详情、修改用户需求、删除用户需求、激活用户需求、变更用户需求、关闭用户需求",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取用户需求列表，支持获取产品下的用户需求",
+        "type": "list",
+        "method": "get",
+        "path": "/products/{productID}/requirements",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "requirements",
+        "pathParams": {
+          "productID": "所属产品ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是unclosed",
+            "defaultValue": "unclosed",
+            "options": [
+              {
+                "value": "allstory",
+                "label": "全部"
+              },
+              {
+                "value": "assignedtome",
+                "label": "指派给我"
+              },
+              {
+                "value": "openedbyme",
+                "label": "我创建"
+              },
+              {
+                "value": "reviewbyme",
+                "label": "待我评审"
+              },
+              {
+                "value": "draftstory",
+                "label": "草稿"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "标题 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "标题 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建用户需求",
+        "type": "create",
+        "method": "post",
+        "path": "/requirements",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "产品ID",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父用户需求",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "spec",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "用户需求描述"
+          },
+          {
+            "name": "category",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "类别(feature 功能 | interface 接口 | performance 性能 | safe 安全 | experience 体验 | improve 改进 | other 其他)",
+            "format": "int32"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源(customer 客户 | user 用户 | po 产品经理 | market 市场 | service 客服 | operation 运营 | support 技术支持 | competitor 竞争对手 | partner 合作伙伴 | dev 开发人员 | tester 测试人员 | bug Bug | forum 论坛 | other 其他)"
+          },
+          {
+            "name": "verify",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "验收标准"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "reviewer",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "评审人，如果设置必须评审，必须填写"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取用户需求详情",
+        "type": "get",
+        "method": "get",
+        "path": "/requirements/{storyID}",
+        "resultType": "object",
+        "resultGetter": "requirement",
+        "pathParams": {
+          "storyID": "需求ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改用户需求",
+        "type": "update",
+        "method": "put",
+        "path": "/requirements/{requirementID}",
+        "resultType": "object",
+        "pathParams": {
+          "requirementID": "用户需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父用户需求",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "category",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "类别(feature 功能 | interface 接口 | performance 性能 | safe 安全 | experience 体验 | improve 改进 | other 其他)",
+            "format": "int32"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源(customer 客户 | user 用户 | po 产品经理 | market 市场 | service 客服 | operation 运营 | support 技术支持 | competitor 竞争对手 | partner 合作伙伴 | dev 开发人员 | tester 测试人员 | bug Bug | forum 论坛 | other 其他)"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除用户需求",
+        "type": "delete",
+        "method": "delete",
+        "path": "/requirements/{requirementID}",
+        "resultType": "text",
+        "pathParams": {
+          "requirementID": "用户需求ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "activate",
+        "display": "激活用户需求",
+        "type": "action",
+        "method": "put",
+        "path": "/requirements/{requirementID}/activate",
+        "resultType": "text",
+        "pathParams": {
+          "requirementID": "用户需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "change",
+        "display": "变更用户需求",
+        "type": "action",
+        "method": "put",
+        "path": "/requirements/{requirementID}/change",
+        "resultType": "text",
+        "pathParams": {
+          "requirementID": "用户需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "需求名称"
+          },
+          {
+            "name": "spec",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "需求描述"
+          },
+          {
+            "name": "verify",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "验收标准"
+          }
+        ]
+      },
+      {
+        "name": "close",
+        "display": "关闭用户需求",
+        "type": "action",
+        "method": "put",
+        "path": "/requirements/{requirementID}/close",
+        "resultType": "text",
+        "pathParams": {
+          "requirementID": "用户需求ID"
+        },
+        "bodyParams": [
+          {
+            "name": "closedReason",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "关闭原因(done 已完成 | subdivided 已拆分 | duplicate 重复 | postponed 延期 | willnotdo 不做 | cancel 已取消 | bydesign 设计如此)"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      }
+    ]
+  },
+  "bug": {
+    "name": "bug",
+    "display": "Bug",
+    "description": "Bug管理，支持获取Bug列表，支持获取产品/项目/执行下的Bug、创建Bug、获取Bug详情、修改Bug、删除Bug、激活Bug、关闭Bug、解决Bug",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取Bug列表，支持获取产品/项目/执行下的Bug",
+        "type": "list",
+        "method": "get",
+        "path": "/{scope}/{scopeID}/bugs",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "bugs",
+        "pathParams": {
+          "scope": {
+            "description": "Bug所属范围",
+            "options": [
+              {
+                "value": "products",
+                "label": "产品"
+              },
+              {
+                "value": "projects",
+                "label": "项目"
+              },
+              {
+                "value": "executions",
+                "label": "执行"
+              }
+            ]
+          },
+          "scopeID": "所属范围ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是unclosed",
+            "defaultValue": "unclosed",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "unclosed",
+                "label": "未关闭"
+              },
+              {
+                "value": "openedbyme",
+                "label": "我创建"
+              },
+              {
+                "value": "assignedbyme",
+                "label": "由我指派"
+              },
+              {
+                "value": "assigntome",
+                "label": "指派给我"
+              },
+              {
+                "value": "resolvedbyme",
+                "label": "由我解决"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "标题 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "标题 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建Bug",
+        "type": "create",
+        "method": "post",
+        "path": "/bugs",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "Bug标题"
+          },
+          {
+            "name": "openedBuild",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "影响版本,主干是trunk，其他版本使用版本ID"
+          },
+          {
+            "name": "project",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目",
+            "format": "int32"
+          },
+          {
+            "name": "execution",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属执行",
+            "format": "int32"
+          },
+          {
+            "name": "severity",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "严重程度，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "Bug类型(codeerror 代码错误 | config 配置相关 | install 安装部署 | security 安全相关 | performance 性能问题 | standard 标准规范 | automation 测试脚本 | designdefect 设计缺陷 | others 其他)"
+          },
+          {
+            "name": "steps",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "重现步骤"
+          },
+          {
+            "name": "story",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "相关需求",
+            "format": "int32"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取Bug详情",
+        "type": "get",
+        "method": "get",
+        "path": "/bugs/{bugID}",
+        "resultType": "object",
+        "resultGetter": "bug",
+        "pathParams": {
+          "bugID": "Bug ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改Bug",
+        "type": "update",
+        "method": "put",
+        "path": "/bugs/{bugID}",
+        "resultType": "object",
+        "pathParams": {
+          "bugID": "Bug ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "Bug标题"
+          },
+          {
+            "name": "severity",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "严重程度，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级，默认是3",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "Bug类型(codeerror 代码错误 | config 配置相关 | install 安装部署 | security 安全相关 | performance 性能问题 | standard 标准规范 | automation 测试脚本 | designdefect 设计缺陷 | others 其他)"
+          },
+          {
+            "name": "openedBuild",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "影响版本,主干是trunk，其他版本使用版本ID"
+          },
+          {
+            "name": "steps",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "重现步骤"
+          },
+          {
+            "name": "project",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目",
+            "format": "int32"
+          },
+          {
+            "name": "execution",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属执行",
+            "format": "int32"
+          },
+          {
+            "name": "story",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "相关需求",
+            "format": "int32"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除Bug",
+        "type": "delete",
+        "method": "delete",
+        "path": "/bugs/{bugID}",
+        "resultType": "text",
+        "pathParams": {
+          "bugID": "Bug ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "activate",
+        "display": "激活Bug",
+        "type": "action",
+        "method": "put",
+        "path": "/bugs/{bugID}/activate",
+        "resultType": "text",
+        "pathParams": {
+          "bugID": "Bug ID"
+        },
+        "bodyParams": [
+          {
+            "name": "openedBuild",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "影响版本, trunk为主干"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "close",
+        "display": "关闭Bug",
+        "type": "action",
+        "method": "put",
+        "path": "/bugs/{bugID}/close",
+        "resultType": "text",
+        "pathParams": {
+          "bugID": "Bug ID"
+        },
+        "bodyParams": [
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "resolve",
+        "display": "解决Bug",
+        "type": "action",
+        "method": "put",
+        "path": "/bugs/{bugID}/resolve",
+        "resultType": "text",
+        "pathParams": {
+          "bugID": "Bug ID"
+        },
+        "bodyParams": [
+          {
+            "name": "resolution",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "fixed 已解决 | notrepro 无法重现 | bydesign 设计如此 | duplicate 重复Bug | external 外部原因| postponed 延期处理 | willnotfix 不予解决 | tostory 转为需求"
+          },
+          {
+            "name": "resolvedDate",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "解决日期，默认今天"
+          },
+          {
+            "name": "resolvedBuild",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "解决版本, trunk为主干"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      }
+    ]
+  },
+  "testcase": {
+    "name": "testcase",
+    "display": "测试用例",
+    "description": "测试用例管理，支持获取测试用例列表，支持获取产品/项目/执行下的测试用例、创建测试用例、获取测试用例详情、修改测试用例、删除测试用例",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取测试用例列表，支持获取产品/项目/执行下的测试用例",
+        "type": "list",
+        "method": "get",
+        "path": "/{scope}/{scopeID}/testcases",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "testcases",
+        "pathParams": {
+          "scope": {
+            "description": "测试用例所属范围",
+            "options": [
+              {
+                "value": "products",
+                "label": "产品"
+              },
+              {
+                "value": "projects",
+                "label": "项目"
+              },
+              {
+                "value": "executions",
+                "label": "执行"
+              }
+            ]
+          },
+          "scopeID": "所属范围ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是all",
+            "defaultValue": "all",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "wait",
+                "label": "未关闭"
+              },
+              {
+                "value": "needconfirm",
+                "label": "需求变动"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "标题 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "标题 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建测试用例",
+        "type": "create",
+        "method": "post",
+        "path": "/testcases",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "用例标题"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "story",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "相关需求",
+            "format": "int32"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "用例类型(unit 单元测试 | interface 接口测试 | feature 功能测试 | install 安装部署 | config 配置相关 | performance 性能测试 | security 安全相关 | other 其他)"
+          },
+          {
+            "name": "precondition",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "前置条件"
+          },
+          {
+            "name": "steps",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "用例步骤"
+          },
+          {
+            "name": "expects",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "用例步骤期望"
+          },
+          {
+            "name": "stepType",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "用例步骤类型(step 步骤 | group 父级步骤)"
+          },
+          {
+            "name": "project",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属项目",
+            "format": "int32"
+          },
+          {
+            "name": "execution",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属执行",
+            "format": "int32"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取测试用例详情",
+        "type": "get",
+        "method": "get",
+        "path": "/testcases/{caseID}",
+        "resultType": "object",
+        "resultGetter": "testcase",
+        "pathParams": {
+          "caseID": "测试用例ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改测试用例",
+        "type": "update",
+        "method": "put",
+        "path": "/testcases/{testcasID}",
+        "resultType": "object",
+        "pathParams": {
+          "testcasID": "测试用例ID"
+        },
+        "bodyParams": [
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "用例标题"
+          },
+          {
+            "name": "moudule",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "story",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "相关需求",
+            "format": "int32"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "用例类型(unit 单元测试 | interface 接口测试 | feature 功能测试 | install 安装部署 | config 配置相关 | performance 性能测试 | security 安全相关 | other 其他)"
+          },
+          {
+            "name": "precondition",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "前置条件"
+          },
+          {
+            "name": "steps",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "用例步骤"
+          },
+          {
+            "name": "expects",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "用例步骤期望"
+          },
+          {
+            "name": "stepType",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "用例步骤类型(step 步骤 | group 父级步骤)"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除测试用例",
+        "type": "delete",
+        "method": "delete",
+        "path": "/testcases/{testcasID}",
+        "resultType": "text",
+        "pathParams": {
+          "testcasID": "测试用例ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "task": {
+    "name": "task",
+    "display": "任务",
+    "description": "任务管理，支持获取任务列表，支持获取执行下的任务、创建任务、获取任务详情、修改任务、删除任务、激活任务、关闭任务、完成任务、启动任务",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取任务列表，支持获取执行下的任务",
+        "type": "list",
+        "method": "get",
+        "path": "/executions/{executionID}/tasks",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "tasks",
+        "pathParams": {
+          "executionID": "执行ID"
+        },
+        "params": [
+          {
+            "name": "status",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是unclosed",
+            "defaultValue": "unclosed",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "unclosed",
+                "label": "未关闭"
+              },
+              {
+                "value": "assignedtome",
+                "label": "指派给我"
+              },
+              {
+                "value": "assignedtome",
+                "label": "指派给我"
+              },
+              {
+                "value": "myinvolved",
+                "label": "由我参与"
+              },
+              {
+                "value": "assignedbyme",
+                "label": "由我指派"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "name_asc",
+                "label": "名称 升序"
+              },
+              {
+                "value": "name_desc",
+                "label": "名称 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建任务",
+        "type": "create",
+        "method": "post",
+        "path": "/tasks",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "任务名称"
+          },
+          {
+            "name": "executionID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属执行",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "任务类型"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "estStarted",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "预计开始"
+          },
+          {
+            "name": "deadline",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "截止日期"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "story",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "相关需求",
+            "format": "int32"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "任务描述"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父任务",
+            "format": "int32"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取任务详情",
+        "type": "get",
+        "method": "get",
+        "path": "/tasks/{taskID}",
+        "resultType": "object",
+        "pathParams": {
+          "taskID": "任务ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改任务",
+        "type": "update",
+        "method": "put",
+        "path": "/tasks/{taskID}",
+        "resultType": "object",
+        "pathParams": {
+          "taskID": "任务ID"
+        },
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "任务名称"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "任务类型"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "estStarted",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "预计开始"
+          },
+          {
+            "name": "deadline",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "截止日期"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "优先级",
+            "format": "int32"
+          },
+          {
+            "name": "estimate",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计工时",
+            "format": "float"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "story",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "相关需求",
+            "format": "int32"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "任务描述"
+          },
+          {
+            "name": "parent",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "父任务",
+            "format": "int32"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除任务",
+        "type": "delete",
+        "method": "delete",
+        "path": "/tasks/{taskID}",
+        "resultType": "text",
+        "pathParams": {
+          "taskID": "任务ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "activate",
+        "display": "激活任务",
+        "type": "action",
+        "method": "put",
+        "path": "/tasks/{taskID}/activate",
+        "resultType": "text",
+        "pathParams": {
+          "taskID": "任务ID"
+        },
+        "bodyParams": [
+          {
+            "name": "left",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计剩余",
+            "format": "float"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "close",
+        "display": "关闭任务",
+        "type": "action",
+        "method": "put",
+        "path": "/tasks/{taskID}/close",
+        "resultType": "text",
+        "pathParams": {
+          "taskID": "任务ID"
+        },
+        "bodyParams": [
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "finish",
+        "display": "完成任务",
+        "type": "action",
+        "method": "put",
+        "path": "/tasks/{taskID}/finish",
+        "resultType": "text",
+        "pathParams": {
+          "taskID": "任务ID"
+        },
+        "bodyParams": [
+          {
+            "name": "currentConsumed",
+            "role": "body",
+            "required": true,
+            "type": "number",
+            "description": "本次消耗",
+            "format": "float"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "任务名称"
+          },
+          {
+            "name": "consumed",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "总计消耗",
+            "format": "float"
+          },
+          {
+            "name": "realStarted",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "实际开始"
+          },
+          {
+            "name": "finishedDate",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "实际完成"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "start",
+        "display": "启动任务",
+        "type": "action",
+        "method": "put",
+        "path": "/tasks/{taskID}/start",
+        "resultType": "text",
+        "pathParams": {
+          "taskID": "任务ID"
+        },
+        "bodyParams": [
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "任务名称"
+          },
+          {
+            "name": "realStarted",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "实际开始"
+          },
+          {
+            "name": "consumed",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "总计消耗",
+            "format": "float"
+          },
+          {
+            "name": "left",
+            "role": "body",
+            "required": false,
+            "type": "number",
+            "description": "预计剩余",
+            "format": "float"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      }
+    ]
+  },
+  "feedback": {
+    "name": "feedback",
+    "display": "反馈",
+    "description": "反馈管理，支持获取反馈列表，支持获取产品下的反馈、创建反馈、获取反馈详情、修改反馈、删除反馈、激活反馈、关闭反馈",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取反馈列表，支持获取产品下的反馈",
+        "type": "list",
+        "method": "get",
+        "path": "/products/{productID}/feedbacks",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "feedbacks",
+        "pathParams": {
+          "productID": "所属产品ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是wait",
+            "defaultValue": "wait",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "wait",
+                "label": "待处理"
+              },
+              {
+                "value": "doing",
+                "label": "处理中"
+              },
+              {
+                "value": "toclosed",
+                "label": "待关闭"
+              },
+              {
+                "value": "review",
+                "label": "待评审"
+              },
+              {
+                "value": "assigntome",
+                "label": "指派给我"
+              },
+              {
+                "value": "openedbyme",
+                "label": "由我反馈"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "标题 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "标题 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建反馈",
+        "type": "create",
+        "method": "post",
+        "path": "/feedbacks",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "product",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "标题"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "类型(story 需求 | task 任务 | bug Bug | todo 待办 | advice 建议 | issue 问题 | risk 风险 | opportunity 机会)"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          },
+          {
+            "name": "feedbackBy",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "反馈者"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取反馈详情",
+        "type": "get",
+        "method": "get",
+        "path": "/feedbacks/{feedbackID}",
+        "resultType": "object",
+        "resultGetter": "feedback",
+        "pathParams": {
+          "feedbackID": "反馈ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改反馈",
+        "type": "update",
+        "method": "put",
+        "path": "/feedbacks/{feedbackID}",
+        "resultType": "object",
+        "pathParams": {
+          "feedbackID": "反馈ID"
+        },
+        "bodyParams": [
+          {
+            "name": "product",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "标题"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "类型(story 需求 | task 任务 | bug Bug | todo 待办 | advice 建议 | issue 问题 | risk 风险 | opportunity 机会)"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          },
+          {
+            "name": "feedbackBy",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "反馈者"
+          },
+          {
+            "name": "source",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "来源"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除反馈",
+        "type": "delete",
+        "method": "delete",
+        "path": "/feedbacks/{feedbackID}",
+        "resultType": "text",
+        "pathParams": {
+          "feedbackID": "反馈ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "activate",
+        "display": "激活反馈",
+        "type": "action",
+        "method": "put",
+        "path": "/feedbacks/{feedbackID}/activate",
+        "resultType": "text",
+        "pathParams": {
+          "feedbackID": "反馈ID"
+        },
+        "bodyParams": [
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "close",
+        "display": "关闭反馈",
+        "type": "action",
+        "method": "put",
+        "path": "/feedbacks/{feedbackID}/close",
+        "resultType": "text",
+        "pathParams": {
+          "feedbackID": "反馈ID"
+        },
+        "bodyParams": [
+          {
+            "name": "closedReason",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "关闭原因(commented 已处理 | repeat 重复 | refuse 不予采纳)"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      }
+    ]
+  },
+  "ticket": {
+    "name": "ticket",
+    "display": "工单",
+    "description": "工单管理，支持获取工单列表，支持获取产品下的工单、创建工单、获取工单详情、修改工单、删除工单、激活工单、关闭工单",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取工单列表，支持获取产品下的工单",
+        "type": "list",
+        "method": "get",
+        "path": "/products/{productID}/tickets",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "tickets",
+        "pathParams": {
+          "productID": "所属产品ID"
+        },
+        "params": [
+          {
+            "name": "browseType",
+            "required": false,
+            "type": "string",
+            "description": "状态，默认是wait",
+            "defaultValue": "wait",
+            "options": [
+              {
+                "value": "all",
+                "label": "全部"
+              },
+              {
+                "value": "unclosed",
+                "label": "未关闭"
+              },
+              {
+                "value": "wait",
+                "label": "待处理"
+              },
+              {
+                "value": "doing",
+                "label": "处理中"
+              },
+              {
+                "value": "done",
+                "label": "待关闭"
+              },
+              {
+                "value": "finishedbyme",
+                "label": "由我解决"
+              },
+              {
+                "value": "assigntome",
+                "label": "指派给我"
+              },
+              {
+                "value": "openedbyme",
+                "label": "由我创建"
+              }
+            ]
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "type": "string",
+            "description": "排序",
+            "options": [
+              {
+                "value": "id_asc",
+                "label": "ID 升序"
+              },
+              {
+                "value": "id_desc",
+                "label": "ID 降序"
+              },
+              {
+                "value": "title_asc",
+                "label": "标题 升序"
+              },
+              {
+                "value": "title_desc",
+                "label": "标题 降序"
+              },
+              {
+                "value": "status_asc",
+                "label": "状态 升序"
+              },
+              {
+                "value": "status_desc",
+                "label": "状态 降序"
+              }
+            ]
+          },
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建工单",
+        "type": "create",
+        "method": "post",
+        "path": "/tickets",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "product",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "标题"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "类型(code 程序报错 | data 数据错误 | stuck 流程卡断 | security 安全问题 | affair 事务)"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "deadline",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "截止日期"
+          },
+          {
+            "name": "openedBuild",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "影响版本"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取工单详情",
+        "type": "get",
+        "method": "get",
+        "path": "/tickets/{ticketID}",
+        "resultType": "object",
+        "resultGetter": "ticket",
+        "pathParams": {
+          "ticketID": "工单ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改工单",
+        "type": "update",
+        "method": "put",
+        "path": "/tickets/{ticketID}",
+        "resultType": "object",
+        "pathParams": {
+          "ticketID": "工单ID"
+        },
+        "bodyParams": [
+          {
+            "name": "product",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "module",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属模块",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "标题"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "类型(code 程序报错 | data 数据错误 | stuck 流程卡断 | security 安全问题 | affair 事务)"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          },
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "deadline",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "截止日期"
+          },
+          {
+            "name": "openedBuild",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "影响版本"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除工单",
+        "type": "delete",
+        "method": "delete",
+        "path": "/tickets/{ticketID}",
+        "resultType": "text",
+        "pathParams": {
+          "ticketID": "工单ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "activate",
+        "display": "激活工单",
+        "type": "action",
+        "method": "put",
+        "path": "/tickets/{ticketID}/activate",
+        "resultType": "text",
+        "pathParams": {
+          "ticketID": "工单ID"
+        },
+        "bodyParams": [
+          {
+            "name": "assignedTo",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "指派给"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      },
+      {
+        "name": "close",
+        "display": "关闭工单",
+        "type": "action",
+        "method": "put",
+        "path": "/tickets/{ticketID}/close",
+        "resultType": "text",
+        "pathParams": {
+          "ticketID": "工单ID"
+        },
+        "bodyParams": [
+          {
+            "name": "closedReason",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "关闭原因(commented 已处理 | repeat 重复 | refuse 不予处理)"
+          },
+          {
+            "name": "comment",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "备注"
+          }
+        ]
+      }
+    ]
+  },
+  "system": {
+    "name": "system",
+    "display": "应用",
+    "description": "应用管理，支持获取应用列表，支持获取产品下的应用、创建应用、修改应用",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取应用列表，支持获取产品下的应用",
+        "type": "list",
+        "method": "get",
+        "path": "/products/{productID}/systems",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "pathParams": {
+          "productID": "所属产品ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建应用",
+        "type": "create",
+        "method": "post",
+        "path": "/systems",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "integrated",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "是否集成应用(0 否| 1 是)",
+            "format": "int32"
+          },
+          {
+            "name": "children",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "集成应用需要包含其他应用，非集成应用传空数组[]"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "应用名称"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      },
+      {
+        "name": "update",
+        "display": "修改应用",
+        "type": "update",
+        "method": "put",
+        "path": "/systems/{systemID}",
+        "resultType": "object",
+        "pathParams": {
+          "systemID": "应用ID"
+        },
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "应用名称"
+          },
+          {
+            "name": "children",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "集成应用需要包含其他应用，非集成应用传空数组[]"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      }
+    ]
+  },
+  "build": {
+    "name": "build",
+    "display": "版本",
+    "description": "版本管理，支持获取版本列表，支持获取项目/执行下的版本、创建版本/构建、修改版本、删除版本",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取版本列表，支持获取项目/执行下的版本",
+        "type": "list",
+        "method": "get",
+        "path": "/{scope}/{scopeID}/builds",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "builds",
+        "pathParams": {
+          "scope": {
+            "description": "版本所属范围",
+            "options": [
+              {
+                "value": "projects",
+                "label": "项目"
+              },
+              {
+                "value": "executions",
+                "label": "执行"
+              }
+            ]
+          },
+          "scopeID": "所属范围ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建版本/构建",
+        "type": "create",
+        "method": "post",
+        "path": "/builds",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "executionID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属执行/迭代",
+            "format": "int32"
+          },
+          {
+            "name": "product",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "构建名称"
+          },
+          {
+            "name": "system",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属应用",
+            "format": "int32"
+          },
+          {
+            "name": "builder",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "构建者"
+          },
+          {
+            "name": "date",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "打包日期"
+          },
+          {
+            "name": "scmPath",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "源代码地址"
+          },
+          {
+            "name": "filePath",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "下载地址"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      },
+      {
+        "name": "update",
+        "display": "修改版本",
+        "type": "update",
+        "method": "put",
+        "path": "/builds/{buildID}",
+        "resultType": "object",
+        "pathParams": {
+          "buildID": "版本ID"
+        },
+        "bodyParams": [
+          {
+            "name": "execution",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属执行/迭代",
+            "format": "int32"
+          },
+          {
+            "name": "product",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "构建名称"
+          },
+          {
+            "name": "system",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属应用",
+            "format": "int32"
+          },
+          {
+            "name": "builder",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "构建者"
+          },
+          {
+            "name": "date",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "打包日期"
+          },
+          {
+            "name": "scmPath",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "源代码地址"
+          },
+          {
+            "name": "filePath",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "下载地址"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除版本",
+        "type": "delete",
+        "method": "delete",
+        "path": "/builds/{buildID}",
+        "resultType": "text",
+        "pathParams": {
+          "buildID": "版本ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "testtask": {
+    "name": "testtask",
+    "display": "测试单",
+    "description": "测试单管理，支持获取测试单列表，支持获取产品/项目/执行下的测试单、创建测试单、修改测试单、删除测试单",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取测试单列表，支持获取产品/项目/执行下的测试单",
+        "type": "list",
+        "method": "get",
+        "path": "/{scope}/{scopeID}/testtasks",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "testtasks",
+        "pathParams": {
+          "scope": {
+            "description": "测试单所属范围",
+            "options": [
+              {
+                "value": "products",
+                "label": "产品"
+              },
+              {
+                "value": "projects",
+                "label": "项目"
+              },
+              {
+                "value": "executions",
+                "label": "执行"
+              }
+            ]
+          },
+          "scopeID": "所属范围ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建测试单",
+        "type": "create",
+        "method": "post",
+        "path": "/testtasks",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品ID",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "测试单名称"
+          },
+          {
+            "name": "build",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "提测构建/版本",
+            "format": "int32"
+          },
+          {
+            "name": "execution",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属执行",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "类型(integrate 集成测试 | system 系统测试 | acceptance 验收测试 | performance 性能测试 | safety 安全测试)"
+          },
+          {
+            "name": "owner",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "负责人"
+          },
+          {
+            "name": "status",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "状态(wait 未开始 | doing 进行中 | done 已关闭 | blocked 被阻塞)"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      },
+      {
+        "name": "update",
+        "display": "修改测试单",
+        "type": "update",
+        "method": "put",
+        "path": "/testtasks/{testtaskID}",
+        "resultType": "object",
+        "pathParams": {
+          "testtaskID": "测试单ID"
+        },
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "测试单名称"
+          },
+          {
+            "name": "build",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "提测构建/版本",
+            "format": "int32"
+          },
+          {
+            "name": "execution",
+            "role": "body",
+            "required": false,
+            "type": "integer",
+            "description": "所属执行",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "role": "body",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "类型(integrate 集成测试 | system 系统测试 | acceptance 验收测试 | performance 性能测试 | safety 安全测试)"
+          },
+          {
+            "name": "owner",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "负责人"
+          },
+          {
+            "name": "status",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "状态(wait 未开始 | doing 进行中 | done 已关闭 | blocked 被阻塞)"
+          },
+          {
+            "name": "begin",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "开始日期"
+          },
+          {
+            "name": "end",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "结束日期"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除测试单",
+        "type": "delete",
+        "method": "delete",
+        "path": "/testtasks/{testtaskID}",
+        "resultType": "text",
+        "pathParams": {
+          "testtaskID": "测试单ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "release": {
+    "name": "release",
+    "display": "发布",
+    "description": "发布管理，支持获取发布列表，支持获取产品下的发布、创建发布、修改发布、删除发布",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取发布列表，支持获取产品下的发布",
+        "type": "list",
+        "method": "get",
+        "path": "/products/{productID}/releases",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "releases",
+        "pathParams": {
+          "productID": "所属产品ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建发布",
+        "type": "create",
+        "method": "post",
+        "path": "/releases",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "productID",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属产品",
+            "format": "int32"
+          },
+          {
+            "name": "system",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属应用",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "应用版本号"
+          },
+          {
+            "name": "build",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "包含构建"
+          },
+          {
+            "name": "status",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "状态(wait 未开始 | normal 已发布 | fail 发布失败 | terminate 停止维护)"
+          },
+          {
+            "name": "date",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划发布日期"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      },
+      {
+        "name": "update",
+        "display": "修改发布",
+        "type": "update",
+        "method": "put",
+        "path": "/releases/{releasID}",
+        "resultType": "object",
+        "pathParams": {
+          "releasID": "发布ID"
+        },
+        "bodyParams": [
+          {
+            "name": "system",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属应用",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "应用版本号"
+          },
+          {
+            "name": "build",
+            "role": "body",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "包含构建"
+          },
+          {
+            "name": "status",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "状态(wait 未开始 | normal 已发布 | fail 发布失败 | terminate 停止维护)"
+          },
+          {
+            "name": "date",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "计划发布日期"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "描述"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除发布",
+        "type": "delete",
+        "method": "delete",
+        "path": "/releases/{releasID}",
+        "resultType": "text",
+        "pathParams": {
+          "releasID": "发布ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "file": {
+    "name": "file",
+    "display": "附件",
+    "description": "附件管理，支持编辑附件，修改附件的名称、删除附件",
+    "actions": [
+      {
+        "name": "create",
+        "display": "编辑附件，修改附件的名称",
+        "type": "create",
+        "method": "post",
+        "path": "/files",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "fileName",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "附件名称"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除附件",
+        "type": "delete",
+        "method": "delete",
+        "path": "/files/{fileID}",
+        "resultType": "text",
+        "pathParams": {
+          "fileID": "附件ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "risk": {
+    "name": "risk",
+    "display": "风险",
+    "description": "项目风险管理，支持获取风险列表、创建风险、获取风险详情、修改风险、删除风险",
+    "actions": [
+      {
+        "name": "list",
+        "display": "获取风险列表",
+        "type": "list",
+        "method": "get",
+        "path": "/projects/{projectID}/risks",
+        "resultType": "list",
+        "pagerGetter": "pager",
+        "resultGetter": "risks",
+        "pathParams": {
+          "projectID": "所属项目ID"
+        },
+        "params": [
+          {
+            "name": "recPerPage",
+            "required": false,
+            "type": "number",
+            "description": "每页数量，不超过1000"
+          },
+          {
+            "name": "pageID",
+            "required": false,
+            "type": "number",
+            "description": "页码，从第1页开始"
+          }
+        ],
+        "bodyParams": []
+      },
+      {
+        "name": "create",
+        "display": "创建风险",
+        "type": "create",
+        "method": "post",
+        "path": "/risks",
+        "resultType": "object",
+        "bodyParams": [
+          {
+            "name": "project",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属项目数字ID，禁止填0。",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "风险标题"
+          },
+          {
+            "name": "status",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "状态",
+            "defaultValue": "active"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "int",
+            "description": "优先级,1-3",
+            "defaultValue": "3"
+          },
+          {
+            "name": "impact",
+            "role": "body",
+            "required": false,
+            "type": "int",
+            "description": "影响程度,1-5",
+            "defaultValue": "3"
+          },
+          {
+            "name": "prevention",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "应对措施,长文本",
+            "defaultValue": ""
+          },
+          {
+            "name": "remedy",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "相应措施,长文本",
+            "defaultValue": ""
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取风险详情",
+        "type": "get",
+        "method": "get",
+        "path": "/risks/{riskID}",
+        "resultType": "object",
+        "resultGetter": "risk",
+        "pathParams": {
+          "riskID": "风险ID"
+        },
+        "bodyParams": []
+      },
+      {
+        "name": "update",
+        "display": "修改风险",
+        "type": "update",
+        "method": "put",
+        "path": "/risks/{riskID}",
+        "resultType": "object",
+        "pathParams": {
+          "riskID": "风险ID"
+        },
+        "bodyParams": [
+          {
+            "name": "name",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "风险标题"
+          },
+          {
+            "name": "desc",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "风险描述"
+          },
+          {
+            "name": "status",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "状态"
+          },
+          {
+            "name": "pri",
+            "role": "body",
+            "required": false,
+            "type": "string",
+            "description": "优先级"
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "display": "删除风险",
+        "type": "delete",
+        "method": "delete",
+        "path": "/risks/{riskID}",
+        "resultType": "text",
+        "pathParams": {
+          "riskID": "风险ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "weekly": {
+    "name": "weekly",
+    "display": "周报",
+    "description": "项目周报管理，支持创建周报、获取周报",
+    "actions": [
+      {
+        "name": "create",
+        "display": "创建周报",
+        "type": "create",
+        "method": "local",
+        "path": "weekly/create",
+        "resultType": "object",
+        "handler": "createWeekly",
+        "bodyParams": [
+          {
+            "name": "project",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属项目数字ID，必须使用对象列表中的项目ID，禁止填0。也可传 projectID",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "报告标题"
+          },
+          {
+            "name": "content",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "报告正文"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取周报",
+        "type": "get",
+        "method": "get",
+        "path": "/doc/docs/{docID}",
+        "resultType": "object",
+        "resultGetter": "doc",
+        "pathParams": {
+          "docID": "文档ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "report": {
+    "name": "report",
+    "display": "报告",
+    "description": "项目报告管理，支持创建报告、获取报告",
+    "actions": [
+      {
+        "name": "create",
+        "display": "创建报告",
+        "type": "create",
+        "method": "local",
+        "path": "weekly/create",
+        "resultType": "object",
+        "handler": "createWeekly",
+        "bodyParams": [
+          {
+            "name": "project",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属项目数字ID，必须使用对象列表中的项目ID，禁止填0。也可传 projectID",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "报告标题"
+          },
+          {
+            "name": "content",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "报告正文"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取报告",
+        "type": "get",
+        "method": "get",
+        "path": "/doc/docs/{docID}",
+        "resultType": "object",
+        "resultGetter": "doc",
+        "pathParams": {
+          "docID": "文档ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  },
+  "doc": {
+    "name": "doc",
+    "display": "文档",
+    "description": "文档管理，支持创建文档、获取文档",
+    "actions": [
+      {
+        "name": "create",
+        "display": "创建文档",
+        "type": "create",
+        "method": "local",
+        "path": "weekly/create",
+        "resultType": "object",
+        "handler": "createWeekly",
+        "bodyParams": [
+          {
+            "name": "project",
+            "role": "body",
+            "required": true,
+            "type": "integer",
+            "description": "所属项目数字ID，必须使用对象列表中的项目ID，禁止填0。也可传 projectID",
+            "format": "int32"
+          },
+          {
+            "name": "title",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "报告标题"
+          },
+          {
+            "name": "content",
+            "role": "body",
+            "required": true,
+            "type": "string",
+            "description": "报告正文"
+          }
+        ]
+      },
+      {
+        "name": "get",
+        "display": "获取文档",
+        "type": "get",
+        "method": "get",
+        "path": "/doc/docs/{docID}",
+        "resultType": "object",
+        "resultGetter": "doc",
+        "pathParams": {
+          "docID": "文档ID"
+        },
+        "bodyParams": []
+      }
+    ]
+  }
+}
