@@ -8,40 +8,19 @@ $revisionVersion = (int)($revisions[0]->version ?? 1);
 $rich = isset($richVersions[$revisionVersion]);
 ob_start();
 ?>
-<section class="panel p-4">
+<section class="reqintake-detail">
     <a href="<?= $escape(\helper::createLink('reqintake', 'index')) ?>"><?= $escape($labels->common) ?></a>
     <h2>#<?= (int)$item->id ?> <?= $escape($item->title) ?></h2>
+    <div class="reqintake-detail-grid">
+    <article class="reqintake-detail-content panel p-4">
     <dl>
-        <dt><?= $escape($labels->fields['product']) ?></dt>
-        <dd><?= $escape($item->productName) ?></dd>
-        <dt><?= $escape($labels->submitter) ?></dt>
-        <dd><?= $escape($item->openedBy) ?></dd>
-        <dt><?= $escape($labels->listColumns[3]) ?></dt>
-        <dd><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></dd>
-        <dt><?= $escape($labels->listColumns[4]) ?></dt>
-        <dd><?= $escape($labels->states[$item->status] ?? $item->status) ?></dd>
-        <?php foreach(array('customer', 'channel', 'description') as $field): ?>
-            <dt><?= $escape($labels->fields[$field]) ?></dt>
-            <dd style="white-space: pre-wrap"><?= $field === 'description' && $rich ? $item->$field : $escape($item->$field) ?></dd>
-        <?php endforeach; ?>
-        <?php foreach($attributes as $field => $value): ?>
-            <?php if($field === 'branchModules') continue; ?>
-            <dt><?= $escape($labels->fields[$field]) ?></dt>
-            <dd style="white-space: pre-wrap"><?= $field === 'acceptance' && $rich ? $value : $escape($scopeLabels[$field][$value] ?? $attributeOptions[$field][$value] ?? $value) ?></dd>
-        <?php endforeach; ?>
-        <?php if($attributes['branchModules']): ?>
-            <dt><?= $escape($labels->additionalBranches) ?></dt>
-            <dd>
-                <ul>
-                    <?php foreach($attributes['branchModules'] as $branch => $module): ?>
-                        <li><?= $escape($scopeOptions['branches'][$branch] ?? '#' . $branch) ?> · <?= $escape($scopeOptions['modules'][$branch][$module] ?? '#' . $module) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </dd>
-        <?php endif; ?>
+        <dt><?= $escape($labels->fields['description']) ?></dt>
+        <dd class="whitespace-pre-wrap"><?= $rich ? $item->description : $escape($item->description) ?></dd>
+        <dt><?= $escape($labels->fields['acceptance']) ?></dt>
+        <dd class="whitespace-pre-wrap"><?= $rich ? $attributes['acceptance'] : $escape($attributes['acceptance']) ?></dd>
     </dl>
     <?php if($canRevise): ?>
-        <details>
+        <details id="reqintake-edit">
             <summary><?= $escape($labels->editFeedback) ?></summary>
             <form method="post">
                 <input type="hidden" name="intent" value="revise">
@@ -50,7 +29,7 @@ ob_start();
                 <input type="hidden" name="version" value="<?= (int)$item->version ?>">
                 <?php foreach(array('title' => 255, 'customer' => 255, 'channel' => 64) as $field => $limit): ?>
                     <label class="block"><?= $escape($labels->fields[$field]) ?>
-                        <input name="<?= $field ?>" value="<?= $field === 'description' && $rich ? $item->$field : $escape($item->$field) ?>" maxlength="<?= $limit ?>" <?= $field === 'title' ? 'required' : '' ?>>
+                        <input name="<?= $field ?>" value="<?= $escape($item->$field) ?>" maxlength="<?= $limit ?>" <?= $field === 'title' ? 'required' : '' ?>>
                     </label>
                 <?php endforeach; ?>
                 <label class="block"><?= $escape($labels->fields['description']) ?>
@@ -213,9 +192,90 @@ ob_start();
             <button type="submit" class="btn"><?= $escape($labels->linkStory) ?></button>
         </form>
     <?php endif; ?>
+    <?php if($canTransition): ?>
+        <details id="reqintake-workflow">
+            <summary><?= $escape($labels->actionsLabel) ?></summary>
+            <form method="post">
+                <input type="hidden" name="intent" value="transition">
+                <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+                <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+                <label><?= $escape($labels->transitionReason) ?> <input name="reason" maxlength="500"></label>
+                <?php foreach(match($item->status) {'pending' => ['start', 'close'], 'tracking' => ['close'], 'closed' => ['reopen'], default => []} as $action): ?>
+                    <button type="submit" class="btn" name="action" value="<?= $escape($action) ?>"><?= $escape($labels->actions[$action]) ?></button>
+                <?php endforeach; ?>
+            </form>
+        </details>
+    <?php endif; ?>
+    </article>
+    <aside class="panel p-4 reqintake-detail-info">
+    <h3><?= $escape($labels->basicInfo) ?></h3>
+    <dl>
+        <dt><?= $escape($labels->fields['product']) ?></dt>
+        <dd><?= $escape($item->productName) ?></dd>
+        <dt><?= $escape($labels->submitter) ?></dt>
+        <dd><?= $escape($item->openedBy) ?></dd>
+        <dt><?= $escape($labels->listColumns[3]) ?></dt>
+        <dd><?= $escape($item->assignedTo) ?><?php if($item->assignmentPending): ?> (<?= $escape($labels->ownerPending) ?>)<?php endif; ?></dd>
+        <dt><?= $escape($labels->listColumns[4]) ?></dt>
+        <dd><?= $escape($labels->states[$item->status] ?? $item->status) ?></dd>
+        <?php foreach(array('customer', 'channel') as $field): ?>
+            <dt><?= $escape($labels->fields[$field]) ?></dt>
+            <dd style="white-space: pre-wrap"><?= $escape($item->$field) ?></dd>
+        <?php endforeach; ?>
+        <?php foreach($attributes as $field => $value): ?>
+            <?php if(in_array($field, array('acceptance', 'branchModules'), true)) continue; ?>
+            <dt><?= $escape($labels->fields[$field]) ?></dt>
+            <dd style="white-space: pre-wrap"><?= $escape($scopeLabels[$field][$value] ?? $attributeOptions[$field][$value] ?? $value) ?></dd>
+        <?php endforeach; ?>
+        <?php if($attributes['branchModules']): ?>
+            <dt><?= $escape($labels->additionalBranches) ?></dt>
+            <dd>
+                <ul>
+                    <?php foreach($attributes['branchModules'] as $branch => $module): ?>
+                        <li><?= $escape($scopeOptions['branches'][$branch] ?? '#' . $branch) ?> · <?= $escape($scopeOptions['modules'][$branch][$module] ?? '#' . $module) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </dd>
+        <?php endif; ?>
+    </dl>
+    </aside>
+    </div>
+    <?php if($canTransition): ?>
+        <nav class="reqintake-detail-toolbar" aria-label="<?= $escape($labels->actionsLabel) ?>">
+            <?php if($canRevise): ?>
+                <button class="btn ghost" type="button" data-reqintake-open="reqintake-edit"><?= $escape($labels->editFeedback) ?></button>
+            <?php endif; ?>
+            <button class="btn ghost" type="button" data-reqintake-open="reqintake-workflow"><?= $escape($labels->actionsLabel) ?></button>
+        </nav>
+    <?php endif; ?>
 </section>
 <?php
 html(ob_get_clean());
 require __DIR__ . '/product-scope-js.php';
 context::js('document.querySelectorAll("form:has(input[name=intent][value=revise])").forEach(form => reqintakeScope(form, ' .
     json_encode($scopeOptions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) . '));');
+
+context::css(<<<'CSS'
+.reqintake-detail {padding-bottom: 4rem;}
+.reqintake-detail-grid {display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 27%); gap: 1rem; align-items: start;}
+.reqintake-detail-content {grid-area: 1 / 1;}
+.reqintake-detail-info {grid-area: 1 / 2;}
+.reqintake-detail dd {margin-bottom: .5rem; overflow-wrap: anywhere;}
+.reqintake-detail-toolbar {position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #303642; color: white; border-radius: .25rem; padding: .25rem; z-index: 10;}
+.reqintake-detail-toolbar .btn {color: inherit;}
+@media (max-width: 800px) {
+    .reqintake-detail-grid {grid-template-columns: minmax(0, 1fr);}
+    .reqintake-detail-info {grid-area: 2 / 1;}
+}
+CSS);
+context::js(<<<'JS'
+document.querySelectorAll('[data-reqintake-open]').forEach(button => {
+    button.addEventListener('click', () => {
+        const section = document.getElementById(button.dataset.reqintakeOpen);
+        if (!section) return;
+        section.open = true;
+        section.scrollIntoView({block: 'center'});
+        section.querySelector('summary').focus({preventScroll: true});
+    });
+});
+JS);

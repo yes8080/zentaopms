@@ -179,7 +179,11 @@ class reqintake extends control
             }
             try
             {
-                if($this->formValue('intent') === 'duplicate')
+                if($this->formValue('intent') === 'transition')
+                {
+                    $model->transition($id, (int)$this->formValue('version'), $this->formValue('action'), $this->formValue('reason'));
+                }
+                elseif($this->formValue('intent') === 'duplicate')
                 {
                     $original = (int)$this->formValue('original');
                     if($original < 1) throw new DomainException('duplicateTarget');
@@ -248,7 +252,8 @@ class reqintake extends control
             $feedback = clone $feedback;
             foreach(array('title', 'description', 'customer', 'channel') as $field) $feedback->$field = $latest->$field;
         }
-        $this->view->canRevise = $feedback->status !== 'closed' && $model->canHandle($feedback);
+        $this->view->canTransition = $model->canHandle($feedback);
+        $this->view->canRevise = $feedback->status !== 'closed' && $this->view->canTransition;
         $this->view->linkToken = $token;
         $this->view->storyTypes = $model->visibleTargetTypes();
         $this->view->taskExecutions = $this->view->canRevise ? $model->taskExecutions((int)$feedback->product) : array();

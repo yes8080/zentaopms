@@ -100,3 +100,4 @@ $lang->reqintake->errors['duplicateTarget'] = 'Select a different feedback from 
 $lang->reqintake->additionalBranches = 'Additional branches or platforms';
 $lang->reqintake->branchNotSelected = 'Outside feedback scope';
 $lang->reqintake->updatedDate = 'Last updated';
+$lang->reqintake->basicInfo = 'Basic information';

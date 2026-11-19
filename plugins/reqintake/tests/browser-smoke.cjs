@@ -62,6 +62,15 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await app.locator('dl').getByText('Browser acceptance',{exact:true}).waitFor();
         assert.equal(await app.locator('dd img').count(),1);
         if (branchModule) await app.locator('dl').getByText(branchModule, {exact:false}).waitFor();
+        const content = await app.locator('.reqintake-detail-content').boundingBox();
+        const info = await app.locator('.reqintake-detail-info').boundingBox();
+        assert.ok(content && info && content.x < info.x);
+        await app.locator('[data-reqintake-open=reqintake-workflow]').click();
+        assert.equal(await app.locator('#reqintake-workflow').getAttribute('open'), '');
+        await app.locator('[data-reqintake-open=reqintake-edit]').click();
+        assert.equal(await app.locator('#reqintake-edit').getAttribute('open'), '');
+        await app.locator('#reqintake-workflow button[value=start]').click();
+        await app.locator('.reqintake-detail-info').getByText('跟进中', {exact:true}).waitFor();
         assert.deepEqual(errors,[]);
         if (process.env.REQINTAKE_SCREENSHOT) await page.screenshot({path:process.env.REQINTAKE_SCREENSHOT,fullPage:true});
         console.log('Browser verified product preview, editor input, clipboard PNG, submission and detail');
