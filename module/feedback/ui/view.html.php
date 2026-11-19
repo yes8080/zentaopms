@@ -48,25 +48,39 @@ $operations = array(
     'close' => array('closedReason', $feedbackLang->closedReasonList),
     'activate' => array('', array()), 'delete' => array('', array()),
 );
-$repeatPicker = '';
-if($canOperate('close'))
+$operations = array_filter($operations, static fn($operation) =>
+    $canOperate($operation) && ($operation !== 'convert' || $conversionTypes), ARRAY_FILTER_USE_KEY);
+$backLink = helper::createLink('feedback', 'browse', 'browseType=all');
+$modalID = static fn($operation) => "feedback-action-{$feedback->id}-$operation";
+$icons = array('assignTo' => 'hand-right', 'review' => 'checked', 'reply' => 'reply', 'ask' => 'help',
+    'comment' => 'chat', 'convert' => 'exchange', 'close' => 'off', 'activate' => 'play', 'delete' => 'trash');
+$mainActions = $suffixActions = array();
+foreach(array_keys($operations) as $operation)
 {
-    $model = $app->control->feedback;
-    disableGlobalRender();
-    $repeatPicker = picker(set::name('repeatFeedback'), set::items($model->getRepeatOptions($feedback)),
-        set::search(true), set::placeholder($feedbackLang->selectRepeatFeedback),
-        set::attrs(array('aria-labelledby' => 'feedbackRepeatLabel')))->render();
-    enableGlobalRender();
+    $action = array('text' => $feedbackLang->$operation, 'icon' => $icons[$operation],
+        'data-toggle' => 'modal', 'data-target' => '#' . $modalID($operation));
+    if($operation === 'delete') $suffixActions[] = $action;
+    else $mainActions[] = $action;
 }
+if($canOperate('edit')) array_unshift($suffixActions, array('text' => $feedbackLang->edit, 'icon' => 'edit', 'url' => $link('edit')));
+
+disableGlobalRender();
+$toolbar = floatToolbar(
+    set::prefix(array(array('text' => $feedbackLang->back, 'icon' => 'back', 'url' => $backLink))),
+    set::main($mainActions), set::suffix($suffixActions)
+)->render();
+$repeatPicker = isset($operations['close']) ? picker(
+    set::name('repeatFeedback'), set::items($app->control->feedback->getRepeatOptions($feedback)),
+    set::search(true), set::placeholder($feedbackLang->selectRepeatFeedback),
+    set::attrs(array('aria-labelledby' => 'feedbackRepeatLabel'))
+)->render() : '';
+enableGlobalRender();
 ob_start();
 ?>
 <main class="feedback-detail">
   <div class="panel feedback-detail-header">
     <h2 class="panel-title"><span class="text-muted">#<?= (int)$feedback->id ?></span> <?= $escape($feedback->title) ?></h2>
-    <div class="feedback-actions">
-      <?php if($canOperate('edit')): ?><a class="btn" href="<?= $escape($link('edit')) ?>"><?= $escape($feedbackLang->edit) ?></a><?php endif; ?>
-      <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse', 'browseType=all')) ?>"><?= $escape($feedbackLang->back) ?></a>
-    </div>
+
   </div>
   <?php if($justSaved): ?><p class="feedback-saved" role="status"><?= $escape($lang->saveSuccess) ?></p><?php endif; ?>
   <div class="feedback-detail-grid">
@@ -129,38 +143,6 @@ ob_start();
       </section>
     <?php endif; ?>
     <section class="panel feedback-card">
-      <h3><?= $escape($feedbackLang->operations) ?></h3>
-      <div class="feedback-command-grid">
-      <?php foreach($operations as $operation => [$field, $options]): if(!$canOperate($operation) || ($operation === 'convert' && !$conversionTypes)) continue; ?>
-        <details class="border rounded p-3 mb-2">
-          <summary><?= $escape($feedbackLang->$operation) ?></summary>
-          <form method="post" action="<?= $escape($link($operation)) ?>" class="feedback-operation">
-            <input type="hidden" name="submitAction" value="1">
-            <?php if($field): ?>
-              <select class="form-control" name="<?= $escape($field) ?>" aria-label="<?= $escape($feedbackLang->$operation) ?>">
-                <?php foreach($options as $key => $label): ?>
-                  <option value="<?= $escape($key) ?>" <?= $operation === 'assignTo' && $key === $feedback->assignedTo ? 'selected' : '' ?>><?= $escape($label) ?></option>
-                <?php endforeach; ?>
-              </select>
-            <?php endif; ?>
-            <?php if($operation === 'close'): ?>
-              <div class="feedback-field feedback-repeat-field">
-                <span id="feedbackRepeatLabel"><?= $escape($feedbackLang->repeatFeedback) ?></span>
-                <?= $repeatPicker ?>
-              </div>
-            <?php endif; ?>
-            <?php if($operation === 'delete'): ?>
-              <p><?= $escape($feedbackLang->deleteConfirm) ?></p>
-            <?php elseif(!in_array($operation, array('activate', 'convert'), true)): ?>
-              <textarea class="form-control" name="comment" aria-label="<?= $escape($feedbackLang->comment) ?>" placeholder="<?= $escape($feedbackLang->comment) ?>" <?= in_array($operation, array('comment', 'reply', 'ask'), true) ? 'required' : '' ?>></textarea>
-            <?php endif; ?>
-            <button class="btn <?= $operation === 'delete' ? 'danger' : 'primary' ?> self-start" type="submit"><?= $escape($feedbackLang->$operation) ?></button>
-          </form>
-        </details>
-      <?php endforeach; ?>
-      </div>
-    </section>
-    <section class="panel feedback-card">
       <h3><?= $escape($feedbackLang->activity) ?></h3>
       <ol class="mt-2">
         <?php foreach($actions as $action): ?>
@@ -190,5 +172,41 @@ ob_start();
     <?php endforeach; ?>
   </aside>
   </div>
+  <div class="feedback-float-toolbar" aria-label="<?= $escape($feedbackLang->operations) ?>">
+    <?= $toolbar ?>
+  </div>
 </main>
-<?php html(ob_get_clean());
+<?php foreach($operations as $operation => [$field, $options]): ob_start(); ?>
+  <form method="post" action="<?= $escape($link($operation)) ?>" class="feedback-operation">
+    <input type="hidden" name="submitAction" value="1">
+    <?php if($field): ?>
+      <select class="form-control" name="<?= $escape($field) ?>" aria-label="<?= $escape($feedbackLang->$operation) ?>">
+        <?php foreach($options as $key => $label): ?>
+          <option value="<?= $escape($key) ?>" <?= $operation === 'assignTo' && $key === $feedback->assignedTo ? 'selected' : '' ?>><?= $escape($label) ?></option>
+        <?php endforeach; ?>
+      </select>
+    <?php endif; ?>
+    <?php if($operation === 'close'): ?>
+      <div class="feedback-field feedback-repeat-field">
+        <span id="feedbackRepeatLabel"><?= $escape($feedbackLang->repeatFeedback) ?></span>
+        <?= $repeatPicker ?>
+      </div>
+    <?php endif; ?>
+    <?php if($operation === 'delete'): ?>
+      <p><?= $escape($feedbackLang->deleteConfirm) ?></p>
+    <?php elseif(!in_array($operation, array('activate', 'convert'), true)): ?>
+      <textarea class="form-control" name="comment" aria-label="<?= $escape($feedbackLang->comment) ?>" placeholder="<?= $escape($feedbackLang->comment) ?>" <?= in_array($operation, array('comment', 'reply', 'ask'), true) ? 'required' : '' ?>></textarea>
+    <?php endif; ?>
+    <div class="feedback-actions">
+      <button class="btn <?= $operation === 'delete' ? 'danger' : 'primary' ?> self-start" type="submit"><?= $escape($feedbackLang->$operation) ?></button>
+      <button class="btn" type="button" data-dismiss="modal"><?= $escape($lang->cancel) ?></button>
+    </div>
+  </form>
+<?php
+    $operationForm = ob_get_clean();
+    disableGlobalRender();
+    echo modal(setID($modalID($operation)), set::title($feedbackLang->$operation),
+        set::size('sm'), set::autoLoad(''), html($operationForm))->render();
+    enableGlobalRender();
+endforeach;
+html(ob_get_clean());

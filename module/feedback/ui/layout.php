@@ -75,17 +75,18 @@ context::css(<<<'CSS'
     margin-top: 0.75rem;
     color: var(--color-success-700, #167454);
 }
-.feedback-command-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
-    align-items: start;
-    gap: 0.5rem;
+.feedback-float-toolbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: safe center;
+    margin-top: 1rem;
+    overflow-x: auto;
 }
-.feedback-command-grid > details[open] {
-    grid-column: 1 / -1;
-}
-.feedback-command-grid summary {
-    cursor: pointer;
+.feedback-float-toolbar > .float-toolbar {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
 }
 .feedback-upload input {
     max-width: 100%;

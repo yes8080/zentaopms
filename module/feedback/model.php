@@ -176,17 +176,18 @@ class feedbackModel extends model
         $owner = $feedback->openedBy === $user->account;
         $handler = $user->admin || $feedback->assignedTo === $user->account;
         $status = $feedback->status;
+        $inProcessing = in_array($status, array('wait', 'commenting', 'asked', 'replied'), true);
 
         return match($operation) {
-            'edit', 'delete' => ($owner || $handler) && ($status !== 'closed' || $operation === 'delete'),
-            'assignTo' => ($owner || $handler) && $status !== 'closed',
+            'edit' => ($owner || $handler) && in_array($status, array('noreview', 'clarify', 'wait'), true),
+            'delete' => $owner || $handler,
+            'assignTo', 'close' => ($owner || $handler) && $status !== 'closed',
             'review' => $handler && $status === 'noreview',
-            'convert' => $handler && !$feedback->result && in_array($status, array('wait', 'commenting', 'asked', 'replied'), true),
-            'reply' => $handler && in_array($status, array('wait', 'commenting', 'asked'), true),
-            'ask' => $owner && $status === 'replied',
-            'close' => ($owner || $handler) && $status !== 'closed',
-            'activate' => ($owner || $handler) && $status === 'closed',
-            'comment' => $status !== 'closed',
+            'convert' => $handler && !$feedback->result && $inProcessing,
+            'reply' => $handler && $inProcessing,
+            'ask' => $owner && $inProcessing,
+            'activate' => ($owner || $handler) && in_array($status, array('replied', 'closed'), true),
+            'comment' => $feedback->public && $inProcessing,
             default => false,
         };
     }
@@ -232,7 +233,7 @@ class feedbackModel extends model
                 $extra = $value;
                 break;
             case 'activate':
-                $status = $feedback->prevStatus;
+                $status = $feedback->status === 'replied' ? 'wait' : $feedback->prevStatus;
                 if($status === 'closed' || !isset($lang->statusList[$status])) $status = 'wait';
                 $data = array('status' => $status, 'activatedBy' => $account, 'activatedDate' => $now, 'closedBy' => '', 'closedDate' => null, 'closedReason' => '', 'repeatFeedback' => 0);
                 $action = 'activated';
