@@ -130,6 +130,16 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await app.locator('#reqintake-workflow button[value=start]').click();
         await app.locator('.reqintake-detail-info').getByText('跟进中', {exact:true}).waitFor();
         await app.locator('.reqintake-detail-content').getByText(/admin · 开始跟进/).waitFor();
+        const reply = app.locator('form:has(button[name=closeAfterReply])');
+        await reply.locator('..').locator('summary').click();
+        await reply.locator('[name=summary]').fill('Browser customer');
+        await reply.locator('[name=replyChannel]').fill('Phone');
+        await reply.locator('[name=details]').fill('Customer confirmed the fix');
+        await reply.locator('[name=reason]').fill('Adjusted settings and verified with the customer');
+        await reply.locator('[name=verified]').check();
+        await reply.getByRole('button',{name:'记录答复并结案'}).click();
+        await app.locator('.reqintake-detail-info').getByText('已关闭',{exact:true}).waitFor();
+        await app.locator('.reqintake-detail-content').getByText(/客户确认.*Adjusted settings/).waitFor();
         assert.deepEqual(errors,[]);
         if (process.env.REQINTAKE_SCREENSHOT) await page.screenshot({path:process.env.REQINTAKE_SCREENSHOT,fullPage:true});
         console.log('Browser verified product preview, editor input, clipboard PNG, submission and detail');

@@ -365,12 +365,16 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
     confirmation = 'Confirmed warehouse inventory export'
     upgrade = 'Wait for customer upgrade'
     remainder = 'Approver column remains outstanding'
-    assert confirmation in handle_source(confirmed, intent='handling', kind='reply',
-                                         summary='Customer A', details=confirmation, replyChannel='phone')
-    close = dict(intent='transition', action='close', reason=confirmation, outcome='confirmed')
+    close = dict(intent='handling', kind='reply', summary='Customer A', details=confirmation,
+                 replyChannel='phone', closeAfterReply='1', reason='Customer verified the export')
     assert '请核实剩余事项' in handle_source(confirmed, **close)
+    assert confirmation not in request(detail_route + confirmed)
+    stale_path = detail_route + confirmed
+    stale_token = re.search(r'name="token" value="([^"]+)"', request(stale_path))[1]
+    stale = request(stale_path, dict(close, token=stale_token, version=1, verified='1'))
+    assert '反馈状态已变化' in stale and confirmation not in stale
     result = handle_source(confirmed, **close, verified='1')
-    assert '已关闭' in result and '· 客户确认 ·' in result
+    assert '已关闭' in result and '· 客户确认 ·' in result and confirmation in result
     assert upgrade in handle_source(waiting, intent='handling', kind='plan', summary=upgrade, details='')
     assert remainder in handle_source(extra, intent='handling', kind='plan', summary='Check extra requirement',
                                        details=remainder)

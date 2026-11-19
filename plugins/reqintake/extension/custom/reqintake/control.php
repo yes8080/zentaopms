@@ -264,7 +264,9 @@ class reqintake extends control
                 elseif($this->formValue('intent') === 'handling')
                 {
                     $model->recordHandling($feedback, (int)$this->formValue('version'), $this->formValue('kind'),
-                        $this->formValue('summary'), $this->formValue('details'), $this->formValue('replyChannel'));
+                        $this->formValue('summary'), $this->formValue('details'), $this->formValue('replyChannel'),
+                        $this->formValue('closeAfterReply') === '1' ? $this->formValue('reason') : null,
+                        $this->formValue('verified') === '1');
                 }
                 elseif($this->formValue('intent') === 'attachment')
                 {

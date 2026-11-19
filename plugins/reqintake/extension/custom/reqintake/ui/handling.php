@@ -32,6 +32,16 @@ $plan = $plans[0] ?? null;
                     <textarea name="details" maxlength="2000" <?= $kind === 'reply' ? 'required' : '' ?>><?= $escape($kind === 'plan' ? ($plan->details ?? '') : '') ?></textarea>
                 </label>
                 <button class="btn" type="submit"><?= $escape($kind === 'plan' ? $labels->handlingEdit : $labels->handlingReply) ?></button>
+                <?php if($kind === 'reply'): ?>
+                    <fieldset class="mt-2">
+                        <legend><?= $escape($labels->replyAndClose) ?></legend>
+                        <label class="block"><?= $escape($labels->replyAndCloseReason) ?>
+                            <input name="reason" maxlength="500">
+                        </label>
+                        <label class="block"><input type="checkbox" name="verified" value="1"> <?= $escape($labels->closeVerification) ?></label>
+                        <button class="btn" type="submit" name="closeAfterReply" value="1"><?= $escape($labels->replyAndClose) ?></button>
+                    </fieldset>
+                <?php endif; ?>
             </form>
         </details>
     <?php endforeach; ?>

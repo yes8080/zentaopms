@@ -153,3 +153,6 @@ $lang->reqintake->feedbackID = '反馈编号';
 $lang->reqintake->richRevisionChanged = '富文本格式或内嵌图片有变更';
 
 $lang->reqintake->submitRetry = '提交未完成，请重试。';
+
+$lang->reqintake->replyAndClose = '记录答复并结案';
+$lang->reqintake->replyAndCloseReason = '处理办法和结案原因';

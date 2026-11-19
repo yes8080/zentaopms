@@ -153,3 +153,6 @@ $lang->reqintake->feedbackID = 'Feedback ID';
 $lang->reqintake->richRevisionChanged = 'Rich text formatting or embedded images changed';
 
 $lang->reqintake->submitRetry = 'The submission did not finish. Try again.';
+
+$lang->reqintake->replyAndClose = 'Record reply and close';
+$lang->reqintake->replyAndCloseReason = 'Resolution and closure reason';

@@ -485,7 +485,7 @@ class reqintakeModel extends model
             ->where('feedback')->eq((int)$feedback->id)->orderBy('version_desc')->fetchAll();
     }
 
-    public function recordHandling(object $feedback, int $version, string $kind, string $summary, string $details, string $channel): void
+    public function recordHandling(object $feedback, int $version, string $kind, string $summary, string $details, string $channel, ?string $closeReason = null, bool $verified = false): void
     {
         if(!$this->canHandle($feedback)) throw new DomainException('handler');
 
@@ -497,6 +497,14 @@ class reqintakeModel extends model
             || ($kind === 'reply' && ($summary === '' || $details === '' || $channel === '')))
             throw new InvalidArgumentException('handlingFields');
 
+        if($closeReason !== null)
+        {
+            if($kind !== 'reply') throw new InvalidArgumentException('handlingFields');
+            $this->transition((int)$feedback->id, $version, 'close', $closeReason, outcome: 'confirmed', verified: $verified,
+                reply: array($summary, $details, $channel));
+            return;
+        }
+
         $prefix = $this->config->db->prefix;
         $now = helper::now();
         $this->dbh->beginTransaction();
@@ -506,8 +514,7 @@ class reqintakeModel extends model
             $update->execute([$now, $feedback->id, $version]);
             if($update->rowCount() !== 1) throw new DomainException('staleFeedback');
 
-            $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeHandling` (feedback,version,kind,actor,summary,details,channel,createdDate) VALUES (?,?,?,?,?,?,?,?)");
-            $insert->execute([$feedback->id, $version + 1, $kind, $this->app->user->account, $summary, $details, $kind === 'reply' ? $channel : '', $now]);
+            $this->insertHandling((int)$feedback->id, $version + 1, $kind, $summary, $details, $kind === 'reply' ? $channel : '', $now);
             $this->dbh->commit();
         }
         catch(Throwable $error)
@@ -515,6 +522,13 @@ class reqintakeModel extends model
             if($this->dbh->inTransaction()) $this->dbh->rollBack();
             throw $error;
         }
+    }
+
+    private function insertHandling(int $id, int $version, string $kind, string $summary, string $details, string $channel, string $date): void
+    {
+        $table = $this->config->db->prefix . 'reqintakeHandling';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,kind,actor,summary,details,channel,createdDate) VALUES (?,?,?,?,?,?,?,?)");
+        $insert->execute([$id, $version, $kind, $this->app->user->account, $summary, $details, $channel, $date]);
     }
 
     public function followups(object $feedback): array
@@ -997,7 +1011,7 @@ class reqintakeModel extends model
         return $row ? $this->findFeedback((int)$row->original) : false;
     }
 
-    public function transition(int $id, int $version, string $action, string $reason, int $original = 0, string $outcome = '', bool $verified = false): void
+    public function transition(int $id, int $version, string $action, string $reason, int $original = 0, string $outcome = '', bool $verified = false, ?array $reply = null): void
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -1052,6 +1066,7 @@ class reqintakeModel extends model
                 $closure = $this->config->db->prefix . 'reqintakeClosure';
                 $query = $this->dbh->prepare("INSERT INTO `$closure` (feedback,version,outcome) VALUES (?,?,?)");
                 $query->execute([$id, $version + 1, $outcome]);
+                if($reply !== null) $this->insertHandling($id, $version + 1, 'reply', $reply[0], $reply[1], $reply[2], $now);
             }
             $this->dbh->commit();
         }
