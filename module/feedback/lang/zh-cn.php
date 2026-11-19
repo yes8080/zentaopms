@@ -74,3 +74,4 @@ $lang->feedback->download = '下载附件';
 $lang->feedback->exportLimit = '请缩小筛选范围，每次最多导出 5,000 条反馈。';
 $lang->feedback->keepType = '保留原类型';
 $lang->feedback->keepPriority = '保留原优先级';
+$lang->feedback->noProducts = '当前没有可选产品。请先创建产品，或请管理员授予产品访问权限。';

@@ -73,3 +73,4 @@ $lang->feedback->download = 'Download attachment';
 $lang->feedback->exportLimit = 'Narrow the filters to export up to 5,000 feedback items.';
 $lang->feedback->keepType = 'Keep type';
 $lang->feedback->keepPriority = 'Keep priority';
+$lang->feedback->noProducts = 'No products are available to you. Create a product or ask an administrator to grant access.';

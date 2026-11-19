@@ -1,6 +1,8 @@
 <?php
 namespace zin;
 
+require __DIR__ . '/layout.php';
+
 $feedbackLang = $lang->feedback;
 $escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $link = static fn($method) => helper::createLink('feedback', $method, "feedbackID=$feedback->id");
@@ -32,7 +34,7 @@ ob_start();
     </div>
   </div>
   <div class="panel-body">
-    <dl class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <dl class="feedback-summary">
       <?php foreach($fields as $field => $value): ?>
         <div><dt class="text-muted"><?= $escape($feedbackLang->$field) ?></dt><dd><?= $escape($value) ?></dd></div>
       <?php endforeach; ?>
@@ -94,7 +96,7 @@ ob_start();
       <?php foreach($operations as $operation => [$field, $options]): if(!$canOperate($operation) || ($operation === 'convert' && !$conversionTypes)) continue; ?>
         <details class="border rounded p-3 mb-2">
           <summary><?= $escape($feedbackLang->$operation) ?></summary>
-          <form method="post" action="<?= $escape($link($operation)) ?>" class="flex flex-col gap-2 mt-2">
+          <form method="post" action="<?= $escape($link($operation)) ?>" class="feedback-operation">
             <input type="hidden" name="submitAction" value="1">
             <?php if($field): ?>
               <select class="form-control" name="<?= $escape($field) ?>" aria-label="<?= $escape($feedbackLang->$operation) ?>">
