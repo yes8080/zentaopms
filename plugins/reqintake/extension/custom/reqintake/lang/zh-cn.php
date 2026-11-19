@@ -104,3 +104,5 @@ $lang->reqintake->basicInfo = '基本信息';
 $lang->reqintake->sortFeedback = '反馈排序';
 $lang->reqintake->sortRecent = '最新提报';
 $lang->reqintake->visibleColumns = '显示列';
+
+$lang->reqintake->workbench = '待处理反馈';

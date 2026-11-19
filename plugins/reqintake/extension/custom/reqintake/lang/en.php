@@ -104,3 +104,5 @@ $lang->reqintake->basicInfo = 'Basic information';
 $lang->reqintake->sortFeedback = 'Sort feedback';
 $lang->reqintake->sortRecent = 'Latest submissions';
 $lang->reqintake->visibleColumns = 'Visible columns';
+
+$lang->reqintake->workbench = 'Feedback assigned to me';

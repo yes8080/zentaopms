@@ -67,6 +67,8 @@ for output in (first,second):
 assert re.search(r'已登记反馈 #(\d+)',first)[1] == re.search(r'已登记反馈 #(\d+)',second)[1]
 print('Intake submission and identical retry passed')
 id = re.search(r'已登记反馈 #(\d+)',first)[1]
+dashboard = html.unescape(request('index.php?m=my&f=index'))
+assert '待处理反馈' in dashboard and f'm=reqintake&f=detail&id={id}' in dashboard
 def transition(version,action,reason=''):
     return submit(dict(keys,intent='transition',feedbackID=id,version=version,action=action,reason=reason))
 assert '跟进中' in transition(1,'start')
