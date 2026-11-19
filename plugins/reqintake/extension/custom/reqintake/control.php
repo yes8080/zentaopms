@@ -103,7 +103,10 @@ class reqintake extends control
         if($this->view->inputRich)
         {
             foreach(array('description', 'acceptance') as $field)
-                $this->view->fields[$field] = $this->reqintake->cleanRichText($this->view->fields[$field]);
+                {
+                try { $this->view->fields[$field] = $this->reqintake->cleanRichText($this->view->fields[$field]); }
+                catch(InvalidArgumentException $error) { $this->view->fields[$field] = ''; }
+            }
         }
         $this->view->products = $this->loadModel('product')->getPairs();
         $model = $this->loadModel('reqintake');

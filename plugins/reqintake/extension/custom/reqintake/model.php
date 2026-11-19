@@ -131,11 +131,17 @@ class reqintakeModel extends model
             $this->app->loadClass('purifier', true);
             $config = HTMLPurifier_Config::createDefault();
             $config->set('Cache.DefinitionImpl', null);
-            /* Images and external resources require feedback-specific file access. */
-            $config->set('HTML.Allowed', 'p,br,strong,b,em,i,u,s,ul,ol,li,blockquote,pre,code,h1,h2,h3,h4,hr');
+            $config->set('HTML.Allowed', 'p,br,strong,b,em,i,u,s,ul,ol,li,blockquote,pre,code,h1,h2,h3,h4,hr,img[src|alt]');
+            $config->set('URI.AllowedSchemes', array('data' => true));
             $purifier = new HTMLPurifier($config);
         }
-        return $purifier->purify($text);
+        if(strlen($text) > 4 * 1024 * 1024) throw new InvalidArgumentException('richTextSize');
+
+        /* Purifier validates and canonicalizes data images. Discard relative image sources too. */
+        return preg_replace_callback('~<img(?= )[^>]*>~i', static function($match)
+        {
+            return preg_match('~ src="data:image/(?:png|jpeg|gif);base64,[A-Za-z0-9+/=]+"~', $match[0]) ? $match[0] : '';
+        }, $purifier->purify($text)) ?? '';
     }
 
     public function attributeOptions(): array
@@ -191,7 +197,7 @@ class reqintakeModel extends model
         }
         $title = trim($fields['title']);
         if($title === '' || mb_strlen($title) > 255) throw new InvalidArgumentException('title');
-        if(trim($rich ? html_entity_decode(strip_tags($fields['description'])) : $fields['description']) === '' || strlen($fields['description']) > 16777215) throw new InvalidArgumentException('description');
+        if((trim($rich ? html_entity_decode(strip_tags($fields['description'])) : $fields['description']) === '' && (!$rich || !str_contains($fields['description'], '<img '))) || strlen($fields['description']) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($fields['customer']) > 255 || mb_strlen($fields['channel']) > 64) throw new InvalidArgumentException('source');
 
         $attributes = $this->validatedAttributes(array_intersect_key($fields, array_flip(array('category', 'priority', 'acceptance'))) + $this->attributes((int)$feedback->id));
@@ -726,7 +732,7 @@ class reqintakeModel extends model
             $description = $this->cleanRichText($description);
             $attributes['acceptance'] = $this->cleanRichText($attributes['acceptance'] ?? '');
         }
-        if(trim($rich ? html_entity_decode(strip_tags($description)) : $description) === '' || strlen($description) > 16777215) throw new InvalidArgumentException('description');
+        if((trim($rich ? html_entity_decode(strip_tags($description)) : $description) === '' && (!$rich || !str_contains($description, '<img '))) || strlen($description) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($customer) > 255 || mb_strlen($channel) > 64) throw new InvalidArgumentException('source');
 
         $attributes = $this->validatedAttributes($attributes + array('category' => 'feature', 'priority' => '3', 'acceptance' => ''));

@@ -75,3 +75,4 @@ $lang->reqintake->removeAttachment = '移除';
 $lang->reqintake->attachmentLimit = '选择文件（最多 5 MiB）';
 $lang->reqintake->uploadAttachment = '上传';
 $lang->reqintake->errors['attachment'] = '请选择有效的附件，单个文件不超过 5 MiB。';
+$lang->reqintake->errors['richTextSize'] = '富文本内容超过 4 MiB。';

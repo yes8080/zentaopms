@@ -75,3 +75,4 @@ $lang->reqintake->removeAttachment = 'Remove';
 $lang->reqintake->attachmentLimit = 'File (up to 5 MiB)';
 $lang->reqintake->uploadAttachment = 'Upload';
 $lang->reqintake->errors['attachment'] = 'Choose a valid file up to 5 MiB.';
+$lang->reqintake->errors['richTextSize'] = 'Rich text exceeds the 4 MiB limit.';

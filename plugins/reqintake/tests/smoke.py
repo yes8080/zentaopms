@@ -306,14 +306,17 @@ assert all(re.search(r'<zen-editor[^>]+name="' + field + '"', page)
            for field in ('description', 'acceptance'))
 fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
          for key in ('operation', 'token')}
+image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aUioAAAAASUVORK5CYII='
 rich = dict(payload, **fresh) | dict(bodyFormat='rich',
     description='<p>Formatted <strong>description</strong></p>',
-    acceptance='<ol><li>First criterion</li></ol>')
+    acceptance=f'<ol><li>First criterion</li></ol><p><img src="{image}" alt="Inline image"></p>'
+               '<p><img src="/untrusted-image.png" alt="external image"></p>')
 source = re.search(r'已登记反馈 #(\d+)', submit(rich))[1]
 assert re.search(r'已登记反馈 #(\d+)', submit(rich))[1] == source
 source_route = detail_route + source
 page = request(source_route)
 assert '<strong>description</strong>' in page and '<ol><li>First criterion</li></ol>' in page
+assert image in page and 'untrusted-image.png' not in page
 token = re.search(r'name="token" value="([^"]+)"', page)[1]
 revision = dict(rich, token=token, intent='revise', version=1,
                 description='<p><em>Edited and formatted</em></p>')

@@ -31,7 +31,7 @@ $title = $revisions ? reset($revisions)->title : $feedback->title;
 $attributes = $model->attributes((int)$feedback->id);
 $richVersions = $model->richTextVersions((int)$feedback->id);
 $version = (int)($revisions[0]->version ?? 1);
-$acceptance = isset($richVersions[$version]) ? $attributes['acceptance'] : nl2br(htmlspecialchars($attributes['acceptance'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+$acceptance = isset($richVersions[$version]) ? strip_tags($attributes['acceptance'], '<p><br><strong><b><em><i><u><s><ul><ol><li><blockquote><pre><code><h1><h2><h3><h4><hr>') : nl2br(htmlspecialchars($attributes['acceptance'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 query('formGridPanel')->each(function($node) use($title, $attributes, $acceptance)
 {
     $fields = $node->prop('fields');
