@@ -38,6 +38,21 @@ class reqintake extends control
                     $model->setOwner((int)$fields['product'], trim($this->formValue('owner')));
                     $this->view->ownerSaved = true;
                 }
+                elseif($intent === 'batchLink')
+                {
+                    $type = $this->formValue('storyType');
+                    if(!in_array($type, array('story', 'requirement', 'epic'), true)) throw new DomainException('linkTarget');
+                    $sources = array();
+                    $submitted = $this->post->sources;
+                    if(!is_array($submitted) || count($submitted) > 50) throw new DomainException('batchSelection');
+                    foreach($submitted as $source)
+                    {
+                        if(!is_string($source) || !preg_match('/\A([1-9][0-9]{0,9}):([1-9][0-9]{0,9})\z/', $source, $parts)) throw new DomainException('batchSelection');
+                        $sources[(int)$parts[1]] = (int)$parts[2];
+                    }
+                    $model->linkTargets($sources, (int)$this->formValue('storyID'), $this->formValue('linkScope'), $type);
+                    $this->view->batchCount = count($sources);
+                }
                 elseif($intent === 'transition')
                 {
                     $model->transition((int)$this->formValue('feedbackID'), (int)$this->formValue('version'), $this->formValue('action'), $this->formValue('reason'));
@@ -66,6 +81,8 @@ class reqintake extends control
         $this->view->currentAccount = $this->app->user->account;
         $this->view->scope = in_array($scope, array('all', 'mine', 'assigned'), true) ? $scope : 'all';
         $this->view->filterProduct = max(0, $filterProduct);
+        $this->view->batchTypes = array_intersect($model->visibleTargetTypes(), array('story', 'requirement', 'epic'));
+        if(!$model->canAccess('detail')) $this->view->batchTypes = array();
         $this->view->feedback = $model->recent($this->view->scope, $this->view->filterProduct);
         $this->view->history = $model->historyForRecent($this->view->feedback);
         $this->display();

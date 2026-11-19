@@ -66,14 +66,36 @@ ob_start();
     <?php if(!$feedback): ?>
         <p><?= $escape($labels->emptyList) ?></p>
     <?php else: ?>
+        <?php if(isset($batchCount)): ?><p role="status"><?= $escape(sprintf($labels->batchSuccess, $batchCount)) ?></p><?php endif; ?>
+        <?php if($batchTypes): ?>
+            <form method="post" id="reqintake-batch-link" class="mb-2">
+                <input type="hidden" name="intent" value="batchLink">
+                <input type="hidden" name="operation" value="<?= $escape($operation) ?>">
+                <input type="hidden" name="token" value="<?= $escape($token) ?>">
+                <label><?= $escape($labels->storyType) ?>
+                    <select name="storyType">
+                        <?php foreach($batchTypes as $type): ?><option value="<?= $escape($type) ?>"><?= $escape($labels->storyTypes[$type]) ?></option><?php endforeach; ?>
+                    </select>
+                </label>
+                <label><?= $escape($labels->storyID) ?> <input name="storyID" type="number" min="1" required></label>
+                <label><?= $escape($labels->batchScope) ?> <input name="linkScope" maxlength="500"></label>
+                <button class="btn" type="submit"><?= $escape($labels->batchLink) ?></button>
+            </form>
+        <?php endif; ?>
         <table class="table">
             <thead><tr>
+                <?php if($batchTypes): ?><th scope="col"><?= $escape($labels->batchSelect) ?></th><?php endif; ?>
                 <?php foreach($labels->listColumns as $column): ?><th scope="col"><?= $escape($column) ?></th><?php endforeach; ?>
                 <th scope="col"><?= $escape($labels->actionsLabel) ?></th>
             </tr></thead>
             <tbody>
                 <?php foreach($feedback as $item): ?>
                     <tr>
+                        <?php if($batchTypes): ?><td>
+                            <?php if($item->status !== 'closed' && ($isAdmin || ($item->assignedTo === $currentAccount && !$item->assignmentPending))): ?>
+                                <input form="reqintake-batch-link" type="checkbox" name="sources[]" value="<?= (int)$item->id ?>:<?= (int)$item->version ?>" aria-label="<?= $escape($labels->batchSelect . ' #' . $item->id) ?>">
+                            <?php endif; ?>
+                        </td><?php endif; ?>
                         <td>#<?= (int)$item->id ?></td>
                         <td>
                             <a href="<?= $escape(\helper::createLink('reqintake', 'detail', "id=" . (int)$item->id)) ?>"><?= $escape($item->title) ?></a>

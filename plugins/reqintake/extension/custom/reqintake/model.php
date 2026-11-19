@@ -116,39 +116,56 @@ class reqintakeModel extends model
 
     public function linkTarget(int $feedbackID, int $version, int $targetID, string $scope, string $type = 'story'): void
     {
-        $feedback = $this->findFeedback($feedbackID);
-        if(!$feedback || !$this->canHandle($feedback) || !in_array($type, $this->visibleTargetTypes(), true)) throw new DomainException('handler');
+        $this->linkTargets(array($feedbackID => $version), $targetID, $scope, $type);
+    }
+
+    public function linkTargets(array $sources, int $targetID, string $scope, string $type): void
+    {
+        if(!$sources || count($sources) > 50) throw new DomainException('batchSelection');
+        if(!in_array($type, $this->visibleTargetTypes(), true)) throw new DomainException('handler');
+
+        $product = null;
+        foreach($sources as $feedbackID => $version)
+        {
+            $feedback = $this->findFeedback($feedbackID);
+            if(!$feedback || !$this->canHandle($feedback)) throw new DomainException('handler');
+            $product ??= (int)$feedback->product;
+            if($product !== (int)$feedback->product) throw new DomainException('batchProduct');
+        }
 
         $scope = trim($scope);
         if(mb_strlen($scope) > 500) throw new InvalidArgumentException('linkScope');
-        if(!$this->targetForProduct($type, $targetID, (int)$feedback->product)) throw new DomainException('linkTarget');
+        if(!$this->targetForProduct($type, $targetID, $product)) throw new DomainException('linkTarget');
 
+        ksort($sources, SORT_NUMERIC);
         $prefix = $this->config->db->prefix;
         $this->dbh->beginTransaction();
         try
         {
-            $lock = $this->dbh->prepare("SELECT id FROM `{$prefix}reqintakeFeedback` WHERE id = ? FOR UPDATE");
-            $lock->execute([$feedbackID]);
-            if(!$lock->fetchColumn()) throw new DomainException('staleFeedback');
-            $lock->closeCursor();
-
-            $query = $this->dbh->prepare("SELECT scope FROM `{$prefix}reqintakeLink` WHERE feedback = ? AND targetType = ? AND target = ?");
-            $query->execute([$feedbackID, $type, $targetID]);
-            $existing = $query->fetchColumn();
-            if($existing !== false)
+            foreach($sources as $feedbackID => $version)
             {
-                if($existing !== $scope) throw new DomainException('linkScope');
-                $this->dbh->commit();
-                return;
+                $lock = $this->dbh->prepare("SELECT id FROM `{$prefix}reqintakeFeedback` WHERE id = ? FOR UPDATE");
+                $lock->execute([$feedbackID]);
+                if(!$lock->fetchColumn()) throw new DomainException('staleFeedback');
+                $lock->closeCursor();
+
+                $query = $this->dbh->prepare("SELECT scope FROM `{$prefix}reqintakeLink` WHERE feedback = ? AND targetType = ? AND target = ?");
+                $query->execute([$feedbackID, $type, $targetID]);
+                $existing = $query->fetchColumn();
+                if($existing !== false)
+                {
+                    if($existing !== $scope) throw new DomainException('linkScope');
+                    continue;
+                }
+
+                $now = helper::now();
+                $query = $this->dbh->prepare("UPDATE `{$prefix}reqintakeFeedback` SET status = 'tracking', version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status IN ('pending','tracking')");
+                $query->execute([$now, $feedbackID, $version]);
+                if($query->rowCount() !== 1) throw new DomainException('staleFeedback');
+
+                $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,?,?,?,?,?)");
+                $query->execute([$feedbackID, $type, $targetID, $scope, $this->app->user->account, $now]);
             }
-
-            $now = helper::now();
-            $query = $this->dbh->prepare("UPDATE `{$prefix}reqintakeFeedback` SET status = 'tracking', version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status IN ('pending','tracking')");
-            $query->execute([$now, $feedbackID, $version]);
-            if($query->rowCount() !== 1) throw new DomainException('staleFeedback');
-
-            $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,?,?,?,?,?)");
-            $query->execute([$feedbackID, $type, $targetID, $scope, $this->app->user->account, $now]);
             $this->dbh->commit();
         }
         catch(Throwable $error)
