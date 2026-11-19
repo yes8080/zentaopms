@@ -20,22 +20,27 @@ ob_start();
         <dd class="whitespace-pre-wrap"><?= $rich ? $attributes['acceptance'] : $escape($attributes['acceptance']) ?></dd>
     </dl>
     <?php if($canRevise): ?>
-        <details id="reqintake-edit">
+        <details id="reqintake-edit" <?= isset($revisionInput) ? 'open' : '' ?>>
             <summary><?= $escape($labels->editFeedback) ?></summary>
             <form method="post">
                 <input type="hidden" name="intent" value="revise">
                 <input type="hidden" name="bodyFormat" value="rich">
                 <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
-                <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+                <input type="hidden" name="version" value="<?= $revisionInputVersion ?? (int)$item->version ?>">
                 <?php foreach(array('title' => 255, 'customer' => 255, 'channel' => 64) as $field => $limit): ?>
                     <label class="block"><?= $escape($labels->fields[$field]) ?>
-                        <input name="<?= $field ?>" value="<?= $escape($item->$field) ?>" maxlength="<?= $limit ?>" <?= $field === 'title' ? 'required' : '' ?>>
+                        <input name="<?= $field ?>" value="<?= $escape($revisionInput[$field] ?? $item->$field) ?>" maxlength="<?= $limit ?>" <?= $field === 'title' ? 'required' : '' ?>>
                     </label>
                 <?php endforeach; ?>
                 <label class="block"><?= $escape($labels->fields['description']) ?>
-                    <?= $renderEditor('description', $item->description, $rich) ?>
+                    <?= $renderEditor('description', $revisionInput['description'] ?? $item->description, $revisionInputRich ?? $rich) ?>
                 </label>
-                <?php $values = $attributes; require __DIR__ . '/attribute-fields.php'; ?>
+                <?php
+                $values = ($revisionInput ?? array()) + $attributes;
+                if(isset($revisionInputRich)) $rich = $revisionInputRich;
+                require __DIR__ . '/attribute-fields.php';
+                $rich = isset($richVersions[$revisionVersion]);
+                ?>
                 <button class="btn" type="submit"><?= $escape($labels->editFeedback) ?></button>
             </form>
         </details>
@@ -257,7 +262,7 @@ ob_start();
 html(ob_get_clean());
 require __DIR__ . '/product-scope-js.php';
 context::js('document.querySelectorAll("form:has(input[name=intent][value=revise])").forEach(form => reqintakeScope(form, ' .
-    json_encode($scopeOptions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) . '));');
+    json_encode($scopeOptions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) . ', form.elements.module.dataset.initial));');
 
 context::css(<<<'CSS'
 .reqintake-detail {padding-bottom: 4rem;}

@@ -214,9 +214,12 @@ class reqintake extends control
                 }
                 elseif($this->formValue('intent') === 'revise')
                 {
-                    $fields = array();
-                    foreach(array('title', 'description', 'customer', 'channel') as $field) $fields[$field] = $this->formValue($field);
-                    $model->revise($feedback, (int)$this->formValue('version'), $fields + $this->attributeInputs(), $this->formValue('bodyFormat') === 'rich');
+                    $revisionInput = array();
+                    foreach(array('title', 'description', 'customer', 'channel') as $field) $revisionInput[$field] = $this->formValue($field);
+                    $revisionInput += $this->attributeInputs();
+                    $revisionRich = $this->formValue('bodyFormat') === 'rich';
+                    $model->revise($feedback, (int)$this->formValue('version'), $revisionInput, $revisionRich);
+                    unset($revisionInput);
                 }
                 elseif(in_array($this->formValue('intent'), array('followup', 'transfer'), true))
                 {
@@ -236,6 +239,21 @@ class reqintake extends control
         }
 
         $this->view->attributes = $model->attributes($id);
+        if(isset($revisionInput) && $error instanceof InvalidArgumentException && $model->canHandle($feedback) && $feedback->status !== 'closed')
+        {
+            if(!empty($revisionRich))
+            {
+                foreach(array('description', 'acceptance') as $field)
+                {
+                    if(!isset($revisionInput[$field])) continue;
+                    try { $revisionInput[$field] = $model->cleanRichText($revisionInput[$field]); }
+                    catch(InvalidArgumentException $invalid) { $revisionInput[$field] = ''; }
+                }
+            }
+            $this->view->revisionInput = $revisionInput;
+            $this->view->revisionInputRich = !empty($revisionRich);
+            $this->view->revisionInputVersion = (int)$this->formValue('version');
+        }
         $scope = $model->productScopeOptions((int)$feedback->product);
         $this->view->scopeOptions = $scope;
         $this->view->scopeLabels = array(

@@ -424,6 +424,9 @@ rich = dict(payload, **fresh) | dict(bodyFormat='rich',
     description='<p>Formatted <strong>description</strong></p>',
     acceptance=f'<ol><li>First criterion</li></ol><p><img src="{image}" alt="Inline image"></p>'
                '<p><img src="/untrusted-image.png" alt="external image"></p>')
+failed_create = submit(dict(rich, estimate='-1'))
+assert '请选择有效来源' in failed_create and image in failed_create
+assert rich['operation'] in failed_create and '<strong>description</strong>' in html.unescape(failed_create)
 source = re.search(r'已登记反馈 #(\d+)', submit(rich))[1]
 assert re.search(r'已登记反馈 #(\d+)', submit(rich))[1] == source
 source_route = detail_route + source
@@ -433,6 +436,12 @@ assert image in page and 'untrusted-image.png' not in page
 token = re.search(r'name="token" value="([^"]+)"', page)[1]
 revision = dict(rich, token=token, intent='revise', version=1,
                 description='<p><em>Edited and formatted</em></p>', customer='Revised client name')
+failed_revision = request(source_route, dict(revision, estimate='-1'))
+assert '请选择有效来源' in failed_revision
+assert re.search(r'<details id="reqintake-edit"\s+open', failed_revision)
+assert '<em>Edited and formatted</em>' in html.unescape(failed_revision)
+assert 'Revised client name' in failed_revision and image in failed_revision
+assert 'Revised client name' not in request(source_route)
 page = request(source_route, revision)
 assert '<em>Edited and formatted</em>' in page and '<strong>description</strong>' in page
 if 'story' in args.conversion:
