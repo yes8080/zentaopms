@@ -143,7 +143,7 @@ class reqintake extends control
             catch(InvalidArgumentException $error) {}
         }
         $this->view->fields = $fields + $inputAttributes + $this->reqintake->attributeDefaults();
-        $this->view->attributeOptions = $this->reqintake->attributeOptions();
+        $this->view->attributeOptions = $this->reqintake->attributeOptions() + array('suggestedGrade' => $this->reqintake->gradeSuggestions());
         $this->view->mailtoOptions = $ownerOptions;
         $this->view->inputRich = isset($this->view->formError) && $this->formValue('bodyFormat') === 'rich';
         if($this->view->inputRich)
@@ -304,7 +304,7 @@ class reqintake extends control
             'branch' => $scope['branches'], 'module' => $scope['modules'][$this->view->attributes['branch']] ?? array(),
             'plan' => $scope['plans'][$this->view->attributes['branch']] ?? array()
         );
-        $this->view->attributeOptions = $model->attributeOptions();
+        $this->view->attributeOptions = $model->attributeOptions() + array('suggestedGrade' => $model->gradeSuggestions());
         $this->view->mailtoOptions = $model->mailtoOptions();
         $this->view->stateHistory = $model->historyForRecent(array($feedback))[$id] ?? array();
         $this->view->handling = $model->handling($feedback);

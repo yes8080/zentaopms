@@ -1,8 +1,9 @@
 <?php foreach($attributeOptions as $field => $options): ?>
     <label class="block mb-2"><?= $escape($labels->fields[$field]) ?>
         <select class="form-control" name="<?= $field ?>">
+            <?php if($field === 'suggestedGrade' && !isset($options[$values[$field]])) $options[$values[$field]] = $values[$field]; ?>
             <?php foreach($options as $key => $label): ?>
-                <?php if($label === '' && $field !== 'source') continue; ?>
+                <?php if($label === '' && !in_array($field, array('source', 'suggestedGrade'), true)) continue; ?>
                 <option value="<?= $escape($key) ?>" <?= (string)$key === $values[$field] ? 'selected' : '' ?>><?= $escape($label) ?></option>
             <?php endforeach; ?>
         </select>

@@ -198,3 +198,10 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeInitialAttachment` (
   `fingerprint` char(64) NOT NULL,
   PRIMARY KEY (`feedback`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeGrade` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `suggestedGrade` varchar(40) NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

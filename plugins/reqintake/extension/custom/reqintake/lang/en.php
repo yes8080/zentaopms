@@ -138,3 +138,6 @@ $lang->reqintake->updatedTo = 'Updated through';
 
 $lang->reqintake->sourceScope = 'Scope for this feedback';
 $lang->reqintake->wholeFeedback = 'Entire feedback';
+
+$lang->reqintake->fields['suggestedGrade'] = 'Suggested demand grade';
+$lang->reqintake->errors['suggestedGrade'] = 'Select a valid suggested demand grade.';

@@ -138,3 +138,6 @@ $lang->reqintake->updatedTo = '更新结束日期';
 
 $lang->reqintake->sourceScope = '本条承接范围';
 $lang->reqintake->wholeFeedback = '整条反馈';
+
+$lang->reqintake->fields['suggestedGrade'] = '建议需求层级';
+$lang->reqintake->errors['suggestedGrade'] = '请选择有效的需求层级建议。';

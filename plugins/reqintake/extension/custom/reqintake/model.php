@@ -189,17 +189,30 @@ class reqintakeModel extends model
         return array_filter($this->loadModel('user')->getPairs('pdfirst|noclosed|nodeleted'), static fn($account) => $account !== '', ARRAY_FILTER_USE_KEY);
     }
 
+    public function gradeSuggestions(): array
+    {
+        $options = array('' => '');
+        $story = $this->loadModel('story');
+        foreach(array('story', 'requirement', 'epic') as $type)
+        {
+            if($this->config->{$type}->gradeRule === 'stepwise') continue;
+            foreach($story->getGradePairs($type) as $id => $label)
+                $options["$type:$id"] = $this->lang->reqintake->storyTypes[$type] . ' · ' . $label;
+        }
+        return $options;
+    }
+
     public function attributeDefaults(): array
     {
         return array('category' => 'feature', 'priority' => '3', 'acceptance' => '',
-            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'customerVersion' => '', 'branchModules' => array());
+            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '', 'branch' => '0', 'module' => '0', 'plan' => '0', 'mailto' => '', 'customerVersion' => '', 'suggestedGrade' => '', 'branchModules' => array());
     }
 
     public function attributes(int $id, ?int $version = null): array
     {
         $defaults = $this->attributeDefaults();
         $prefix = $this->config->db->prefix;
-        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto', 'reqintakeCustomerVersion' => 'customerVersion') as $table => $fields)
+        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate', 'reqintakeProductScope' => 'branch,module', 'reqintakePlan' => 'plan', 'reqintakeMailto' => 'mailto', 'reqintakeCustomerVersion' => 'customerVersion', 'reqintakeGrade' => 'suggestedGrade') as $table => $fields)
         {
             $query = $this->dao->select($fields)->from($prefix . $table)->where('feedback')->eq($id);
             if($version !== null) $query->andWhere('version')->le($version);
@@ -278,6 +291,9 @@ class reqintakeModel extends model
         $fields['customerVersion'] = trim($fields['customerVersion']);
         if(mb_strlen($fields['customerVersion']) > 100) throw new InvalidArgumentException('customerVersion');
 
+        if($fields['suggestedGrade'] !== ($previous['suggestedGrade'] ?? '') && !isset($this->gradeSuggestions()[$fields['suggestedGrade']]))
+            throw new InvalidArgumentException('suggestedGrade');
+
         $validated = array_replace($this->attributeDefaults(), $fields);
         $validated['priority'] = (string)$validated['priority'];
         return $validated;
@@ -308,6 +324,10 @@ class reqintakeModel extends model
         $table = $this->config->db->prefix . 'reqintakeCustomerVersion';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,customerVersion) VALUES (?,?,?)");
         $insert->execute([$id, $version, $fields['customerVersion']]);
+
+        $table = $this->config->db->prefix . 'reqintakeGrade';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,suggestedGrade) VALUES (?,?,?)");
+        $insert->execute([$id, $version, $fields['suggestedGrade']]);
 
         $table = $this->config->db->prefix . 'reqintakeBranchScope';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,branchModules) VALUES (?,?,?)");
