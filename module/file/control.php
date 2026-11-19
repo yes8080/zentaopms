@@ -65,6 +65,9 @@ class file extends control
      */
     public function ajaxUpload(string $uid = '', string $objectType = '', int $objectID = 0, string $extra = '', string $field = 'imgFile', bool $api = false, string $gid = '')
     {
+        if(strtolower($objectType) === 'feedback' && $this->config->edition === 'open')
+            return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
+
         $_FILES = validater::filterFiles();
 
         /* extra 只允许空值或 editor，editor 由文档应用(docApp)编辑器图片上传使用，禁止客户端写入其他值。Only allow empty or editor extra. */
@@ -326,6 +329,11 @@ class file extends control
             if(empty($file) || !$this->file->fileExists($file)) return $this->send(array('result' => 'fail', 'message' => $this->lang->file->fileNotFound));
 
             $canDelete = $this->file->checkPriv($file);
+            if($canDelete && strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
+            {
+                $feedback = $this->loadModel('feedback')->getByID((int)$file->objectID);
+                $canDelete = $feedback && $this->feedback->canOperate($feedback, 'edit');
+            }
             if($file->objectType == 'comment')
             {
                 $action    = $this->loadModel('action')->fetchBaseInfo($file->objectID);
@@ -383,6 +391,17 @@ class file extends control
      */
     public function edit(int $fileID)
     {
+        if($this->config->edition === 'open')
+        {
+            $attachment = $this->file->getById($fileID);
+            if($attachment && strtolower($attachment->objectType) === 'feedback')
+            {
+                $feedback = $this->loadModel('feedback')->getByID((int)$attachment->objectID);
+                if(!$this->file->checkPriv($attachment) || !$feedback || !$this->feedback->canOperate($feedback, 'edit'))
+                    return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
+            }
+        }
+
         if($_POST)
         {
             $result = $this->fileZen->updateFileName($fileID);
@@ -591,6 +610,8 @@ class file extends control
             }
             if($file)
             {
+                if(strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
+                    return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
                 if($this->viewType === 'json')
                 {
                     $this->send(array('result' => 'success', 'file' => array('id' => $file->id, 'title' => $file->title, 'extension' => $file->extension, 'size' => $file->size, 'realPath' => $file->realPath, 'gid' => $file->gid, 'addedBy' => $file->addedBy, 'addedDate' => $file->addedDate, 'objectType' => $file->objectType, 'objectID' => $file->objectID)));
@@ -607,6 +628,8 @@ class file extends control
 
         if(!empty($title)) $title = urldecode(base64_decode($title));
         $file = $this->file->query($objectType, $objectID, $title, $extra);
+        if($file && strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
+            return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
         if(empty($file)) return $this->send(array('result' => 'fail', 'message' => $this->lang->file->fileNotFound, 'load' => helper::createLink('my', 'index'), 'closeModal' => true));
 
         if($this->viewType === 'json')

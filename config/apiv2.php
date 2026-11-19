@@ -328,6 +328,12 @@ if($this->config->edition === 'open')
 
 $routes['/tickets']                       = array('response' => 'tickets(array),pager', 'search' => array('enabled' => true));
 $routes['/feedbacks/:feedbackID/tickets'] = array('post' => array('redirect' => '/ticket/create?productID=0&extras=fromType=feedback,fromID=:feedbackID', 'data' => 'feedback=:feedbackID'));
+if($this->config->edition === 'open')
+{
+    $routes['/feedbacks/:feedbackID/tickets'] = array('post' => array(
+        'redirect' => '/feedbacks/:feedbackID/convert', 'data' => 'target=ticket', 'response' => '*',
+    ));
+}
 $routes['/feedbacks/:feedbackID/tasks']   = array('post' => array('redirect' => '/task/create?executionID=0', 'data' => 'feedback=:feedbackID'));
 $routes['/products/:productID/tickets']   = array('redirect' => '/tickets?param=:productID', 'search' => array('enabled' => true));
 $routes['/tickets/:ticketID']             = array('response' => 'ticket,actions(array)');

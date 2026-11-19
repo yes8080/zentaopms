@@ -53,6 +53,11 @@ class feedback extends control
         $this->view->repeat = $feedback->repeatFeedback ? $this->feedback->getByID((int)$feedback->repeatFeedback) : false;
         $this->view->product = zget($this->feedback->getGrantProducts(), $feedback->product, '');
         $this->view->modulePath = $feedback->module ? $this->loadModel('tree')->getParents($feedback->module) : array();
+        $this->view->attachments = array_map(static fn($file) => (object)array(
+            'id' => $file->id, 'title' => $file->title, 'size' => $file->size,
+        ), $this->loadModel('file')->getByObject('feedback', $feedbackID));
+        $this->view->feedback->files = array_values($this->view->attachments);
+        $this->view->ticket = common::hasPriv('feedback', 'ticket') ? $this->feedback->getTicket($feedback) : false;
         $this->view->actions = $this->loadModel('action')->getList('feedback', $feedbackID);
         $this->view->users = $this->feedback->getFeedbackPairs('');
         $this->view->conversionTypes = $this->feedback->getConversionTypes($feedback);
@@ -77,7 +82,7 @@ class feedback extends control
     {
         $products = $this->feedback->getGrantProducts();
         $input = array();
-        foreach(array('title', 'product', 'module', 'type', 'pri', 'desc', 'public', 'feedbackBy', 'notifyEmail') as $field)
+        foreach(array('title', 'product', 'module', 'type', 'pri', 'desc', 'public', 'feedbackBy', 'notifyEmail', 'notify') as $field)
         {
             $input[$field] = $this->input($field, (string)($feedback->$field ?? ''));
         }
@@ -124,13 +129,217 @@ class feedback extends control
         if(!common::hasPriv('feedback', 'convert')) return $this->failure($this->lang->feedback->invalidAction, 403);
         try
         {
-            $this->feedback->convert($feedback, $this->input('target'));
+            $target = $this->input('target');
+            $this->feedback->convert($feedback, $target);
+            if(($this->app->apiVersion ?? '') === 'v2' && $target === 'ticket')
+            {
+                $current = $this->feedback->getByID($feedbackID);
+                return $this->send(array('result' => 'success', 'id' => (int)$current->result, 'feedbackID' => $feedbackID, 'message' => $this->lang->saveSuccess));
+            }
             return $this->success($feedbackID);
         }
         catch(InvalidArgumentException|RuntimeException $error)
         {
             return $this->failure($error->getMessage());
         }
+    }
+
+    public function upload(int $feedbackID)
+    {
+        $feedback = $this->feedback->getByID($feedbackID);
+        if(!$feedback) return $this->failure($this->lang->feedback->notFound, 404);
+        if(!$this->feedback->canOperate($feedback, 'edit')) return $this->failure($this->lang->feedback->invalidAction, 403);
+        if(($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') return $this->failure($this->lang->feedback->invalidAction, 405);
+
+        $upload = $_FILES['files'] ?? array();
+        if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($upload['tmp_name'] ?? null) || !is_uploaded_file($upload['tmp_name'])
+            || $upload['size'] <= 0 || $upload['size'] > 10 * 1024 * 1024)
+        {
+            return $this->failure($this->lang->feedback->uploadError);
+        }
+
+        try
+        {
+            $this->feedback->attachFile($feedback);
+            return $this->success($feedbackID);
+        }
+        catch(InvalidArgumentException|RuntimeException $error)
+        {
+            return $this->failure($error->getMessage());
+        }
+    }
+
+    public function download(int $fileID)
+    {
+        $model = $this->loadModel('file');
+        $file = $model->getById($fileID);
+        if(!$file || $file->objectType !== 'feedback' || $file->deleted || !$model->checkPriv($file))
+            return $this->failure($this->lang->feedback->notFound, 404);
+        $root = realpath($model->savePath);
+        $path = realpath($file->realPath);
+        if(!$root || !$path || !str_starts_with($path, $root . DIRECTORY_SEPARATOR) || !is_file($path) || filesize($path) > 10 * 1024 * 1024)
+            return $this->failure($this->lang->feedback->notFound, 404);
+
+        $contents = file_get_contents($path);
+        if($contents === false) return $this->failure($this->lang->feedback->notFound, 404);
+        header('X-Content-Type-Options: nosniff');
+        $model->sendDownHeader($file->title, $file->extension, $contents);
+    }
+
+    public function ticket(int $feedbackID)
+    {
+        $feedback = $this->feedback->getByID($feedbackID);
+        $ticket = $feedback ? $this->feedback->getTicket($feedback) : false;
+        if(!$ticket) return $this->failure($this->lang->feedback->notFound, 404);
+        if(!$_POST) return $this->locate($this->createLink('feedback', 'view', "feedbackID=$feedbackID"));
+        if(!$this->app->user->admin && $ticket->assignedTo !== $this->app->user->account)
+            return $this->failure($this->lang->feedback->invalidAction, 403);
+
+        try
+        {
+            $this->feedback->changeTicket($feedback, $ticket, $this->input('status'));
+            return $this->success($feedbackID);
+        }
+        catch(InvalidArgumentException|RuntimeException $error)
+        {
+            return $this->failure($error->getMessage());
+        }
+    }
+
+    public function batch()
+    {
+        $ids = $_POST['feedbackIDs'] ?? array();
+        $operation = $this->input('operation');
+        if(!is_array($ids) || !$ids || count($ids) > 100 || !in_array($operation, array('assignTo', 'review', 'close', 'edit'), true))
+            return $this->failure($this->lang->feedback->invalidAction);
+        if(!common::hasPriv('feedback', $operation)) return $this->failure($this->lang->feedback->invalidAction, 403);
+
+        foreach($ids as $id)
+        {
+            if(!is_scalar($id) || !ctype_digit((string)$id) || (int)$id < 1) return $this->failure($this->lang->feedback->invalidFields);
+        }
+        $ids = array_unique(array_map('intval', $ids));
+        $items = $this->feedback->getByList($ids);
+        if(count($items) !== count($ids)) return $this->failure($this->lang->feedback->notFound, 404);
+
+        $fields = array('assignTo' => 'assignedTo', 'review' => 'reviewResult', 'close' => 'closedReason');
+        $value = $operation === 'edit'
+            ? array_filter(array('pri' => $this->input('pri'), 'type' => $this->input('type')), static fn($item) => $item !== '')
+            : $this->input($fields[$operation]);
+        try
+        {
+            $this->feedback->batchOperate($items, $operation, $value);
+            return $this->locate($this->createLink('feedback', 'browse'));
+        }
+        catch(InvalidArgumentException|RuntimeException $error)
+        {
+            return $this->failure($error->getMessage());
+        }
+    }
+
+    public function export(int $template = 0, int $productID = 0, string $browseType = 'all', string $keyword = '')
+    {
+        $this->app->loadClass('pager', true);
+        $fields = $this->spreadsheetFields();
+        $pager = new pager(0, 5000, 1);
+        $rows = $template ? array() : $this->feedback->getList($browseType, $productID, (string)helper::safe64Decode($keyword), 'id_asc', $pager);
+        if(!$template && $pager->recTotal > 5000) return $this->failure($this->lang->feedback->exportLimit);
+        $excel = $this->app->loadClass('phpexcel');
+        $sheet = $excel->getActiveSheet();
+        $columns = $template ? $fields : array_merge(array('id', 'status'), $fields);
+        $sheet->fromArray($columns);
+        foreach(array_values($rows) as $index => $row)
+        {
+            foreach($columns as $column => $name)
+            {
+                $sheet->setCellValueExplicitByColumnAndRow($column + 1, $index + 2, (string)$row->$name, 's');
+            }
+        }
+
+        $filename = $template ? 'feedback-template.xlsx' : 'feedback.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=$filename");
+        $excel->createWriter()->save('php://output');
+    }
+
+    public function import()
+    {
+        if(!common::hasPriv('feedback', 'create')) return $this->failure($this->lang->feedback->invalidAction, 403);
+        if($_POST)
+        {
+            try
+            {
+                $this->feedback->importRows($this->readSpreadsheet($_FILES['workbook'] ?? array()));
+                return $this->locate($this->createLink('feedback', 'browse', 'browseType=all'));
+            }
+            catch(InvalidArgumentException|RuntimeException $error)
+            {
+                $this->view->error = $error->getMessage();
+            }
+        }
+
+        $this->view->title = $this->lang->feedback->import;
+        $this->view->products = $this->feedback->getGrantProducts();
+        $this->display('feedback', 'import');
+    }
+
+    private function spreadsheetFields(): array
+    {
+        return array('product', 'title', 'desc', 'module', 'type', 'pri', 'public', 'feedbackBy', 'notifyEmail', 'notify');
+    }
+
+    private function readSpreadsheet(array $upload): array
+    {
+        $error = $this->lang->feedback->workbookError;
+        $path = $upload['tmp_name'] ?? '';
+        if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($path) || !is_uploaded_file($path)
+            || $upload['size'] > 2 * 1024 * 1024) throw new InvalidArgumentException($error);
+
+        $archive = new ZipArchive();
+        if($archive->open($path) !== true) throw new InvalidArgumentException($error);
+        try
+        {
+            $expandedSize = 0;
+            for($index = 0; $index < $archive->numFiles; $index++)
+            {
+                $entry = $archive->statIndex($index);
+                if(!$entry || ($expandedSize += $entry['size']) > 16 * 1024 * 1024) throw new InvalidArgumentException($error);
+            }
+        }
+        finally
+        {
+            $archive->close();
+        }
+
+        $excel = $this->app->loadClass('phpexcel');
+        try
+        {
+            $reader = $excel->createReader();
+            $sheets = $reader->listWorksheetInfo($path);
+            if(count($sheets) !== 1 || $sheets[0]['totalRows'] > 201 || $sheets[0]['totalColumns'] > 12)
+                throw new InvalidArgumentException($error);
+            $sheet = $reader->setReadDataOnly(true)->load($path)->getActiveSheet();
+        }
+        catch(Exception $exception)
+        {
+            throw new InvalidArgumentException($error, 0, $exception);
+        }
+
+        $rows = $sheet->toArray('', false);
+        $fields = array_shift($rows);
+        if($fields !== $this->spreadsheetFields() && $fields !== array_merge(array('id', 'status'), $this->spreadsheetFields()))
+            throw new InvalidArgumentException($error);
+
+        $result = array();
+        foreach($rows as $index => $row)
+        {
+            $row = array_combine($fields, $row);
+            unset($row['id'], $row['status']);
+            $row = array_map(static fn($value) => is_scalar($value) ? (string)$value : '', $row);
+            if(count(array_filter($row, static fn($value) => $value !== ''))) $result[$index + 2] = $row;
+        }
+        if(!$result) throw new InvalidArgumentException($error);
+        return $result;
     }
 
     public function assignTo(int $feedbackID) { return $this->change($feedbackID, 'assignTo', 'assignedTo'); }

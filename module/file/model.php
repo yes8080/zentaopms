@@ -731,6 +731,11 @@ class fileModel extends model
     public function checkPriv(object $file): bool
     {
         if(!$file->objectType || !$file->objectID) return true;
+        if(strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
+        {
+            return $this->loadModel('user')->isLogon() && common::hasPriv('feedback', 'view')
+                && $this->loadModel('feedback')->getByID((int)$file->objectID) !== false;
+        }
         if(!$this->loadModel('user')->isLogon()) return true;
         if($file->extra == 'editor') return true;
 

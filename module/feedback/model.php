@@ -88,7 +88,7 @@ class feedbackModel extends model
         }
 
         $email = trim($input['notifyEmail'] ?? '');
-        if($email !== '' && (strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)))
+        if((!empty($input['notify']) || $email !== '') && (strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)))
         {
             throw new InvalidArgumentException($lang->invalidFields);
         }
@@ -96,7 +96,7 @@ class feedbackModel extends model
         $data = array(
             'title' => $title, 'product' => $product, 'module' => $module, 'type' => $type, 'pri' => $priority,
             'desc' => fixer::stripDataTags($input['desc'] ?? ''), 'public' => (int)!empty($input['public']),
-            'notifyEmail' => $email, 'feedbackBy' => mb_substr(trim($input['feedbackBy'] ?? ''), 0, 100),
+            'notifyEmail' => $email, 'notify' => (int)!empty($input['notify']), 'feedbackBy' => mb_substr(trim($input['feedbackBy'] ?? ''), 0, 100),
         );
 
         if($old)
@@ -107,19 +107,20 @@ class feedbackModel extends model
         }
 
         $data += array('status' => 'noreview', 'openedBy' => $this->app->user->account, 'openedDate' => helper::now());
-        $this->dbh->beginTransaction();
+        $ownsTransaction = !$this->dbh->inTransaction();
+        if($ownsTransaction) $this->dbh->beginTransaction();
         try
         {
             $this->dao->insert(TABLE_FEEDBACK)->data($data)->exec();
             if(dao::isError()) throw new RuntimeException($lang->saveFailed);
             $id = (int)$this->dao->lastInsertID();
             $this->logAction($id, 'opened');
-            $this->dbh->commit();
+            if($ownsTransaction) $this->dbh->commit();
             return $id;
         }
         catch(Throwable $error)
         {
-            $this->dbh->rollBack();
+            if($ownsTransaction) $this->dbh->rollBack();
             throw $error;
         }
     }
@@ -205,6 +206,8 @@ class feedbackModel extends model
                 break;
         }
         $this->record($feedback, $data, $action, $comment, $extra);
+        if(!$this->dbh->inTransaction() && in_array($operation, array('assignTo', 'review', 'reply', 'close', 'activate'), true))
+            $this->notifyFeedback($feedback, $data['status'] ?? $feedback->status);
     }
 
     public function getEligibleAssignees(int $product): array
@@ -220,7 +223,7 @@ class feedbackModel extends model
     public function getConversionTypes(object $feedback): array
     {
         if(!$this->canOperate($feedback, 'convert')) return array();
-        return array_filter($this->lang->feedback->conversionTypes, fn($module) => common::hasPriv($module, 'create'), ARRAY_FILTER_USE_KEY);
+        return array_filter($this->lang->feedback->conversionTypes, fn($module) => $module === 'ticket' ? common::hasPriv('feedback', 'ticket') : common::hasPriv($module, 'create'), ARRAY_FILTER_USE_KEY);
     }
 
     public function convert(object $feedback, string $type): void
@@ -244,6 +247,7 @@ class feedbackModel extends model
                     'openedBy' => $user, 'openedDate' => $now, 'status' => 'draft', 'stage' => 'wait', 'version' => 1,
                     'pri' => $feedback->pri, 'estimate' => 0,
                 ), 0, 0, "fromType=feedback,fromID={$feedback->id}"),
+                'ticket' => $this->createTicket($feedback, $title, $desc, $user, $now),
                 'todo' => $this->loadModel('todo')->create((object)array(
                     'name' => $title, 'desc' => $desc, 'type' => 'custom', 'account' => $user, 'assignedTo' => $user,
                     'date' => date('Y-m-d'), 'begin' => 0, 'end' => 0, 'status' => 'wait', 'pri' => $feedback->pri,
@@ -254,11 +258,148 @@ class feedbackModel extends model
             if($type === 'todo') $this->loadModel('action')->create('todo', $id, 'opened');
             return array('solution' => $type, 'result' => $id, 'status' => 'replied', 'processedBy' => $user, 'processedDate' => $now);
         }, 'converted', '', $type);
+        $this->notifyFeedback($feedback, 'replied');
+    }
+
+    public function attachFile(object $feedback): void
+    {
+        $model = $this->loadModel('file');
+        $upload = $model->getUpload();
+        if(count($upload) !== 1 || !isset($upload[0]['extension'])) throw new InvalidArgumentException($this->lang->feedback->uploadError);
+        $file = $upload[0];
+        $file['pathname'] = date('Ym/') . bin2hex(random_bytes(16)) . '.' . $file['extension'];
+        $path = $model->savePath . $model->getSaveName($file['pathname']);
+        try
+        {
+            $this->record($feedback, function() use ($model, $file, $feedback)
+            {
+                $saved = $model->saveAFile($file, 'feedback', (int)$feedback->id);
+                if(!$saved || !$saved->id || dao::isError()) throw new RuntimeException($this->lang->feedback->uploadError);
+                return array();
+            }, 'addedfile', '', $file['title']);
+        }
+        catch(Throwable $error)
+        {
+            if(is_file($path)) unlink($path);
+            throw $error;
+        }
+    }
+
+    private function createTicket(object $feedback, string $title, string $description, string $account, string $date): int
+    {
+        $this->dao->insert(TABLE_TICKET)->data(array(
+            'product' => $feedback->product, 'module' => $feedback->module, 'title' => $title,
+            'desc' => $description, 'feedback' => $feedback->id, 'type' => 'issue', 'pri' => $feedback->pri,
+            'status' => 'wait', 'openedBy' => $account, 'openedDate' => $date,
+            'assignedTo' => $feedback->assignedTo, 'assignedDate' => $feedback->assignedTo ? $date : null,
+        ))->exec();
+        if(dao::isError()) throw new RuntimeException($this->lang->feedback->saveFailed);
+        return (int)$this->dao->lastInsertID();
+    }
+
+    public function getTicket(object $feedback): object|false
+    {
+        if($feedback->solution !== 'ticket' || !$feedback->result) return false;
+        return $this->dao->select('*')->from(TABLE_TICKET)->where('id')->eq($feedback->result)
+            ->andWhere('feedback')->eq($feedback->id)->andWhere('deleted')->eq(0)->fetch() ?: false;
+    }
+
+    public function changeTicket(object $feedback, object $ticket, string $status): void
+    {
+        $next = array('wait' => 'doing', 'doing' => 'done', 'done' => 'closed');
+        if(($next[$ticket->status] ?? '') !== $status) throw new InvalidArgumentException($this->lang->feedback->invalidAction);
+        $account = $this->app->user->account;
+        $date = helper::now();
+        $fields = array('doing' => 'started', 'done' => 'finished', 'closed' => 'closed');
+        $field = $fields[$status];
+        $updated = $this->dao->update(TABLE_TICKET)->data(array(
+            'status' => $status, $field . 'By' => $account, $field . 'Date' => $date, 'editedBy' => $account, 'editedDate' => $date,
+        ))->where('id')->eq($ticket->id)->andWhere('status')->eq($ticket->status)->andWhere('deleted')->eq(0)->exec();
+        if(!$updated || dao::isError()) throw new RuntimeException($this->lang->feedback->saveFailed);
+    }
+
+    public function notifyFeedback(object $feedback, string $status): void
+    {
+        if(!$feedback->notify || !filter_var($feedback->notifyEmail, FILTER_VALIDATE_EMAIL)) return;
+
+        try
+        {
+            $mail = $this->loadModel('mail');
+            if(empty($this->config->mail->turnon)) return;
+            $text = sprintf($this->lang->feedback->noticeBody, $feedback->id, zget($this->lang->feedback->statusList, $status, $status));
+            $recipient = (object)array('email' => $feedback->notifyEmail, 'realname' => '');
+            $mail->send('feedback-contact', $this->lang->feedback->noticeSubject, htmlspecialchars($text, ENT_QUOTES, 'UTF-8'), '', true, array('feedback-contact' => $recipient), true, false);
+        }
+        catch(Throwable $error)
+        {
+            $this->app->saveError(E_USER_WARNING, 'Feedback mail delivery failed for #' . (int)$feedback->id, __FILE__, __LINE__);
+        }
+    }
+
+    public function batchOperate(array $feedbacks, string $operation, string|array $value): void
+    {
+        if(!$feedbacks || !in_array($operation, array('review', 'assignTo', 'close', 'edit'), true))
+            throw new InvalidArgumentException($this->lang->feedback->invalidAction);
+        ksort($feedbacks);
+        $this->dbh->beginTransaction();
+        try
+        {
+            foreach($feedbacks as $feedback)
+            {
+                if($operation === 'edit')
+                {
+                    if(!$value || !$this->canOperate($feedback, 'edit')) throw new InvalidArgumentException($this->lang->feedback->invalidAction);
+                    $this->saveFeedback($value + (array)$feedback, $feedback);
+                }
+                else
+                {
+                    $this->operate($feedback, $operation, $value, '');
+                }
+            }
+            $this->dbh->commit();
+        }
+        catch(Throwable $error)
+        {
+            $this->dbh->rollBack();
+            throw $error;
+        }
+        if($operation === 'edit') return;
+        foreach($feedbacks as $feedback)
+        {
+            $current = $this->getByID((int)$feedback->id);
+            if($current) $this->notifyFeedback($current, $current->status);
+        }
+    }
+
+    public function importRows(array $rows): void
+    {
+        $this->dbh->beginTransaction();
+        try
+        {
+            foreach($rows as $line => $row)
+            {
+                try
+                {
+                    $this->saveFeedback($row);
+                }
+                catch(InvalidArgumentException|RuntimeException $error)
+                {
+                    throw new InvalidArgumentException(sprintf($this->lang->feedback->importRowError, $line) . ' ' . $error->getMessage(), 0, $error);
+                }
+            }
+            $this->dbh->commit();
+        }
+        catch(Throwable $error)
+        {
+            $this->dbh->rollBack();
+            throw $error;
+        }
     }
 
     private function record(object $feedback, array|Closure $data, string $action, string $comment = '', string $extra = ''): void
     {
-        $this->dbh->beginTransaction();
+        $ownsTransaction = !$this->dbh->inTransaction();
+        if($ownsTransaction) $this->dbh->beginTransaction();
         try
         {
             $locked = $this->dbh->query('SELECT id FROM ' . TABLE_FEEDBACK . ' WHERE id = ' . (int)$feedback->id . ' FOR UPDATE')->fetch();
@@ -270,11 +411,11 @@ class feedbackModel extends model
             $this->dao->update(TABLE_FEEDBACK)->data($data)->where('id')->eq($feedback->id)->exec();
             if(dao::isError()) throw new RuntimeException($this->lang->feedback->saveFailed);
             $this->logAction((int)$feedback->id, $action, $comment, $extra);
-            $this->dbh->commit();
+            if($ownsTransaction) $this->dbh->commit();
         }
         catch(Throwable $error)
         {
-            $this->dbh->rollBack();
+            if($ownsTransaction) $this->dbh->rollBack();
             throw $error;
         }
     }

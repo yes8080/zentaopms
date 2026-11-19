@@ -2413,7 +2413,7 @@ if($config->edition === 'open')
 {
     $lang->moduleOrder[252] = 'feedback';
     $lang->resource->feedback = new stdclass();
-    foreach(array('browse', 'admin', 'view', 'adminView', 'create', 'edit', 'assignTo', 'review', 'reply', 'ask', 'comment', 'close', 'activate', 'delete', 'convert') as $method)
+    foreach(array('browse', 'admin', 'view', 'adminView', 'create', 'edit', 'assignTo', 'review', 'reply', 'ask', 'comment', 'close', 'activate', 'delete', 'convert', 'ticket', 'upload', 'download', 'batch', 'export', 'import') as $method)
     {
         $lang->resource->feedback->$method = $method;
     }

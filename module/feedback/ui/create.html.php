@@ -54,6 +54,7 @@ ob_start();
         <label><?= $escape($feedbackLang->notifyEmail) ?><input class="form-control" type="email" name="notifyEmail" maxlength="100" value="<?= $escape($feedback->notifyEmail ?? '') ?>"></label>
       </div>
       <label><input type="hidden" name="public" value="0"><input type="checkbox" name="public" value="1" <?= !empty($feedback->public) ? 'checked' : '' ?>> <?= $escape($feedbackLang->public) ?></label>
+      <label><input type="hidden" name="notify" value="0"><input type="checkbox" name="notify" value="1" <?= !empty($feedback->notify) ? 'checked' : '' ?>> <?= $escape($feedbackLang->notify) ?></label>
       <div class="flex gap-2">
         <button class="btn primary" type="submit"><?= $escape($lang->save) ?></button>
         <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse')) ?>"><?= $escape($feedbackLang->back) ?></a>

@@ -46,7 +46,7 @@ ob_start();
     <?php if($feedback->result && isset($feedbackLang->conversionTypes[$feedback->solution])): ?>
       <p class="mt-4">
         <?= $escape($feedbackLang->result) ?>
-        <?php if(\common::hasPriv($feedback->solution, 'view')): ?>
+        <?php if($feedback->solution !== 'ticket' && \common::hasPriv($feedback->solution, 'view')): ?>
           <a href="<?= $escape(helper::createLink($feedback->solution, 'view', array((int)$feedback->result))) ?>"><?= $escape($feedbackLang->conversionTypes[$feedback->solution]) ?> #<?= (int)$feedback->result ?></a>
         <?php else: ?>
           <?= $escape($feedbackLang->conversionTypes[$feedback->solution]) ?> #<?= (int)$feedback->result ?>
@@ -57,6 +57,39 @@ ob_start();
       <h3><?= $escape($feedbackLang->desc) ?></h3>
       <p class="whitespace-pre-wrap"><?= $escape($feedback->desc) ?></p>
     </section>
+    <?php if($ticket): ?>
+      <section class="border rounded p-4 mt-6">
+        <h3>#<?= (int)$ticket->id ?> <?= $escape($ticket->title) ?></h3>
+        <p><?= $escape(zget($feedbackLang->ticketStatuses, $ticket->status, $ticket->status)) ?></p>
+        <?php
+          $next = array('wait' => 'doing', 'doing' => 'done', 'done' => 'closed')[$ticket->status] ?? '';
+          $mayUpdateTicket = $app->user->admin || $ticket->assignedTo === $app->user->account;
+        ?>
+        <?php if($next && $mayUpdateTicket): ?>
+          <form method="post" action="<?= $escape($link('ticket')) ?>">
+            <button class="btn" type="submit" name="status" value="<?= $escape($next) ?>"><?= $escape($feedbackLang->ticketStatuses[$next]) ?></button>
+          </form>
+        <?php endif; ?>
+      </section>
+    <?php endif; ?>
+    <?php if($attachments || (\common::hasPriv('feedback', 'upload') && $app->control->feedback->canOperate($feedback, 'edit'))): ?>
+      <section class="border rounded p-4 mt-6">
+        <h3><?= $escape($feedbackLang->attachments) ?></h3>
+        <?php if(\common::hasPriv('feedback', 'download')): ?>
+          <ul class="my-2">
+            <?php foreach($attachments as $attachment): ?>
+              <li><a href="<?= $escape(helper::createLink('feedback', 'download', array('fileID' => $attachment->id))) ?>"><?= $escape($attachment->title) ?></a></li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+        <?php if(\common::hasPriv('feedback', 'upload') && $app->control->feedback->canOperate($feedback, 'edit')): ?>
+          <form method="post" enctype="multipart/form-data" action="<?= $escape($link('upload')) ?>" class="flex gap-2 items-center">
+            <input type="file" name="files" required aria-label="<?= $escape($feedbackLang->attachments) ?>">
+            <button class="btn" type="submit"><?= $escape($feedbackLang->upload) ?></button>
+          </form>
+        <?php endif; ?>
+      </section>
+    <?php endif; ?>
     <section class="mt-6">
       <?php foreach($operations as $operation => [$field, $options]): if(!$canOperate($operation) || ($operation === 'convert' && !$conversionTypes)) continue; ?>
         <details class="border rounded p-3 mb-2">
