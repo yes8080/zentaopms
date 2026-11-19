@@ -39,5 +39,9 @@ query('formGridPanel')->each(function($node) use($title, $attributes, $acceptanc
     $fields->field('category')->value($attributes['category']);
     $fields->field('pri')->value($attributes['priority']);
     $fields->field('verify')->value($acceptance);
+    foreach(array('source', 'keywords', 'estimate') as $field)
+    {
+        if($attributes[$field] !== '') $fields->field($field)->value($attributes[$field]);
+    }
     $node->setProp('fields', $fields);
 });

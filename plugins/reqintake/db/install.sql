@@ -111,3 +111,13 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeAttachment` (
   PRIMARY KEY (`id`),
   KEY `feedback` (`feedback`, `removed`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeDemandFields` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `source` varchar(30) NOT NULL,
+  `sourceNote` varchar(255) NOT NULL,
+  `keywords` varchar(255) NOT NULL,
+  `estimate` varchar(11) NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

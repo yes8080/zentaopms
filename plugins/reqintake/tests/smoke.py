@@ -53,7 +53,8 @@ page = request(route)
 keys = {k:re.search(f'name="{k}" value="([^"]+)"',page)[1] for k in ('operation','token')}
 product = re.search(r'<option value="(\d+)"[^>]*>Smoke Product',page)[1]
 payload = dict(keys,product=product,title='Reqintake integration request',description='Integration description',customer='Test customer',channel='test',
-               category='performance', priority='2', acceptance='Acceptance criteria integration check')
+               category='performance', priority='2', acceptance='Acceptance criteria integration check',
+               source='market', sourceNote='Private interview notes', keywords='integration tag', estimate='2.75')
 def submit(data):
     with opener.open(Request(base+route,urlencode(data, doseq=True).encode(), {'Referer':base+route}),timeout=10) as response:
         return response.read().decode()
@@ -75,7 +76,9 @@ assert 'Closure evidence' in transition(2,'close','Closure evidence')
 assert 'Reopen evidence' in transition(3,'reopen','Reopen evidence')
 page=request('index.php?m=reqintake&f=detail&id='+id)
 assert all(text in page for text in ('Integration description', 'Test customer', 'Smoke Product',
-                                     '跟进中', '性能', payload['acceptance']))
+                                     '跟进中', '性能', payload['acceptance'], '市场',
+                                     payload['sourceNote'], payload['keywords'], payload['estimate']))
+assert '请选择有效来源' in submit(dict(payload, estimate='-1'))
 assert '请选择有效的类别和优先级' in submit(dict(payload, category='invalid_category'))
 for scope in ('mine','assigned'):
     assert 'Reqintake integration request' in request(route+'&scope='+scope)
@@ -192,7 +195,10 @@ for kind in args.conversion:
     links = (html.unescape(link).lstrip('/')
              for link in re.findall(r'href="([^"]+riOperation[^"]+)"', request(source_route)))
     native_form = next(link for link in links if f'm={kind}&' in link)
-    assert payload['title'] in request(native_form)
+    form = request(native_form)
+    assert payload['title'] in form and payload['sourceNote'] not in form
+    if kind == 'story':
+        assert payload['estimate'] in form and payload['keywords'] in form
     native_title = 'Converted feedback ' + uuid4().hex
     native_fields = dict(product=product, title=native_title, spec='Public description',
                          category='feature', pri=3, needNotReview=1, status='active', module=0,

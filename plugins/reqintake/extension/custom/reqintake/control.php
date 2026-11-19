@@ -97,7 +97,7 @@ class reqintake extends control
         $this->view->title = $this->lang->reqintake->common;
         $this->view->operation = $operation;
         $this->view->token = hash_hmac('sha256', $operation, $key);
-        $this->view->fields = $fields + (isset($this->view->formError) ? $this->attributeInputs() : array()) + array('category' => 'feature', 'priority' => '3', 'acceptance' => '');
+        $this->view->fields = $fields + (isset($this->view->formError) ? $this->attributeInputs() : array()) + $this->reqintake->attributeDefaults();
         $this->view->attributeOptions = $this->reqintake->attributeOptions();
         $this->view->inputRich = isset($this->view->formError) && $this->formValue('bodyFormat') === 'rich';
         if($this->view->inputRich)
@@ -254,7 +254,7 @@ class reqintake extends control
     private function attributeInputs(): array
     {
         $attributes = array();
-        foreach(array('category', 'priority', 'acceptance') as $field)
+        foreach(array_keys($this->reqintake->attributeDefaults()) as $field)
         {
             if(isset($_POST[$field])) $attributes[$field] = $this->formValue($field);
         }

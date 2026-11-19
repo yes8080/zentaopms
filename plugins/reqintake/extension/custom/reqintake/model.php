@@ -147,18 +147,27 @@ class reqintakeModel extends model
     public function attributeOptions(): array
     {
         $this->app->loadLang('story');
-        return array('category' => $this->lang->story->categoryList, 'priority' => $this->lang->story->priList);
+        return array('category' => $this->lang->story->categoryList, 'priority' => $this->lang->story->priList, 'source' => $this->lang->story->sourceList);
+    }
+
+    public function attributeDefaults(): array
+    {
+        return array('category' => 'feature', 'priority' => '3', 'acceptance' => '',
+            'source' => '', 'sourceNote' => '', 'keywords' => '', 'estimate' => '');
     }
 
     public function attributes(int $id, ?int $version = null): array
     {
-        $defaults = array('category' => 'feature', 'priority' => '3', 'acceptance' => '');
-        $query = $this->dao->select('category,priority,acceptance')->from($this->config->db->prefix . 'reqintakeAttributes')
-            ->where('feedback')->eq($id);
-        if($version !== null) $query->andWhere('version')->le($version);
-        $attributes = $query->orderBy('version_desc')->limit(1)->fetch();
-        if(!$attributes) return $defaults;
-        return array('category' => $attributes->category, 'priority' => (string)$attributes->priority, 'acceptance' => $attributes->acceptance);
+        $defaults = $this->attributeDefaults();
+        $prefix = $this->config->db->prefix;
+        foreach(array('reqintakeAttributes' => 'category,priority,acceptance', 'reqintakeDemandFields' => 'source,sourceNote,keywords,estimate') as $table => $fields)
+        {
+            $query = $this->dao->select($fields)->from($prefix . $table)->where('feedback')->eq($id);
+            if($version !== null) $query->andWhere('version')->le($version);
+            $row = $query->orderBy('version_desc')->limit(1)->fetch();
+            if($row) $defaults = array_replace($defaults, array_map('strval', (array)$row));
+        }
+        return $defaults;
     }
 
     private function validatedAttributes(array $fields): array
@@ -167,7 +176,14 @@ class reqintakeModel extends model
         if(!array_key_exists($fields['category'], $options['category'])
             || $fields['priority'] === '0' || !array_key_exists($fields['priority'], $options['priority'])
             || strlen($fields['acceptance']) > 16777215) throw new InvalidArgumentException('attributes');
-        return array('category' => $fields['category'], 'priority' => (string)$fields['priority'], 'acceptance' => $fields['acceptance']);
+        if(!array_key_exists($fields['source'], $options['source'])
+            || mb_strlen($fields['sourceNote']) > 255 || mb_strlen($fields['keywords']) > 255
+            || ($fields['estimate'] !== '' && !preg_match('/\A[0-9]{1,8}(?:\.[0-9]{1,2})?\z/', $fields['estimate'])))
+            throw new InvalidArgumentException('demandFields');
+
+        $validated = array_replace($this->attributeDefaults(), $fields);
+        $validated['priority'] = (string)$validated['priority'];
+        return $validated;
     }
 
     private function saveAttributes(int $id, int $version, array $fields): void
@@ -175,6 +191,10 @@ class reqintakeModel extends model
         $table = $this->config->db->prefix . 'reqintakeAttributes';
         $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,category,priority,acceptance) VALUES (?,?,?,?,?)");
         $insert->execute([$id, $version, $fields['category'], $fields['priority'], $fields['acceptance']]);
+
+        $table = $this->config->db->prefix . 'reqintakeDemandFields';
+        $insert = $this->dbh->prepare("INSERT INTO `$table` (feedback,version,source,sourceNote,keywords,estimate) VALUES (?,?,?,?,?,?)");
+        $insert->execute([$id, $version, $fields['source'], $fields['sourceNote'], $fields['keywords'], $fields['estimate']]);
     }
 
     public function revisions(object $feedback): array
@@ -200,7 +220,7 @@ class reqintakeModel extends model
         if((trim($rich ? html_entity_decode(strip_tags($fields['description'])) : $fields['description']) === '' && (!$rich || !str_contains($fields['description'], '<img '))) || strlen($fields['description']) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($fields['customer']) > 255 || mb_strlen($fields['channel']) > 64) throw new InvalidArgumentException('source');
 
-        $attributes = $this->validatedAttributes(array_intersect_key($fields, array_flip(array('category', 'priority', 'acceptance'))) + $this->attributes((int)$feedback->id));
+        $attributes = $this->validatedAttributes(array_intersect_key($fields, $this->attributeDefaults()) + $this->attributes((int)$feedback->id));
 
         $prefix = $this->config->db->prefix;
         $now = helper::now();
@@ -735,7 +755,7 @@ class reqintakeModel extends model
         if((trim($rich ? html_entity_decode(strip_tags($description)) : $description) === '' && (!$rich || !str_contains($description, '<img '))) || strlen($description) > 16777215) throw new InvalidArgumentException('description');
         if(mb_strlen($customer) > 255 || mb_strlen($channel) > 64) throw new InvalidArgumentException('source');
 
-        $attributes = $this->validatedAttributes($attributes + array('category' => 'feature', 'priority' => '3', 'acceptance' => ''));
+        $attributes = $this->validatedAttributes($attributes + $this->attributeDefaults());
         [$assignee, $pending] = $this->resolveAssignee($product);
         $table = $this->config->db->prefix . 'reqintakeFeedback';
         $now = helper::now();
