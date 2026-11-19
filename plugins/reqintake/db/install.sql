@@ -34,3 +34,14 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeHistory` (
   `createdDate` datetime NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeLink` (
+  `feedback` int unsigned NOT NULL,
+  `targetType` varchar(20) NOT NULL,
+  `target` int unsigned NOT NULL,
+  `scope` varchar(500) NOT NULL DEFAULT '',
+  `createdBy` varchar(30) NOT NULL,
+  `createdDate` datetime NOT NULL,
+  PRIMARY KEY (`feedback`, `targetType`, `target`),
+  KEY `targetLookup` (`targetType`, `target`)
+) ENGINE=InnoDB;

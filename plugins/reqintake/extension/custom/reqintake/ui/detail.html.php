@@ -22,6 +22,24 @@ ob_start();
             <dd style="white-space: pre-wrap"><?= $escape($item->$field) ?></dd>
         <?php endforeach; ?>
     </dl>
+    <h3><?= $escape($labels->linkedStories) ?></h3>
+    <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
+    <ul>
+        <?php foreach($linkedStories as $story): ?>
+            <li><a href="<?= $escape(\helper::createLink('story', 'view', 'storyID=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
+                <span><?= $escape($story->scope) ?></span>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+    <?php if($canLink): ?>
+        <form method="post">
+            <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+            <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+            <label><?= $escape($labels->storyID) ?> <input name="storyID" type="number" min="1" required></label>
+            <label><?= $escape($labels->linkScope) ?> <input name="linkScope" maxlength="500"></label>
+            <button type="submit" class="btn"><?= $escape($labels->linkStory) ?></button>
+        </form>
+    <?php endif; ?>
 </section>
 <?php
 html(ob_get_clean());

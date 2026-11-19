@@ -31,11 +31,74 @@ class reqintakeModel extends model
     {
         if(!$this->canAccess('detail') || $id < 1) return false;
 
-        $feedback = $this->dao->select('f.id,f.product,f.title,f.description,f.customer,f.channel,f.openedBy,f.assignedTo,f.status,f.assignmentPending,p.name AS productName')
+        $feedback = $this->dao->select('f.id,f.product,f.title,f.description,f.customer,f.channel,f.openedBy,f.assignedTo,f.status,f.assignmentPending,f.version,p.name AS productName')
             ->from($this->config->db->prefix . 'reqintakeFeedback')->alias('f')
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
             ->where('f.id')->eq($id)->andWhere('p.deleted')->eq('0')->fetch();
         return $feedback && $this->canReadProduct((int)$feedback->product) ? $feedback : false;
+    }
+
+    public function canHandle(object $feedback): bool
+    {
+        return $this->canAccess('index') && $this->canReadProduct((int)$feedback->product)
+            && (!empty($this->app->user->admin) || (!$feedback->assignmentPending && $feedback->assignedTo === $this->app->user->account));
+    }
+
+    public function linkedStories(object $feedback): array
+    {
+        if(!$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product) || !common::hasPriv('story', 'view')) return array();
+
+        return $this->dao->select('s.id,s.title,s.status,s.stage,l.scope')->from($this->config->db->prefix . 'reqintakeLink')->alias('l')
+            ->innerJoin(TABLE_STORY)->alias('s')->on('s.id = l.target')
+            ->where('l.feedback')->eq((int)$feedback->id)->andWhere('l.targetType')->eq('story')
+            ->andWhere('s.product')->eq((int)$feedback->product)->andWhere('s.type')->eq('story')
+            ->andWhere('s.deleted')->eq('0')->orderBy('s.id_desc')->fetchAll();
+    }
+
+    public function linkStory(int $feedbackID, int $version, int $storyID, string $scope): void
+    {
+        $feedback = $this->findFeedback($feedbackID);
+        if(!$feedback || !$this->canHandle($feedback) || !common::hasPriv('story', 'view')) throw new DomainException('handler');
+
+        $scope = trim($scope);
+        if(mb_strlen($scope) > 500) throw new InvalidArgumentException('linkScope');
+        $story = $this->dao->select('id')->from(TABLE_STORY)->where('id')->eq($storyID)->andWhere('type')->eq('story')
+            ->andWhere('product')->eq((int)$feedback->product)->andWhere('deleted')->eq('0')->fetch();
+        if(!$story) throw new DomainException('linkTarget');
+
+        $prefix = $this->config->db->prefix;
+        $this->dbh->beginTransaction();
+        try
+        {
+            $lock = $this->dbh->prepare("SELECT id FROM `{$prefix}reqintakeFeedback` WHERE id = ? FOR UPDATE");
+            $lock->execute([$feedbackID]);
+            if(!$lock->fetchColumn()) throw new DomainException('staleFeedback');
+            $lock->closeCursor();
+
+            $query = $this->dbh->prepare("SELECT scope FROM `{$prefix}reqintakeLink` WHERE feedback = ? AND targetType = 'story' AND target = ?");
+            $query->execute([$feedbackID, $storyID]);
+            $existing = $query->fetchColumn();
+            if($existing !== false)
+            {
+                if($existing !== $scope) throw new DomainException('linkScope');
+                $this->dbh->commit();
+                return;
+            }
+
+            $now = helper::now();
+            $query = $this->dbh->prepare("UPDATE `{$prefix}reqintakeFeedback` SET status = 'tracking', version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status IN ('pending','tracking')");
+            $query->execute([$now, $feedbackID, $version]);
+            if($query->rowCount() !== 1) throw new DomainException('staleFeedback');
+
+            $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,'story',?,?,?,?)");
+            $query->execute([$feedbackID, $storyID, $scope, $this->app->user->account, $now]);
+            $this->dbh->commit();
+        }
+        catch(Throwable $error)
+        {
+            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            throw $error;
+        }
     }
 
     public function historyForRecent(array $recent): array

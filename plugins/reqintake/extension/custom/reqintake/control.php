@@ -87,6 +87,34 @@ class reqintake extends control
             return;
         }
 
+        $key = $this->session->reqintakeFormKey;
+        if(!$key)
+        {
+            $key = bin2hex(random_bytes(32));
+            $this->session->set('reqintakeFormKey', $key);
+        }
+        $token = hash_hmac('sha256', "linkStory:$id", $key);
+        if($_SERVER['REQUEST_METHOD'] === 'POST')
+        {
+            if(!hash_equals($token, $this->formValue('token')))
+            {
+                http_response_code(403);
+                return;
+            }
+            try
+            {
+                $model->linkStory($id, (int)$this->formValue('version'), (int)$this->formValue('storyID'), $this->formValue('linkScope'));
+                $feedback = $model->findFeedback($id);
+            }
+            catch(InvalidArgumentException | DomainException $error)
+            {
+                $this->view->formError = $this->lang->reqintake->errors[$error->getMessage()] ?? $this->lang->reqintake->invalid;
+            }
+        }
+
+        $this->view->linkToken = $token;
+        $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && common::hasPriv('story', 'view');
+        $this->view->linkedStories = $model->linkedStories($feedback);
         $this->view->title = $feedback->title;
         $this->view->item = $feedback;
         $this->display();
