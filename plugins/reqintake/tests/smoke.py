@@ -14,6 +14,7 @@ parser.add_argument('base_url')
 parser.add_argument('password_file', type=Path)
 parser.add_argument('--target', nargs=2, action='append', default=[], metavar=('TYPE', 'ID'),
                     help='Existing native work on Smoke Product to check in both directions')
+parser.add_argument('--task-conversion', action='store_true', help='Verify creating a task in a linked execution')
 parser.add_argument('--native-product', action='store_true',
                     help='Create a disposable product to verify the native owner field')
 parser.add_argument('--conversion', nargs='+', choices=('story', 'requirement', 'epic', 'bug'), default=[],
@@ -267,3 +268,30 @@ if batch_kind:
         assert 'riOperation' not in rejected_route
         assert '同一产品' in rejected
         print('Batch creation rejects feedback from different products')
+
+
+if args.task_conversion:
+    page = request(route)
+    fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
+             for key in ('operation', 'token')}
+    task_source = re.search(r'已登记反馈 #(\d+)', submit(dict(payload, **fresh)))[1]
+    source_route = detail_route + task_source
+    page = request(source_route)
+    token = re.search(r'name="token" value="([^"]+)"', page)[1]
+    execution = re.search(r'<select name="execution" required>\s*<option value=""></option>\s*<option value="(\d+)">', page)[1]
+    inputs = dict(intent='taskCreate', token=token, version=1, execution=execution)
+    assert '请选择同一产品' in request(source_route, dict(inputs, execution=999999))
+    req = Request(base + source_route, urlencode(inputs).encode(), {'Referer': base + source_route})
+    with opener.open(req, timeout=10) as response:
+        native = response.url.removeprefix(base)
+        form = response.read().decode()
+    assert 'riOperation' in native and payload['title'] in form
+    task_name = 'Task from feedback ' + uuid4().hex
+    fields = dict(execution=execution, name=task_name, type='devel', story=1, pri=3, estimate=0, module=0)
+    assert json.loads(request(native, dict(fields, type='affair')))['result'] == 'fail'
+    first = json.loads(request(native, fields))
+    assert first['result'] == 'success', first
+    second = json.loads(request(native, fields))
+    assert first['changes']['objectList'] == second['changes']['objectList']
+    assert task_name in request(source_route)
+    print('Task conversion checks execution, rejects multiple-task modes, and reuses the native ID')

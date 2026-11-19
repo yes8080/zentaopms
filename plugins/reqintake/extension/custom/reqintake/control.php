@@ -144,7 +144,17 @@ class reqintake extends control
             }
             try
             {
-                if($this->formValue('intent') === 'revise')
+                if($this->formValue('intent') === 'taskCreate')
+                {
+                    $execution = (int)$this->formValue('execution');
+                    if(!$model->canHandle($feedback) || $feedback->status === 'closed'
+                        || (int)$feedback->version !== (int)$this->formValue('version')
+                        || !isset($model->taskExecutions((int)$feedback->product)[$execution])) throw new DomainException('linkTarget');
+                    $extra = 'riOperation=' . $model->conversionToken($feedback, 'task');
+                    header('Location: ' . helper::createLink('task', 'create', "executionID=$execution&storyID=0&moduleID=0&taskID=0&todoID=0&cardPosition=$extra"), true, 303);
+                    return;
+                }
+                elseif($this->formValue('intent') === 'revise')
                 {
                     $fields = array();
                     foreach(array('title', 'description', 'customer', 'channel') as $field) $fields[$field] = $this->formValue($field);
@@ -179,6 +189,7 @@ class reqintake extends control
         $this->view->canRevise = $feedback->status !== 'closed' && $model->canHandle($feedback);
         $this->view->linkToken = $token;
         $this->view->storyTypes = $model->visibleTargetTypes();
+        $this->view->taskExecutions = $this->view->canRevise ? $model->taskExecutions((int)$feedback->product) : array();
         $this->view->conversionLinks = array();
         if($this->view->canRevise)
         {

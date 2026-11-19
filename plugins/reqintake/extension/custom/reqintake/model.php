@@ -227,7 +227,7 @@ class reqintakeModel extends model
 
     public function conversionSource(string $token, string $type): object
     {
-        if(!in_array($type, array('story', 'requirement', 'epic', 'bug'), true)
+        if(!in_array($type, array('story', 'requirement', 'epic', 'bug', 'task'), true)
             || !common::hasPriv($type, 'create') || !common::hasPriv($type, 'view')
             || !$this->session->reqintakeFormKey
             || !preg_match('/\A([1-9][0-9]{0,9})\.([1-9][0-9]{0,9})\.([a-f0-9]{64})\z/', $token, $parts))
@@ -240,9 +240,61 @@ class reqintakeModel extends model
         return $feedback;
     }
 
+    public function taskExecutions(int $product): array
+    {
+        if(!common::hasPriv('task', 'create') || !common::hasPriv('task', 'view') || !$this->canReadProduct($product)) return array();
+
+        $executions = $this->dao->select('DISTINCT e.id,e.name')->from(TABLE_PROJECTPRODUCT)->alias('p')
+            ->innerJoin(TABLE_EXECUTION)->alias('e')->on('p.project = e.id')
+            ->where('p.product')->eq($product)->andWhere('e.deleted')->eq('0')
+            ->andWhere('e.type')->in(array('sprint', 'stage', 'kanban'))->orderBy('e.id_desc')->fetchPairs();
+        $model = $this->loadModel('execution');
+        $limited = !empty($this->app->user->admin) ? array() : explode(',', (string)$model->getLimitedExecution());
+        return array_filter($executions, static fn($id) => $model->checkPriv((int)$id) && !in_array((string)$id, $limited, true), ARRAY_FILTER_USE_KEY);
+    }
+
+    public function convertToTask(string $token, int $execution, callable $create): int|false
+    {
+        $feedback = $this->conversionSource($token, 'task');
+        if(!isset($this->taskExecutions((int)$feedback->product)[$execution])) throw new DomainException('linkTarget');
+
+        /* Native task creation commits the transaction opened by task::create. The reservation
+           becomes durable in that same commit, even if the native call never returns an ID. */
+        $operation = hash('sha256', "task:$feedback->id:$feedback->version");
+        $table = $this->config->db->prefix . 'reqintakeConversion';
+        $lock = $this->dbh->prepare("SELECT target FROM `$table` WHERE operation = ? FOR UPDATE");
+        $lock->execute([$operation]);
+        $recorded = $lock->fetchColumn();
+        $lock->closeCursor();
+        if($recorded === false)
+        {
+            $this->conversionProduct(array((int)$feedback->id => $feedback->version), 'task', true);
+            $reserve = $this->dbh->prepare("INSERT INTO `$table` (operation) VALUES (?)");
+            $reserve->execute([$operation]);
+            $id = $create();
+            if(!$id) return false;
+
+            /* Save the exact ID before attempting linkage so a retry can finish the same task. */
+            $save = $this->dbh->prepare("UPDATE `$table` SET target = ? WHERE operation = ?");
+            $save->execute([$id, $operation]);
+        }
+        else
+        {
+            if(!(int)$recorded) throw new DomainException('taskConversionUncertain');
+            $id = (int)$recorded;
+            unset($_POST['fileList']);
+        }
+
+        $target = $this->targetForProduct('task', $id, (int)$feedback->product);
+        if(!$target || (int)$target->execution !== $execution) throw new DomainException('linkTarget');
+        $this->linkTarget((int)$feedback->id, $feedback->version, $id, '', 'task');
+        if($this->dbh->inTransaction()) $this->dbh->commit();
+        return $id;
+    }
+
     public function prepareBatchConversion(string $id, array $sources, string $type, string $scope): string
     {
-        if($type === 'bug') throw new DomainException('linkTarget');
+        if(in_array($type, array('bug', 'task'), true)) throw new DomainException('linkTarget');
         if(!$sources || mb_strlen($scope) > 500) throw new DomainException('batchSelection');
         $product = $this->conversionProduct($sources, $type, true);
         ksort($sources, SORT_NUMERIC);
@@ -265,7 +317,7 @@ class reqintakeModel extends model
 
     private function conversionProduct(array $sources, string $type, bool $checkVersion = false): int
     {
-        if(!in_array($type, array('story', 'requirement', 'epic', 'bug'), true)
+        if(!in_array($type, array('story', 'requirement', 'epic', 'bug', 'task'), true)
             || !common::hasPriv($type, 'create') || !common::hasPriv($type, 'view')) throw new DomainException('linkTarget');
 
         $product = null;

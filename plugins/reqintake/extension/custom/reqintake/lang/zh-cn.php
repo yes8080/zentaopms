@@ -59,3 +59,6 @@ $lang->reqintake->productOwnerSaveFailed = '产品已保存，需求池负责人
 $lang->reqintake->createTarget = '新建%s';
 $lang->reqintake->batchCreate = '批量新建一张需求';
 $lang->reqintake->batchCreateSummary = '反馈 #%s · 承接范围 %s';
+$lang->reqintake->taskExecution = '所属执行';
+$lang->reqintake->errors['taskConversionUncertain'] = '任务创建结果待核对，请在执行中核对后关联已有任务。';
+$lang->reqintake->errors['taskConversionMode'] = '请使用单任务模式。';

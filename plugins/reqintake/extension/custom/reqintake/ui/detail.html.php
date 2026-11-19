@@ -91,6 +91,20 @@ ob_start();
     <?php foreach($conversionLinks as $type => $url): ?>
         <a class="btn" href="<?= $escape($url) ?>"><?= $escape(sprintf($labels->createTarget, $labels->storyTypes[$type])) ?></a>
     <?php endforeach; ?>
+    <?php if($taskExecutions): ?>
+        <form method="post">
+            <input type="hidden" name="intent" value="taskCreate">
+            <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+            <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+            <label><?= $escape($labels->taskExecution) ?>
+                <select name="execution" required>
+                    <option value=""></option>
+                    <?php foreach($taskExecutions as $id => $name): ?><option value="<?= (int)$id ?>"><?= $escape($name) ?></option><?php endforeach; ?>
+                </select>
+            </label>
+            <button class="btn" type="submit"><?= $escape(sprintf($labels->createTarget, $labels->storyTypes['task'])) ?></button>
+        </form>
+    <?php endif; ?>
     <ul>
         <?php foreach($linkedStories as $story): ?>
             <li>
