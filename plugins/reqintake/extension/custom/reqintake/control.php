@@ -301,7 +301,10 @@ class reqintake extends control
         }
         $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && $this->view->storyTypes;
         foreach(array('story', 'bug', 'task') as $module) $this->app->loadLang($module);
-        $this->view->linkedStories = $model->linkedTargets($feedback);
+        $branches = $scope['hasBranches']
+            ? array((int)$this->view->attributes['branch'], ...array_keys($this->view->attributes['branchModules']))
+            : array();
+        $this->view->linkedStories = $model->linkedTargets($feedback, $branches);
         $this->view->title = $feedback->title;
         $this->view->item = $feedback;
         $this->display();

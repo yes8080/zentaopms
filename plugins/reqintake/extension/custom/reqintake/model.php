@@ -213,7 +213,7 @@ class reqintakeModel extends model
         foreach($modules as $branch => $pairs) $modules[$branch] = array(0 => '') + $pairs;
         $plans = array();
         foreach(array_keys($branches) as $branch) $plans[$branch] = $this->planOptions($product, (string)$branch);
-        return array('branches' => $branches, 'modules' => $modules, 'plans' => $plans);
+        return array('branches' => $branches, 'modules' => $modules, 'plans' => $plans, 'hasBranches' => $record->type !== 'normal');
     }
 
     public function planOptions(int $product, string $branch, bool $forConversion = false): array
@@ -468,7 +468,7 @@ class reqintakeModel extends model
         }
         else
         {
-            $target = $this->dao->select('id,title,status,stage,closedReason')->from(TABLE_STORY)
+            $target = $this->dao->select('id,title,status,stage,closedReason,branch')->from(TABLE_STORY)
                 ->where('id')->eq($id)->andWhere('product')->eq($product)->andWhere('type')->eq($type)->andWhere('deleted')->eq('0')->fetch();
         }
 
@@ -476,7 +476,7 @@ class reqintakeModel extends model
         return $target ?: false;
     }
 
-    public function linkedTargets(object $feedback): array
+    public function linkedTargets(object $feedback, array $branches): array
     {
         $types = $this->visibleTargetTypes();
         if(!$types || !$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
@@ -494,6 +494,18 @@ class reqintakeModel extends model
             $link->status = $target ? $target->status : '';
             $link->stage = $target ? $target->stage : '';
             $link->closedReason = $target ? $target->closedReason : '';
+            $link->branchStages = array();
+            if($target && isset($target->branch) && $branches)
+            {
+                $stages = $this->dao->select('branch,stage')->from(TABLE_STORYSTAGE)->where('story')->eq($target->id)
+                    ->andWhere('branch')->in($branches)->fetchPairs();
+                foreach($branches as $branch)
+                {
+                    /* ZenTao stores a single-branch demand's stage directly on the demand. */
+                    $singleBranch = (int)$target->branch > 0 && (int)$target->branch === $branch;
+                    $link->branchStages[$branch] = $stages[$branch] ?? ($singleBranch ? $target->stage : '');
+                }
+            }
         }
         return $links;
     }

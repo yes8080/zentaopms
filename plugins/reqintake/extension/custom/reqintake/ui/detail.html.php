@@ -171,7 +171,15 @@ ob_start();
                 ?>
                     <a href="<?= $escape(\helper::createLink($story->targetType, 'view', $parameter . '=' . (int)$story->id)) ?>"><?= $escape($story->title) ?></a>
                     <span><?= $escape($targetLang->statusList[$story->status] ?? $story->status) ?></span>
-                    <span><?= $escape($lang->story->stageList[$story->stage] ?? $story->stage) ?></span>
+                    <?php if($story->branchStages): ?>
+                        <ul>
+                            <?php foreach($story->branchStages as $branch => $stage): ?>
+                                <li><?= $escape($scopeOptions['branches'][$branch] ?? '#' . $branch) ?> · <?= $escape($stage === '' ? $labels->branchStageUnknown : ($lang->story->stageList[$stage] ?? $stage)) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <span><?= $escape($lang->story->stageList[$story->stage] ?? $story->stage) ?></span>
+                    <?php endif; ?>
                     <?php if($story->closedReason): ?>
                         <span><?= $escape($reasons[$story->closedReason] ?? $story->closedReason) ?></span>
                     <?php endif; ?>

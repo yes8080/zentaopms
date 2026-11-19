@@ -115,3 +115,5 @@ $lang->reqintake->errors['mailto'] = '请选择有效的抄送账号。';
 
 $lang->reqintake->fields['customerVersion'] = '客户使用版本';
 $lang->reqintake->errors['customerVersion'] = '客户使用版本最多填写 100 个字符。';
+
+$lang->reqintake->branchStageUnknown = '无该范围的阶段记录';
