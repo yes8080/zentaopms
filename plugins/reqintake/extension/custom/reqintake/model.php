@@ -227,7 +227,7 @@ class reqintakeModel extends model
 
     public function conversionSource(string $token, string $type): object
     {
-        if(!in_array($type, array('story', 'requirement', 'epic'), true)
+        if(!in_array($type, array('story', 'requirement', 'epic', 'bug'), true)
             || !common::hasPriv($type, 'create') || !common::hasPriv($type, 'view')
             || !$this->session->reqintakeFormKey
             || !preg_match('/\A([1-9][0-9]{0,9})\.([1-9][0-9]{0,9})\.([a-f0-9]{64})\z/', $token, $parts))
@@ -242,6 +242,7 @@ class reqintakeModel extends model
 
     public function prepareBatchConversion(string $id, array $sources, string $type, string $scope): string
     {
+        if($type === 'bug') throw new DomainException('linkTarget');
         if(!$sources || mb_strlen($scope) > 500) throw new DomainException('batchSelection');
         $product = $this->conversionProduct($sources, $type, true);
         ksort($sources, SORT_NUMERIC);
@@ -264,7 +265,7 @@ class reqintakeModel extends model
 
     private function conversionProduct(array $sources, string $type, bool $checkVersion = false): int
     {
-        if(!in_array($type, array('story', 'requirement', 'epic'), true)
+        if(!in_array($type, array('story', 'requirement', 'epic', 'bug'), true)
             || !common::hasPriv($type, 'create') || !common::hasPriv($type, 'view')) throw new DomainException('linkTarget');
 
         $product = null;
@@ -280,9 +281,8 @@ class reqintakeModel extends model
         return $product;
     }
 
-    public function convertToStory(string $token, object $story, callable $create): int|false
+    public function convertToNative(string $token, string $type, int $targetProduct, callable $create): int|false
     {
-        $type = $story->type;
         if(str_starts_with($token, 'batch.'))
         {
             $batch = $this->batchConversion($token, $type);
@@ -296,7 +296,7 @@ class reqintakeModel extends model
             $scope = '';
         }
         $product = $this->conversionProduct($sources, $type);
-        if($product !== (int)$story->product || !empty($story->branches)) throw new DomainException('linkTarget');
+        if($product !== $targetProduct) throw new DomainException('linkTarget');
 
         $table = $this->config->db->prefix . 'reqintakeConversion';
         $operation = substr($token, strrpos($token, '.') + 1);

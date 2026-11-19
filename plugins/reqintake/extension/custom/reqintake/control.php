@@ -182,10 +182,15 @@ class reqintake extends control
         $this->view->conversionLinks = array();
         if($this->view->canRevise)
         {
-            foreach(array_intersect($this->view->storyTypes, array('story', 'requirement', 'epic')) as $type)
+            foreach(array_intersect($this->view->storyTypes, array('story', 'requirement', 'epic', 'bug')) as $type)
             {
                 if(!common::hasPriv($type, 'create')) continue;
                 $extra = 'riOperation=' . $model->conversionToken($feedback, $type);
+                if($type === 'bug')
+                {
+                    $this->view->conversionLinks[$type] = helper::createLink('bug', 'create', "productID={$feedback->product}&branch=&extras=$extra");
+                    continue;
+                }
                 $this->view->conversionLinks[$type] = helper::createLink($type, 'create', "productID={$feedback->product}&branch=&moduleID=0&storyID=0&objectID=0&bugID=0&planID=0&todoID=0&extra=$extra&storyType=$type");
             }
         }

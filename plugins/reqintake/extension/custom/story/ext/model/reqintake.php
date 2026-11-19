@@ -7,9 +7,9 @@ public function create(object $story, int $executionID = 0, int $bugID = 0, stri
     $this->app->loadLang('reqintake');
     try
     {
-        if(!is_string($operation) || $executionID || $bugID || $todoID) throw new DomainException('linkTarget');
+        if(!is_string($operation) || $executionID || $bugID || $todoID || !empty($story->branches)) throw new DomainException('linkTarget');
         $create = fn() => parent::create($story, $executionID, $bugID, '', $todoID);
-        return $this->loadModel('reqintake')->convertToStory($operation, $story, $create);
+        return $this->loadModel('reqintake')->convertToNative($operation, $story->type, (int)$story->product, $create);
     }
     catch(DomainException $error)
     {

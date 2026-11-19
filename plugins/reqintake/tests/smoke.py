@@ -16,7 +16,7 @@ parser.add_argument('--target', nargs=2, action='append', default=[], metavar=('
                     help='Existing native work on Smoke Product to check in both directions')
 parser.add_argument('--native-product', action='store_true',
                     help='Create a disposable product to verify the native owner field')
-parser.add_argument('--conversion', nargs='+', choices=('story', 'requirement', 'epic'), default=[],
+parser.add_argument('--conversion', nargs='+', choices=('story', 'requirement', 'epic', 'bug'), default=[],
                     help='Verify native creation and idempotent replay for the selected types')
 args = parser.parse_args()
 base = args.base_url.rstrip('/') + '/'
@@ -192,6 +192,22 @@ for kind in args.conversion:
     native_fields = dict(product=product, title=native_title, spec='Public description',
                          category='feature', pri=3, needNotReview=1, status='active', module=0,
                          branch=0, **{'reviewer[]': ''})
+    if kind == 'bug':
+        bug_fields = dict(product=product, title=native_title, type='codeerror',
+                          steps='Confirmed steps', severity=3, pri=3, module=0,
+                          branch=0, **{'openedBuild[]': 'trunk'})
+        first = json.loads(request(native_form, bug_fields))
+        assert first['result'] == 'success', first
+        before = request(source_route)
+        second = json.loads(request(native_form, bug_fields))
+        assert second['result'] == 'success', second
+        after = request(source_route)
+        pattern = r'm=bug&amp;f=view&amp;bugID=(\d+)'
+        matches = re.findall(pattern, before)
+        assert len(matches) == 1 and re.findall(pattern, after) == matches
+        assert native_title in after and '跟进中' in after
+        print('Native bug creation and replay preserve a single feedback link')
+        continue
     first = json.loads(request(native_form, native_fields))
     assert first['result'] == 'success', first
     second = json.loads(request(native_form, native_fields))
@@ -202,8 +218,9 @@ for kind in args.conversion:
     print(f'Native {kind} creation, feedback association and idempotent replay passed')
 
 
-if args.conversion:
-    kind = args.conversion[0]
+batch_kind = next((kind for kind in args.conversion if kind != 'bug'), None)
+if batch_kind:
+    kind = batch_kind
 
     def receive_source():
         page = request(route)
