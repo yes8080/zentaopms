@@ -180,12 +180,44 @@ if args.native_product:
     edit = f'index.php?m=product&f=edit&productID={product_id}'
     assert 'data-reqintake-owner="configured"' in request(detail)
     assert 'reqintakeOwner' in request(edit)
+    other_preview = f'{route}&scope=all&filterProduct=0&previewProduct={product_id}'
+    initial_preview = json.loads(request(other_preview))
+    assert initial_preview['pending'] is False
+    assert json.loads(request(preview_route))['pending'] is True
+    assert json.loads(request(other_preview)) == initial_preview
+
+    def open_intake():
+        page = request(route)
+        fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
+                 for key in ('operation', 'token')}
+        return dict(payload, **fresh) | dict(product=product_id)
+
+    def saved_feedback(fields, owner, pending=False):
+        response = submit(fields)
+        feedback_id = re.search(r'已登记反馈 #(\d+)', response)[1]
+        page = request(detail_route + feedback_id)
+        suffix = ' (待配置负责人)' if pending else ''
+        assert f'<dd>{owner}{suffix}</dd>' in page, (feedback_id, owner, pending)
+        return feedback_id
+
+    existing = open_intake()
+    existing_id = saved_feedback(existing, 'ri_tester')
+    open_form = open_intake()
+    assert json.loads(request(edit, dict(data, reqintakeOwner='admin')))['result'] == 'success'
+    changed_preview = json.loads(request(other_preview))
+    assert changed_preview['pending'] is False and changed_preview['name'] != initial_preview['name']
+    new_id = saved_feedback(open_form, 'admin')
+    assert saved_feedback(existing, 'ri_tester') == existing_id
+    assert existing_id != new_id
     assert json.loads(request(edit,dict(data,reqintakeOwner='')))['result'] == 'success'
     assert 'data-reqintake-owner="pending"' in request(detail)
     invalid = json.loads(request(edit,dict(data,reqintakeOwner='missing_account_123')))
     assert invalid['result'] == 'fail', invalid
     assert 'data-reqintake-owner="pending"' in request(detail)
-    print('Native product create, edit, invalid owner and clearing passed')
+    assert json.loads(request(other_preview))['pending'] is True
+    saved_feedback(open_intake(), 'admin', pending=True)
+    assert saved_feedback(open_form, 'admin') == new_id
+    print(f'Product {product_id} owner change applies on submit; feedback {existing_id} and {new_id} retain their owners')
 
 
 for kind in args.conversion:
