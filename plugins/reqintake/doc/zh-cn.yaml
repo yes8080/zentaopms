@@ -3,7 +3,7 @@ code: reqintake
 type: extension
 abstract: 禅道开源版需求池插件
 desc: |
-  开发验证版，提供管理员可访问的插件加载检查页。
+  开发验证版，供管理员验证反馈登记、负责人分派和状态办理。
 install: |
   在后台扩展管理中本地安装 ZIP。
 releases:

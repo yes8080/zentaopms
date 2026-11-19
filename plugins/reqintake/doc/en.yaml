@@ -3,7 +3,7 @@ code: reqintake
 type: extension
 abstract: Request intake extension for ZenTao Open Source
 desc: |
-  Development build with an administrator-only module smoke page.
+  Development build for administrators to check intake, assignment, and status changes.
 install: |
   Install the ZIP from local extension management.
 releases:
