@@ -16,6 +16,8 @@ parser.add_argument('--target', nargs=2, action='append', default=[], metavar=('
                     help='Existing native work on Smoke Product to check in both directions')
 parser.add_argument('--native-product', action='store_true',
                     help='Create a disposable product to verify the native owner field')
+parser.add_argument('--conversion', nargs='+', choices=('story', 'requirement', 'epic'), default=[],
+                    help='Verify native creation and idempotent replay for the selected types')
 args = parser.parse_args()
 base = args.base_url.rstrip('/') + '/'
 opener = build_opener(HTTPCookieProcessor())
@@ -173,3 +175,28 @@ if args.native_product:
     assert invalid['result'] == 'fail', invalid
     assert 'data-reqintake-owner="pending"' in request(detail)
     print('Native product create, edit, invalid owner and clearing passed')
+
+
+for kind in args.conversion:
+    page = request(route)
+    fresh = {key: re.search(f'name="{key}" value="([^"]+)"', page)[1]
+             for key in ('operation', 'token')}
+    created = submit(dict(payload, **fresh))
+    source_id = re.search(r'已登记反馈 #(\d+)', created)[1]
+    source_route = detail_route + source_id
+    links = (html.unescape(link).lstrip('/')
+             for link in re.findall(r'href="([^"]+riOperation[^"]+)"', request(source_route)))
+    native_form = next(link for link in links if f'm={kind}&' in link)
+    assert payload['title'] in request(native_form)
+    native_title = 'Converted feedback ' + uuid4().hex
+    native_fields = dict(product=product, title=native_title, spec='Public description',
+                         category='feature', pri=3, needNotReview=1, status='active', module=0,
+                         branch=0, **{'reviewer[]': ''})
+    first = json.loads(request(native_form, native_fields))
+    assert first['result'] == 'success', first
+    second = json.loads(request(native_form, native_fields))
+    assert second['result'] == 'success', second
+    assert first['changes']['objectList'] == second['changes']['objectList']
+    saved = request(source_route)
+    assert native_title in saved and '跟进中' in saved
+    print(f'Native {kind} creation, feedback association and idempotent replay passed')

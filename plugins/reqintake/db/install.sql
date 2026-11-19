@@ -80,3 +80,9 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeFollowup` (
   `createdDate` datetime NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeConversion` (
+  `operation` char(64) NOT NULL,
+  `target` int unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`operation`)
+) ENGINE=InnoDB;

@@ -172,6 +172,16 @@ class reqintake extends control
         $this->view->canRevise = $feedback->status !== 'closed' && $model->canHandle($feedback);
         $this->view->linkToken = $token;
         $this->view->storyTypes = $model->visibleTargetTypes();
+        $this->view->conversionLinks = array();
+        if($this->view->canRevise)
+        {
+            foreach(array_intersect($this->view->storyTypes, array('story', 'requirement', 'epic')) as $type)
+            {
+                if(!common::hasPriv($type, 'create')) continue;
+                $extra = 'riOperation=' . $model->conversionToken($feedback, $type);
+                $this->view->conversionLinks[$type] = helper::createLink($type, 'create', "productID={$feedback->product}&branch=&moduleID=0&storyID=0&objectID=0&bugID=0&planID=0&todoID=0&extra=$extra&storyType=$type");
+            }
+        }
         $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && $this->view->storyTypes;
         foreach(array('story', 'bug', 'task') as $module) $this->app->loadLang($module);
         $this->view->linkedStories = $model->linkedTargets($feedback);

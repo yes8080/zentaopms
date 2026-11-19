@@ -218,6 +218,77 @@ class reqintakeModel extends model
         $this->linkTargets(array($feedbackID => $version), $targetID, $scope, $type);
     }
 
+    public function conversionToken(object $feedback, string $type): string
+    {
+        $operation = "$feedback->id.$feedback->version";
+        $account = $this->app->user->account;
+        return $operation . '.' . hash_hmac('sha256', "$account:$type:$operation", (string)$this->session->reqintakeFormKey);
+    }
+
+    public function conversionSource(string $token, string $type): object
+    {
+        if(!in_array($type, array('story', 'requirement', 'epic'), true)
+            || !common::hasPriv($type, 'create') || !common::hasPriv($type, 'view')
+            || !$this->session->reqintakeFormKey
+            || !preg_match('/\A([1-9][0-9]{0,9})\.([1-9][0-9]{0,9})\.([a-f0-9]{64})\z/', $token, $parts))
+            throw new DomainException('linkTarget');
+
+        $feedback = $this->findFeedback((int)$parts[1]);
+        if(!$feedback || !$this->canHandle($feedback)) throw new DomainException('handler');
+        $feedback->version = (int)$parts[2];
+        if(!hash_equals($this->conversionToken($feedback, $type), $token)) throw new DomainException('linkTarget');
+        return $feedback;
+    }
+
+    public function convertToStory(string $token, object $story, callable $create): int|false
+    {
+        $type = $story->type;
+        $feedback = $this->conversionSource($token, $type);
+        if((int)$feedback->product !== (int)$story->product || !empty($story->branches)) throw new DomainException('linkTarget');
+
+        $table = $this->config->db->prefix . 'reqintakeConversion';
+        $operation = substr($token, strrpos($token, '.') + 1);
+        $this->dbh->beginTransaction();
+        try
+        {
+            $insert = $this->dbh->prepare("INSERT INTO `$table` (operation) VALUES (?) ON DUPLICATE KEY UPDATE operation = operation");
+            $insert->execute([$operation]);
+            $read = $this->dbh->prepare("SELECT target FROM `$table` WHERE operation = ? FOR UPDATE");
+            $read->execute([$operation]);
+            $id = (int)$read->fetchColumn();
+            $read->closeCursor();
+            if($id)
+            {
+                if(!$this->targetForProduct($type, $id, (int)$feedback->product)) throw new DomainException('linkTarget');
+                unset($_POST["fileList"]);
+                $this->dbh->commit();
+                return $id;
+            }
+
+            $current = $this->findFeedback((int)$feedback->id);
+            if(!$current || $current->status === 'closed' || (int)$current->version !== $feedback->version)
+                throw new DomainException('staleFeedback');
+
+            $id = $create();
+            if(!$id || dao::isError())
+            {
+                $this->dbh->rollBack();
+                return false;
+            }
+
+            $this->linkTargets(array((int)$feedback->id => $feedback->version), $id, '', $type);
+            $update = $this->dbh->prepare("UPDATE `$table` SET target = ? WHERE operation = ?");
+            $update->execute([$id, $operation]);
+            $this->dbh->commit();
+            return $id;
+        }
+        catch(Throwable $error)
+        {
+            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            throw $error;
+        }
+    }
+
     public function linkTargets(array $sources, int $targetID, string $scope, string $type): void
     {
         if(!$sources || count($sources) > 50) throw new DomainException('batchSelection');
@@ -238,7 +309,8 @@ class reqintakeModel extends model
 
         ksort($sources, SORT_NUMERIC);
         $prefix = $this->config->db->prefix;
-        $this->dbh->beginTransaction();
+        $ownsTransaction = !$this->dbh->inTransaction();
+        if($ownsTransaction) $this->dbh->beginTransaction();
         try
         {
             foreach($sources as $feedbackID => $version)
@@ -265,11 +337,11 @@ class reqintakeModel extends model
                 $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,?,?,?,?,?)");
                 $query->execute([$feedbackID, $type, $targetID, $scope, $this->app->user->account, $now]);
             }
-            $this->dbh->commit();
+            if($ownsTransaction) $this->dbh->commit();
         }
         catch(Throwable $error)
         {
-            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            if($ownsTransaction && $this->dbh->inTransaction()) $this->dbh->rollBack();
             throw $error;
         }
     }

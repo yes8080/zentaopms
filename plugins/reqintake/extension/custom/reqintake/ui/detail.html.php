@@ -88,6 +88,9 @@ ob_start();
         <?php endforeach; ?>
     <?php endif; ?>
     <h3><?= $escape($labels->linkedStories) ?></h3>
+    <?php foreach($conversionLinks as $type => $url): ?>
+        <a class="btn" href="<?= $escape($url) ?>"><?= $escape(sprintf($labels->createTarget, $labels->storyTypes[$type])) ?></a>
+    <?php endforeach; ?>
     <ul>
         <?php foreach($linkedStories as $story): ?>
             <li>

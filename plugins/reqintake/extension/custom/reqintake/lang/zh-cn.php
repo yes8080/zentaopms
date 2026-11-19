@@ -56,3 +56,4 @@ $lang->reqintake->errors['followupMessage'] = '请输入说明，最多 500 个�
 $lang->reqintake->errors['sameAssignee'] = '请选择其他负责人。';
 $lang->reqintake->ownerPreviewUnavailable = '暂时无法预览负责人';
 $lang->reqintake->productOwnerSaveFailed = '产品已保存，需求池负责人未保存。请从产品编辑页补配有权办理的账号。';
+$lang->reqintake->createTarget = '新建%s';
