@@ -22,6 +22,35 @@ ob_start();
             <dd style="white-space: pre-wrap"><?= $escape($item->$field) ?></dd>
         <?php endforeach; ?>
     </dl>
+    <?php if($canRevise): ?>
+        <details>
+            <summary><?= $escape($labels->editFeedback) ?></summary>
+            <form method="post">
+                <input type="hidden" name="intent" value="revise">
+                <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+                <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+                <?php foreach(array('title' => 255, 'customer' => 255, 'channel' => 64) as $field => $limit): ?>
+                    <label class="block"><?= $escape($labels->fields[$field]) ?>
+                        <input name="<?= $field ?>" value="<?= $escape($item->$field) ?>" maxlength="<?= $limit ?>" <?= $field === 'title' ? 'required' : '' ?>>
+                    </label>
+                <?php endforeach; ?>
+                <label class="block"><?= $escape($labels->fields['description']) ?>
+                    <textarea name="description" required><?= $escape($item->description) ?></textarea>
+                </label>
+                <button class="btn" type="submit"><?= $escape($labels->editFeedback) ?></button>
+            </form>
+        </details>
+    <?php endif; ?>
+    <?php if($revisions): ?>
+        <details>
+            <summary><?= $escape($labels->revisionHistory) ?></summary>
+            <?php foreach(array_merge($revisions, array($original)) as $revision): ?>
+                <p><?= $escape($revision->title) ?> <?= $escape($revision->actor ?? $original->openedBy) ?> <?= $escape($revision->createdDate ?? '') ?></p>
+                <p><?= $escape($revision->customer) ?> · <?= $escape($revision->channel) ?></p>
+                <p class="whitespace-pre-wrap"><?= $escape($revision->description) ?></p>
+            <?php endforeach; ?>
+        </details>
+    <?php endif; ?>
     <h3><?= $escape($labels->linkedStories) ?></h3>
     <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
     <ul>

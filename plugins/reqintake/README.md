@@ -46,3 +46,5 @@ docker compose exec -T -u www-data php php extension/custom/reqintake/bin/sync.p
 ```
 
 命令只在插件处于已安装状态时更新快照。详情仍读取单据当前状态，并显示最近后台核对时间。单据的进度不会改变反馈的办理状态。
+
+0.4.0 增加反馈修订记录。升级前执行本版 `db/install.sql` 创建修订表。负责人或管理员可在未关闭反馈的详情中修改标题、描述、客户和渠道；详情保留初次提交和历次修订。

@@ -44,3 +44,5 @@ $lang->reqintake->batchSuccess = 'Linked %d requests.';
 $lang->reqintake->errors['batchSelection'] = 'Select 1 to 50 requests.';
 $lang->reqintake->errors['batchProduct'] = 'Select requests from the same product.';
 $lang->reqintake->checkedDate = 'Last scheduled check: %s';
+$lang->reqintake->editFeedback = 'Edit feedback';
+$lang->reqintake->revisionHistory = 'Feedback revision history';

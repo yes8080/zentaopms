@@ -57,3 +57,15 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeProgress` (
   `checkedDate` datetime NOT NULL,
   PRIMARY KEY (`feedback`, `targetType`, `target`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeRevision` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` mediumtext NOT NULL,
+  `customer` varchar(255) NOT NULL,
+  `channel` varchar(64) NOT NULL,
+  `actor` varchar(30) NOT NULL,
+  `createdDate` datetime NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

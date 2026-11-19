@@ -44,3 +44,5 @@ $lang->reqintake->batchSuccess = '已关联 %d 条反馈。';
 $lang->reqintake->errors['batchSelection'] = '请选择 1 至 50 条反馈。';
 $lang->reqintake->errors['batchProduct'] = '请选择同一产品下的反馈。';
 $lang->reqintake->checkedDate = '最近后台核对：%s';
+$lang->reqintake->editFeedback = '编辑反馈';
+$lang->reqintake->revisionHistory = '反馈修订历史';

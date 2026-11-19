@@ -24,7 +24,16 @@ class reqintakeModel extends model
         $account = $this->app->user->account;
         if($scope === 'mine') $query->andWhere('f.openedBy')->eq($account);
         if($scope === 'assigned') $query->andWhere('f.assignedTo')->eq($account)->andWhere('f.status')->ne('closed');
-        return $query->orderBy('f.id_desc')->limit(50)->fetchAll();
+        $rows = $query->orderBy('f.id_desc')->limit(50)->fetchAll();
+        if(!$rows) return $rows;
+
+        $ids = array_map(static fn($item) => (int)$item->id, $rows);
+        $changes = $this->dao->select('feedback,title')->from($this->config->db->prefix . 'reqintakeRevision')
+            ->where('feedback')->in($ids)->orderBy('version_desc')->fetchAll();
+        $titles = array();
+        foreach($changes as $change) $titles[(int)$change->feedback] ??= $change->title;
+        foreach($rows as $row) $row->title = $titles[(int)$row->id] ?? $row->title;
+        return $rows;
     }
 
     public function findFeedback(int $id): object|false
@@ -36,6 +45,44 @@ class reqintakeModel extends model
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
             ->where('f.id')->eq($id)->andWhere('p.deleted')->eq('0')->fetch();
         return $feedback && $this->canReadProduct((int)$feedback->product) ? $feedback : false;
+    }
+
+    public function revisions(object $feedback): array
+    {
+        if(!$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
+
+        return $this->dao->select('version,title,description,customer,channel,actor,createdDate')
+            ->from($this->config->db->prefix . 'reqintakeRevision')->where('feedback')->eq((int)$feedback->id)
+            ->orderBy('version_desc')->fetchAll();
+    }
+
+    public function revise(object $feedback, int $version, array $fields): void
+    {
+        if(!$this->canHandle($feedback)) throw new DomainException('handler');
+
+        $title = trim($fields['title']);
+        if($title === '' || mb_strlen($title) > 255) throw new InvalidArgumentException('title');
+        if(trim($fields['description']) === '' || strlen($fields['description']) > 16777215) throw new InvalidArgumentException('description');
+        if(mb_strlen($fields['customer']) > 255 || mb_strlen($fields['channel']) > 64) throw new InvalidArgumentException('source');
+
+        $prefix = $this->config->db->prefix;
+        $now = helper::now();
+        $this->dbh->beginTransaction();
+        try
+        {
+            $update = $this->dbh->prepare("UPDATE `{$prefix}reqintakeFeedback` SET version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status <> 'closed'");
+            $update->execute([$now, $feedback->id, $version]);
+            if($update->rowCount() !== 1) throw new DomainException('staleFeedback');
+
+            $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeRevision` (feedback,version,title,description,customer,channel,actor,createdDate) VALUES (?,?,?,?,?,?,?,?)");
+            $insert->execute([$feedback->id, $version + 1, $title, $fields['description'], $fields['customer'], $fields['channel'], $this->app->user->account, $now]);
+            $this->dbh->commit();
+        }
+        catch(Throwable $error)
+        {
+            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            throw $error;
+        }
     }
 
     public function canHandle(object $feedback): bool

@@ -120,7 +120,16 @@ class reqintake extends control
             }
             try
             {
-                $model->linkTarget($id, (int)$this->formValue('version'), (int)$this->formValue('storyID'), $this->formValue('linkScope'), $this->formValue('storyType') ?: 'story');
+                if($this->formValue('intent') === 'revise')
+                {
+                    $fields = array();
+                    foreach(array('title', 'description', 'customer', 'channel') as $field) $fields[$field] = $this->formValue($field);
+                    $model->revise($feedback, (int)$this->formValue('version'), $fields);
+                }
+                else
+                {
+                    $model->linkTarget($id, (int)$this->formValue('version'), (int)$this->formValue('storyID'), $this->formValue('linkScope'), $this->formValue('storyType') ?: 'story');
+                }
                 $feedback = $model->findFeedback($id);
             }
             catch(InvalidArgumentException | DomainException $error)
@@ -129,6 +138,15 @@ class reqintake extends control
             }
         }
 
+        $this->view->original = $feedback;
+        $this->view->revisions = $model->revisions($feedback);
+        if($this->view->revisions)
+        {
+            $latest = reset($this->view->revisions);
+            $feedback = clone $feedback;
+            foreach(array('title', 'description', 'customer', 'channel') as $field) $feedback->$field = $latest->$field;
+        }
+        $this->view->canRevise = $feedback->status !== 'closed' && $model->canHandle($feedback);
         $this->view->linkToken = $token;
         $this->view->storyTypes = $model->visibleTargetTypes();
         $this->view->canLink = $feedback->status !== 'closed' && $model->canHandle($feedback) && $this->view->storyTypes;
