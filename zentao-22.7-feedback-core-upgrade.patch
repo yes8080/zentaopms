@@ -1,0 +1,837 @@
+diff --git a/config/apiv2.php b/config/apiv2.php
+index df5821eb51ef8ca749907e9599e64a7149530ce8..b3d5e9672549ef95def6030700b342ebc1a5cc23 100644
+--- a/config/apiv2.php
++++ b/config/apiv2.php
+@@ -328,6 +328,12 @@ if($this->config->edition === 'open')
+ 
+ $routes['/tickets']                       = array('response' => 'tickets(array),pager', 'search' => array('enabled' => true));
+ $routes['/feedbacks/:feedbackID/tickets'] = array('post' => array('redirect' => '/ticket/create?productID=0&extras=fromType=feedback,fromID=:feedbackID', 'data' => 'feedback=:feedbackID'));
++if($this->config->edition === 'open')
++{
++    $routes['/feedbacks/:feedbackID/tickets'] = array('post' => array(
++        'redirect' => '/feedbacks/:feedbackID/convert', 'data' => 'target=ticket', 'response' => '*',
++    ));
++}
+ $routes['/feedbacks/:feedbackID/tasks']   = array('post' => array('redirect' => '/task/create?executionID=0', 'data' => 'feedback=:feedbackID'));
+ $routes['/products/:productID/tickets']   = array('redirect' => '/tickets?param=:productID', 'search' => array('enabled' => true));
+ $routes['/tickets/:ticketID']             = array('response' => 'ticket,actions(array)');
+diff --git a/module/feedback/control.php b/module/feedback/control.php
+index 9b2d210062feda18791c9ffa564c12ac8dfcb907..1aa9d9afdf80d442a0fdb6f4373991599443853a 100644
+--- a/module/feedback/control.php
++++ b/module/feedback/control.php
+@@ -53,6 +53,11 @@ class feedback extends control
+         $this->view->repeat = $feedback->repeatFeedback ? $this->feedback->getByID((int)$feedback->repeatFeedback) : false;
+         $this->view->product = zget($this->feedback->getGrantProducts(), $feedback->product, '');
+         $this->view->modulePath = $feedback->module ? $this->loadModel('tree')->getParents($feedback->module) : array();
++        $this->view->attachments = array_map(static fn($file) => (object)array(
++            'id' => $file->id, 'title' => $file->title, 'size' => $file->size,
++        ), $this->loadModel('file')->getByObject('feedback', $feedbackID));
++        $this->view->feedback->files = array_values($this->view->attachments);
++        $this->view->ticket = common::hasPriv('feedback', 'ticket') ? $this->feedback->getTicket($feedback) : false;
+         $this->view->actions = $this->loadModel('action')->getList('feedback', $feedbackID);
+         $this->view->users = $this->feedback->getFeedbackPairs('');
+         $this->view->conversionTypes = $this->feedback->getConversionTypes($feedback);
+@@ -77,7 +82,7 @@ class feedback extends control
+     {
+         $products = $this->feedback->getGrantProducts();
+         $input = array();
+-        foreach(array('title', 'product', 'module', 'type', 'pri', 'desc', 'public', 'feedbackBy', 'notifyEmail') as $field)
++        foreach(array('title', 'product', 'module', 'type', 'pri', 'desc', 'public', 'feedbackBy', 'notifyEmail', 'notify') as $field)
+         {
+             $input[$field] = $this->input($field, (string)($feedback->$field ?? ''));
+         }
+@@ -124,7 +129,13 @@ class feedback extends control
+         if(!common::hasPriv('feedback', 'convert')) return $this->failure($this->lang->feedback->invalidAction, 403);
+         try
+         {
+-            $this->feedback->convert($feedback, $this->input('target'));
++            $target = $this->input('target');
++            $this->feedback->convert($feedback, $target);
++            if(($this->app->apiVersion ?? '') === 'v2' && $target === 'ticket')
++            {
++                $current = $this->feedback->getByID($feedbackID);
++                return $this->send(array('result' => 'success', 'id' => (int)$current->result, 'feedbackID' => $feedbackID, 'message' => $this->lang->saveSuccess));
++            }
+             return $this->success($feedbackID);
+         }
+         catch(InvalidArgumentException|RuntimeException $error)
+@@ -133,6 +144,204 @@ class feedback extends control
+         }
+     }
+ 
++    public function upload(int $feedbackID)
++    {
++        $feedback = $this->feedback->getByID($feedbackID);
++        if(!$feedback) return $this->failure($this->lang->feedback->notFound, 404);
++        if(!$this->feedback->canOperate($feedback, 'edit')) return $this->failure($this->lang->feedback->invalidAction, 403);
++        if(($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') return $this->failure($this->lang->feedback->invalidAction, 405);
++
++        $upload = $_FILES['files'] ?? array();
++        if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($upload['tmp_name'] ?? null) || !is_uploaded_file($upload['tmp_name'])
++            || $upload['size'] <= 0 || $upload['size'] > 10 * 1024 * 1024)
++        {
++            return $this->failure($this->lang->feedback->uploadError);
++        }
++
++        try
++        {
++            $this->feedback->attachFile($feedback);
++            return $this->success($feedbackID);
++        }
++        catch(InvalidArgumentException|RuntimeException $error)
++        {
++            return $this->failure($error->getMessage());
++        }
++    }
++
++    public function download(int $fileID)
++    {
++        $model = $this->loadModel('file');
++        $file = $model->getById($fileID);
++        if(!$file || $file->objectType !== 'feedback' || $file->deleted || !$model->checkPriv($file))
++            return $this->failure($this->lang->feedback->notFound, 404);
++        $root = realpath($model->savePath);
++        $path = realpath($file->realPath);
++        if(!$root || !$path || !str_starts_with($path, $root . DIRECTORY_SEPARATOR) || !is_file($path) || filesize($path) > 10 * 1024 * 1024)
++            return $this->failure($this->lang->feedback->notFound, 404);
++
++        $contents = file_get_contents($path);
++        if($contents === false) return $this->failure($this->lang->feedback->notFound, 404);
++        header('X-Content-Type-Options: nosniff');
++        $model->sendDownHeader($file->title, $file->extension, $contents);
++    }
++
++    public function ticket(int $feedbackID)
++    {
++        $feedback = $this->feedback->getByID($feedbackID);
++        $ticket = $feedback ? $this->feedback->getTicket($feedback) : false;
++        if(!$ticket) return $this->failure($this->lang->feedback->notFound, 404);
++        if(!$_POST) return $this->locate($this->createLink('feedback', 'view', "feedbackID=$feedbackID"));
++        if(!$this->app->user->admin && $ticket->assignedTo !== $this->app->user->account)
++            return $this->failure($this->lang->feedback->invalidAction, 403);
++
++        try
++        {
++            $this->feedback->changeTicket($feedback, $ticket, $this->input('status'));
++            return $this->success($feedbackID);
++        }
++        catch(InvalidArgumentException|RuntimeException $error)
++        {
++            return $this->failure($error->getMessage());
++        }
++    }
++
++    public function batch()
++    {
++        $ids = $_POST['feedbackIDs'] ?? array();
++        $operation = $this->input('operation');
++        if(!is_array($ids) || !$ids || count($ids) > 100 || !in_array($operation, array('assignTo', 'review', 'close', 'edit'), true))
++            return $this->failure($this->lang->feedback->invalidAction);
++        if(!common::hasPriv('feedback', $operation)) return $this->failure($this->lang->feedback->invalidAction, 403);
++
++        foreach($ids as $id)
++        {
++            if(!is_scalar($id) || !ctype_digit((string)$id) || (int)$id < 1) return $this->failure($this->lang->feedback->invalidFields);
++        }
++        $ids = array_unique(array_map('intval', $ids));
++        $items = $this->feedback->getByList($ids);
++        if(count($items) !== count($ids)) return $this->failure($this->lang->feedback->notFound, 404);
++
++        $fields = array('assignTo' => 'assignedTo', 'review' => 'reviewResult', 'close' => 'closedReason');
++        $value = $operation === 'edit'
++            ? array_filter(array('pri' => $this->input('pri'), 'type' => $this->input('type')), static fn($item) => $item !== '')
++            : $this->input($fields[$operation]);
++        try
++        {
++            $this->feedback->batchOperate($items, $operation, $value);
++            return $this->locate($this->createLink('feedback', 'browse'));
++        }
++        catch(InvalidArgumentException|RuntimeException $error)
++        {
++            return $this->failure($error->getMessage());
++        }
++    }
++
++    public function export(int $template = 0, int $productID = 0, string $browseType = 'all', string $keyword = '')
++    {
++        $this->app->loadClass('pager', true);
++        $fields = $this->spreadsheetFields();
++        $pager = new pager(0, 5000, 1);
++        $rows = $template ? array() : $this->feedback->getList($browseType, $productID, (string)helper::safe64Decode($keyword), 'id_asc', $pager);
++        if(!$template && $pager->recTotal > 5000) return $this->failure($this->lang->feedback->exportLimit);
++        $excel = $this->app->loadClass('phpexcel');
++        $sheet = $excel->getActiveSheet();
++        $columns = $template ? $fields : array_merge(array('id', 'status'), $fields);
++        $sheet->fromArray($columns);
++        foreach(array_values($rows) as $index => $row)
++        {
++            foreach($columns as $column => $name)
++            {
++                $sheet->setCellValueExplicitByColumnAndRow($column + 1, $index + 2, (string)$row->$name, 's');
++            }
++        }
++
++        $filename = $template ? 'feedback-template.xlsx' : 'feedback.xlsx';
++        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
++        header("Content-Disposition: attachment; filename=$filename");
++        $excel->createWriter()->save('php://output');
++    }
++
++    public function import()
++    {
++        if(!common::hasPriv('feedback', 'create')) return $this->failure($this->lang->feedback->invalidAction, 403);
++        if($_POST)
++        {
++            try
++            {
++                $this->feedback->importRows($this->readSpreadsheet($_FILES['workbook'] ?? array()));
++                return $this->locate($this->createLink('feedback', 'browse', 'browseType=all'));
++            }
++            catch(InvalidArgumentException|RuntimeException $error)
++            {
++                $this->view->error = $error->getMessage();
++            }
++        }
++
++        $this->view->title = $this->lang->feedback->import;
++        $this->view->products = $this->feedback->getGrantProducts();
++        $this->display('feedback', 'import');
++    }
++
++    private function spreadsheetFields(): array
++    {
++        return array('product', 'title', 'desc', 'module', 'type', 'pri', 'public', 'feedbackBy', 'notifyEmail', 'notify');
++    }
++
++    private function readSpreadsheet(array $upload): array
++    {
++        $error = $this->lang->feedback->workbookError;
++        $path = $upload['tmp_name'] ?? '';
++        if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($path) || !is_uploaded_file($path)
++            || $upload['size'] > 2 * 1024 * 1024) throw new InvalidArgumentException($error);
++
++        $archive = new ZipArchive();
++        if($archive->open($path) !== true) throw new InvalidArgumentException($error);
++        try
++        {
++            $expandedSize = 0;
++            for($index = 0; $index < $archive->numFiles; $index++)
++            {
++                $entry = $archive->statIndex($index);
++                if(!$entry || ($expandedSize += $entry['size']) > 16 * 1024 * 1024) throw new InvalidArgumentException($error);
++            }
++        }
++        finally
++        {
++            $archive->close();
++        }
++
++        $excel = $this->app->loadClass('phpexcel');
++        try
++        {
++            $reader = $excel->createReader();
++            $sheets = $reader->listWorksheetInfo($path);
++            if(count($sheets) !== 1 || $sheets[0]['totalRows'] > 201 || $sheets[0]['totalColumns'] > 12)
++                throw new InvalidArgumentException($error);
++            $sheet = $reader->setReadDataOnly(true)->load($path)->getActiveSheet();
++        }
++        catch(Exception $exception)
++        {
++            throw new InvalidArgumentException($error, 0, $exception);
++        }
++
++        $rows = $sheet->toArray('', false);
++        $fields = array_shift($rows);
++        if($fields !== $this->spreadsheetFields() && $fields !== array_merge(array('id', 'status'), $this->spreadsheetFields()))
++            throw new InvalidArgumentException($error);
++
++        $result = array();
++        foreach($rows as $index => $row)
++        {
++            $row = array_combine($fields, $row);
++            unset($row['id'], $row['status']);
++            $row = array_map(static fn($value) => is_scalar($value) ? (string)$value : '', $row);
++            if(count(array_filter($row, static fn($value) => $value !== ''))) $result[$index + 2] = $row;
++        }
++        if(!$result) throw new InvalidArgumentException($error);
++        return $result;
++    }
++
+     public function assignTo(int $feedbackID) { return $this->change($feedbackID, 'assignTo', 'assignedTo'); }
+     public function review(int $feedbackID)   { return $this->change($feedbackID, 'review', 'reviewResult'); }
+     public function close(int $feedbackID)    { return $this->change($feedbackID, 'close', 'closedReason'); }
+diff --git a/module/feedback/lang/en.php b/module/feedback/lang/en.php
+index 7b7f4fc4f8a13fb83adf776dd3e045cb8ce2650c..2fea93b695fa3474f11bba21cd4ebe5f4c0202fb 100644
+--- a/module/feedback/lang/en.php
++++ b/module/feedback/lang/en.php
+@@ -52,3 +52,24 @@ $lang->feedback->conversionTypes = array('bug' => 'Bug', 'story' => 'Requirement
+ $lang->feedback->actionLabels['converted'] = 'Created a work item';
+ $lang->feedback->repeatFeedback = 'Duplicate of feedback #';
+ $lang->feedback->invalidRepeat = 'Select another accessible feedback item in the same product.';
++$lang->feedback->notify = 'Email me about feedback updates';
++$lang->feedback->noticeSubject = 'Feedback update';
++$lang->feedback->noticeBody = 'Feedback #%d was updated. Current status: %s';
++$lang->feedback->attachments = 'Attachments';
++$lang->feedback->upload = 'Upload attachment';
++$lang->feedback->uploadError = 'Could not save the attachment. Upload a file up to 10 MB.';
++$lang->feedback->actionLabels['addedfile'] = 'Attached a file';
++$lang->feedback->batch = 'Apply to selected feedback';
++$lang->feedback->import = 'Import Excel';
++$lang->feedback->export = 'Export Excel';
++$lang->feedback->template = 'Download import template';
++$lang->feedback->importHelp = 'Use the numerical product ID in the product column. Import accepts up to 200 rows in one .xlsx worksheet.';
++$lang->feedback->workbookError = 'Use a valid .xlsx workbook based on the feedback template.';
++$lang->feedback->importRowError = 'Invalid feedback on row %d.';
++$lang->feedback->ticket = 'Ticket';
++$lang->feedback->conversionTypes['ticket'] = $lang->feedback->ticket;
++$lang->feedback->ticketStatuses = array('wait' => 'Waiting', 'doing' => 'Start work', 'done' => 'Mark complete', 'closed' => 'Close ticket');
++$lang->feedback->download = 'Download attachment';
++$lang->feedback->exportLimit = 'Narrow the filters to export up to 5,000 feedback items.';
++$lang->feedback->keepType = 'Keep type';
++$lang->feedback->keepPriority = 'Keep priority';
+diff --git a/module/feedback/lang/zh-cn.php b/module/feedback/lang/zh-cn.php
+index 016089dba046170100cf8cd28c46e6e8b2c0bc11..e530af8ac90580e545494f34a3bc247ba34f7483 100644
+--- a/module/feedback/lang/zh-cn.php
++++ b/module/feedback/lang/zh-cn.php
+@@ -53,3 +53,24 @@ $lang->feedback->conversionTypes = array('bug' => 'Bug', 'story' => '需求', 't
+ $lang->feedback->actionLabels['converted'] = '转化';
+ $lang->feedback->repeatFeedback = '重复反馈编号';
+ $lang->feedback->invalidRepeat = '请输入同一产品下另一条可访问的反馈编号。';
++$lang->feedback->notify = '接收反馈进度邮件';
++$lang->feedback->noticeSubject = '反馈进度更新';
++$lang->feedback->noticeBody = '反馈 #%d 已更新。当前状态为%s。';
++$lang->feedback->attachments = '附件';
++$lang->feedback->upload = '上传附件';
++$lang->feedback->uploadError = '无法保存附件，请上传不超过 10 MB 的文件。';
++$lang->feedback->actionLabels['addedfile'] = '添加了附件';
++$lang->feedback->batch = '批量处理已选反馈';
++$lang->feedback->import = '导入 Excel';
++$lang->feedback->export = '导出 Excel';
++$lang->feedback->template = '下载导入模板';
++$lang->feedback->importHelp = '请在 product 列填写数字产品编号。每次可导入一个 .xlsx 工作表，最多 200 行。';
++$lang->feedback->workbookError = '请上传基于反馈模板制作的有效 .xlsx 文件。';
++$lang->feedback->importRowError = '第 %d 行反馈有误。';
++$lang->feedback->ticket = '工单';
++$lang->feedback->conversionTypes['ticket'] = $lang->feedback->ticket;
++$lang->feedback->ticketStatuses = array('wait' => '待处理', 'doing' => '开始处理', 'done' => '标记完成', 'closed' => '关闭工单');
++$lang->feedback->download = '下载附件';
++$lang->feedback->exportLimit = '请缩小筛选范围，每次最多导出 5,000 条反馈。';
++$lang->feedback->keepType = '保留原类型';
++$lang->feedback->keepPriority = '保留原优先级';
+diff --git a/module/feedback/model.php b/module/feedback/model.php
+index 3bee739eb367534ba9d703be429f2108dc7b7674..0b874399fffe9a916793f3c0542add9a9f2d3dd1 100644
+--- a/module/feedback/model.php
++++ b/module/feedback/model.php
+@@ -88,7 +88,7 @@ class feedbackModel extends model
+         }
+ 
+         $email = trim($input['notifyEmail'] ?? '');
+-        if($email !== '' && (strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)))
++        if((!empty($input['notify']) || $email !== '') && (strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)))
+         {
+             throw new InvalidArgumentException($lang->invalidFields);
+         }
+@@ -96,7 +96,7 @@ class feedbackModel extends model
+         $data = array(
+             'title' => $title, 'product' => $product, 'module' => $module, 'type' => $type, 'pri' => $priority,
+             'desc' => fixer::stripDataTags($input['desc'] ?? ''), 'public' => (int)!empty($input['public']),
+-            'notifyEmail' => $email, 'feedbackBy' => mb_substr(trim($input['feedbackBy'] ?? ''), 0, 100),
++            'notifyEmail' => $email, 'notify' => (int)!empty($input['notify']), 'feedbackBy' => mb_substr(trim($input['feedbackBy'] ?? ''), 0, 100),
+         );
+ 
+         if($old)
+@@ -107,19 +107,20 @@ class feedbackModel extends model
+         }
+ 
+         $data += array('status' => 'noreview', 'openedBy' => $this->app->user->account, 'openedDate' => helper::now());
+-        $this->dbh->beginTransaction();
++        $ownsTransaction = !$this->dbh->inTransaction();
++        if($ownsTransaction) $this->dbh->beginTransaction();
+         try
+         {
+             $this->dao->insert(TABLE_FEEDBACK)->data($data)->exec();
+             if(dao::isError()) throw new RuntimeException($lang->saveFailed);
+             $id = (int)$this->dao->lastInsertID();
+             $this->logAction($id, 'opened');
+-            $this->dbh->commit();
++            if($ownsTransaction) $this->dbh->commit();
+             return $id;
+         }
+         catch(Throwable $error)
+         {
+-            $this->dbh->rollBack();
++            if($ownsTransaction) $this->dbh->rollBack();
+             throw $error;
+         }
+     }
+@@ -205,6 +206,8 @@ class feedbackModel extends model
+                 break;
+         }
+         $this->record($feedback, $data, $action, $comment, $extra);
++        if(!$this->dbh->inTransaction() && in_array($operation, array('assignTo', 'review', 'reply', 'close', 'activate'), true))
++            $this->notifyFeedback($feedback, $data['status'] ?? $feedback->status);
+     }
+ 
+     public function getEligibleAssignees(int $product): array
+@@ -220,7 +223,7 @@ class feedbackModel extends model
+     public function getConversionTypes(object $feedback): array
+     {
+         if(!$this->canOperate($feedback, 'convert')) return array();
+-        return array_filter($this->lang->feedback->conversionTypes, fn($module) => common::hasPriv($module, 'create'), ARRAY_FILTER_USE_KEY);
++        return array_filter($this->lang->feedback->conversionTypes, fn($module) => $module === 'ticket' ? common::hasPriv('feedback', 'ticket') : common::hasPriv($module, 'create'), ARRAY_FILTER_USE_KEY);
+     }
+ 
+     public function convert(object $feedback, string $type): void
+@@ -244,6 +247,7 @@ class feedbackModel extends model
+                     'openedBy' => $user, 'openedDate' => $now, 'status' => 'draft', 'stage' => 'wait', 'version' => 1,
+                     'pri' => $feedback->pri, 'estimate' => 0,
+                 ), 0, 0, "fromType=feedback,fromID={$feedback->id}"),
++                'ticket' => $this->createTicket($feedback, $title, $desc, $user, $now),
+                 'todo' => $this->loadModel('todo')->create((object)array(
+                     'name' => $title, 'desc' => $desc, 'type' => 'custom', 'account' => $user, 'assignedTo' => $user,
+                     'date' => date('Y-m-d'), 'begin' => 0, 'end' => 0, 'status' => 'wait', 'pri' => $feedback->pri,
+@@ -254,12 +258,149 @@ class feedbackModel extends model
+             if($type === 'todo') $this->loadModel('action')->create('todo', $id, 'opened');
+             return array('solution' => $type, 'result' => $id, 'status' => 'replied', 'processedBy' => $user, 'processedDate' => $now);
+         }, 'converted', '', $type);
++        $this->notifyFeedback($feedback, 'replied');
+     }
+ 
+-    private function record(object $feedback, array|Closure $data, string $action, string $comment = '', string $extra = ''): void
++    public function attachFile(object $feedback): void
++    {
++        $model = $this->loadModel('file');
++        $upload = $model->getUpload();
++        if(count($upload) !== 1 || !isset($upload[0]['extension'])) throw new InvalidArgumentException($this->lang->feedback->uploadError);
++        $file = $upload[0];
++        $file['pathname'] = date('Ym/') . bin2hex(random_bytes(16)) . '.' . $file['extension'];
++        $path = $model->savePath . $model->getSaveName($file['pathname']);
++        try
++        {
++            $this->record($feedback, function() use ($model, $file, $feedback)
++            {
++                $saved = $model->saveAFile($file, 'feedback', (int)$feedback->id);
++                if(!$saved || !$saved->id || dao::isError()) throw new RuntimeException($this->lang->feedback->uploadError);
++                return array();
++            }, 'addedfile', '', $file['title']);
++        }
++        catch(Throwable $error)
++        {
++            if(is_file($path)) unlink($path);
++            throw $error;
++        }
++    }
++
++    private function createTicket(object $feedback, string $title, string $description, string $account, string $date): int
++    {
++        $this->dao->insert(TABLE_TICKET)->data(array(
++            'product' => $feedback->product, 'module' => $feedback->module, 'title' => $title,
++            'desc' => $description, 'feedback' => $feedback->id, 'type' => 'issue', 'pri' => $feedback->pri,
++            'status' => 'wait', 'openedBy' => $account, 'openedDate' => $date,
++            'assignedTo' => $feedback->assignedTo, 'assignedDate' => $feedback->assignedTo ? $date : null,
++        ))->exec();
++        if(dao::isError()) throw new RuntimeException($this->lang->feedback->saveFailed);
++        return (int)$this->dao->lastInsertID();
++    }
++
++    public function getTicket(object $feedback): object|false
++    {
++        if($feedback->solution !== 'ticket' || !$feedback->result) return false;
++        return $this->dao->select('*')->from(TABLE_TICKET)->where('id')->eq($feedback->result)
++            ->andWhere('feedback')->eq($feedback->id)->andWhere('deleted')->eq(0)->fetch() ?: false;
++    }
++
++    public function changeTicket(object $feedback, object $ticket, string $status): void
++    {
++        $next = array('wait' => 'doing', 'doing' => 'done', 'done' => 'closed');
++        if(($next[$ticket->status] ?? '') !== $status) throw new InvalidArgumentException($this->lang->feedback->invalidAction);
++        $account = $this->app->user->account;
++        $date = helper::now();
++        $fields = array('doing' => 'started', 'done' => 'finished', 'closed' => 'closed');
++        $field = $fields[$status];
++        $updated = $this->dao->update(TABLE_TICKET)->data(array(
++            'status' => $status, $field . 'By' => $account, $field . 'Date' => $date, 'editedBy' => $account, 'editedDate' => $date,
++        ))->where('id')->eq($ticket->id)->andWhere('status')->eq($ticket->status)->andWhere('deleted')->eq(0)->exec();
++        if(!$updated || dao::isError()) throw new RuntimeException($this->lang->feedback->saveFailed);
++    }
++
++    public function notifyFeedback(object $feedback, string $status): void
++    {
++        if(!$feedback->notify || !filter_var($feedback->notifyEmail, FILTER_VALIDATE_EMAIL)) return;
++
++        try
++        {
++            $mail = $this->loadModel('mail');
++            if(empty($this->config->mail->turnon)) return;
++            $text = sprintf($this->lang->feedback->noticeBody, $feedback->id, zget($this->lang->feedback->statusList, $status, $status));
++            $recipient = (object)array('email' => $feedback->notifyEmail, 'realname' => '');
++            $mail->send('feedback-contact', $this->lang->feedback->noticeSubject, htmlspecialchars($text, ENT_QUOTES, 'UTF-8'), '', true, array('feedback-contact' => $recipient), true, false);
++        }
++        catch(Throwable $error)
++        {
++            $this->app->saveError(E_USER_WARNING, 'Feedback mail delivery failed for #' . (int)$feedback->id, __FILE__, __LINE__);
++        }
++    }
++
++    public function batchOperate(array $feedbacks, string $operation, string|array $value): void
++    {
++        if(!$feedbacks || !in_array($operation, array('review', 'assignTo', 'close', 'edit'), true))
++            throw new InvalidArgumentException($this->lang->feedback->invalidAction);
++        ksort($feedbacks);
++        $this->dbh->beginTransaction();
++        try
++        {
++            foreach($feedbacks as $feedback)
++            {
++                if($operation === 'edit')
++                {
++                    if(!$value || !$this->canOperate($feedback, 'edit')) throw new InvalidArgumentException($this->lang->feedback->invalidAction);
++                    $this->saveFeedback($value + (array)$feedback, $feedback);
++                }
++                else
++                {
++                    $this->operate($feedback, $operation, $value, '');
++                }
++            }
++            $this->dbh->commit();
++        }
++        catch(Throwable $error)
++        {
++            $this->dbh->rollBack();
++            throw $error;
++        }
++        if($operation === 'edit') return;
++        foreach($feedbacks as $feedback)
++        {
++            $current = $this->getByID((int)$feedback->id);
++            if($current) $this->notifyFeedback($current, $current->status);
++        }
++    }
++
++    public function importRows(array $rows): void
+     {
+         $this->dbh->beginTransaction();
+         try
++        {
++            foreach($rows as $line => $row)
++            {
++                try
++                {
++                    $this->saveFeedback($row);
++                }
++                catch(InvalidArgumentException|RuntimeException $error)
++                {
++                    throw new InvalidArgumentException(sprintf($this->lang->feedback->importRowError, $line) . ' ' . $error->getMessage(), 0, $error);
++                }
++            }
++            $this->dbh->commit();
++        }
++        catch(Throwable $error)
++        {
++            $this->dbh->rollBack();
++            throw $error;
++        }
++    }
++
++    private function record(object $feedback, array|Closure $data, string $action, string $comment = '', string $extra = ''): void
++    {
++        $ownsTransaction = !$this->dbh->inTransaction();
++        if($ownsTransaction) $this->dbh->beginTransaction();
++        try
+         {
+             $locked = $this->dbh->query('SELECT id FROM ' . TABLE_FEEDBACK . ' WHERE id = ' . (int)$feedback->id . ' FOR UPDATE')->fetch();
+             $current = $locked ? $this->getByID((int)$feedback->id) : false;
+@@ -270,11 +411,11 @@ class feedbackModel extends model
+             $this->dao->update(TABLE_FEEDBACK)->data($data)->where('id')->eq($feedback->id)->exec();
+             if(dao::isError()) throw new RuntimeException($this->lang->feedback->saveFailed);
+             $this->logAction((int)$feedback->id, $action, $comment, $extra);
+-            $this->dbh->commit();
++            if($ownsTransaction) $this->dbh->commit();
+         }
+         catch(Throwable $error)
+         {
+-            $this->dbh->rollBack();
++            if($ownsTransaction) $this->dbh->rollBack();
+             throw $error;
+         }
+     }
+diff --git a/module/feedback/ui/browse.html.php b/module/feedback/ui/browse.html.php
+index 0439832a584f10474d7038dd3adb48166c4cc516..d316138afb175b94797c4408d11b0f77eedc914d 100644
+--- a/module/feedback/ui/browse.html.php
++++ b/module/feedback/ui/browse.html.php
+@@ -8,14 +8,21 @@ $browseLink = static fn($filter, $page) => $link('browse', http_build_query(arra
+     'browseType' => $filter, 'productID' => $productID, 'orderBy' => $orderBy,
+     'recTotal' => 0, 'recPerPage' => $pager->recPerPage, 'pageID' => $page, 'keyword' => $keyword === '' ? '' : helper::safe64Encode($keyword),
+ )));
++$batchActions = array_filter(array('assignTo', 'review', 'close', 'edit'), static fn($action) => \common::hasPriv('feedback', $action));
++$canBatch = $batchActions && \common::hasPriv('feedback', 'batch');
++$exportLink = $link('export', http_build_query(array('template' => 0, 'productID' => $productID, 'browseType' => $browseType, 'keyword' => $keyword === '' ? '' : helper::safe64Encode($keyword))));
+ ob_start();
+ ?>
+ <main class="panel">
+   <div class="panel-heading flex justify-between items-center">
+     <h2 class="panel-title"><?= $escape($feedbackLang->browse) ?></h2>
++    <div class="flex gap-2">
++    <?php if(\common::hasPriv('feedback', 'export')): ?><a class="btn" href="<?= $escape($exportLink) ?>"><?= $escape($feedbackLang->export) ?></a><?php endif; ?>
++    <?php if(\common::hasPriv('feedback', 'import') && \common::hasPriv('feedback', 'create')): ?><a class="btn" href="<?= $escape($link('import')) ?>"><?= $escape($feedbackLang->import) ?></a><?php endif; ?>
+     <?php if(\common::hasPriv('feedback', 'create')): ?>
+       <a class="btn primary" href="<?= $escape($link('create', "productID=$productID")) ?>"><?= $escape($feedbackLang->create) ?></a>
+     <?php endif; ?>
++    </div>
+   </div>
+   <div class="panel-body">
+     <nav class="flex gap-2 flex-wrap" aria-label="<?= $escape($feedbackLang->status) ?>">
+@@ -41,9 +48,10 @@ ob_start();
+     <?php if(!$feedbacks): ?>
+       <p class="text-muted py-6"><?= $escape($feedbackLang->empty) ?></p>
+     <?php else: ?>
++      <?php if($canBatch): ?><form method="post" action="<?= $escape($link('batch')) ?>"><?php endif; ?>
+       <div class="overflow-auto">
+         <table class="table table-hover">
+-          <thead><tr><th>ID</th>
++          <thead><tr><?php if($canBatch): ?><th></th><?php endif; ?><th>ID</th>
+           <?php foreach(array('title', 'product', 'status', 'pri', 'openedBy', 'assignedTo') as $column): ?>
+             <th><?= $escape($feedbackLang->$column) ?></th>
+           <?php endforeach; ?>
+@@ -51,6 +59,7 @@ ob_start();
+           <tbody>
+           <?php foreach($feedbacks as $item): ?>
+             <tr>
++              <?php if($canBatch): ?><td><input type="checkbox" name="feedbackIDs[]" value="<?= (int)$item->id ?>" aria-label="#<?= (int)$item->id ?> <?= $escape($item->title) ?>"></td><?php endif; ?>
+               <td><?= (int)$item->id ?></td>
+               <td>
+                 <?php if(\common::hasPriv('feedback', 'view')): ?>
+@@ -69,6 +78,44 @@ ob_start();
+           </tbody>
+         </table>
+       </div>
++      <?php if($canBatch): ?>
++        <details class="border rounded p-3 mt-2">
++          <summary><?= $escape($feedbackLang->batch) ?></summary>
++          <?php foreach($batchActions as $action): ?>
++            <div class="flex gap-2 items-center mt-2">
++              <?php if($action === 'assignTo'): ?>
++                <select class="form-control w-56" name="assignedTo" aria-label="<?= $escape($feedbackLang->assignedTo) ?>">
++                  <option value=""><?= $escape($feedbackLang->unassigned) ?></option>
++                  <?php foreach($users as $account => $name): if($account === '') continue; ?>
++                    <option value="<?= $escape($account) ?>"><?= $escape($name) ?></option>
++                  <?php endforeach; ?>
++                </select>
++              <?php elseif($action === 'review'): ?>
++                <select class="form-control w-56" name="reviewResult" aria-label="<?= $escape($feedbackLang->review) ?>">
++                  <?php foreach($feedbackLang->reviewResultList as $key => $name): ?><option value="<?= $escape($key) ?>"><?= $escape($name) ?></option><?php endforeach; ?>
++                </select>
++              <?php elseif($action === 'edit'): ?>
++                <select class="form-control w-48" name="type" aria-label="<?= $escape($feedbackLang->type) ?>">
++                  <option value=""><?= $escape($feedbackLang->keepType) ?></option>
++                  <?php foreach($feedbackLang->typeList as $key => $name): ?><option value="<?= $escape($key) ?>"><?= $escape($name) ?></option><?php endforeach; ?>
++                </select>
++                <select class="form-control w-48" name="pri" aria-label="<?= $escape($feedbackLang->pri) ?>">
++                  <option value=""><?= $escape($feedbackLang->keepPriority) ?></option>
++                  <?php foreach(range(1, 4) as $priority): ?><option value="<?= $priority ?>">P<?= $priority ?></option><?php endforeach; ?>
++                </select>
++              <?php else: ?>
++                <select class="form-control w-56" name="closedReason" aria-label="<?= $escape($feedbackLang->close) ?>">
++                  <?php foreach($feedbackLang->closedReasonList as $key => $name): if($key === 'repeat') continue; ?>
++                    <option value="<?= $escape($key) ?>"><?= $escape($name) ?></option>
++                  <?php endforeach; ?>
++                </select>
++              <?php endif; ?>
++              <button class="btn" type="submit" name="operation" value="<?= $escape($action) ?>"><?= $escape($feedbackLang->$action) ?></button>
++            </div>
++          <?php endforeach; ?>
++        </details>
++        </form>
++      <?php endif; ?>
+       <nav class="flex gap-2 justify-end items-center">
+         <?php if($pager->pageID > 1): ?>
+           <a class="btn" href="<?= $escape($browseLink($browseType, $pager->pageID - 1)) ?>"><?= $escape($feedbackLang->previous) ?></a>
+diff --git a/module/feedback/ui/create.html.php b/module/feedback/ui/create.html.php
+index 2288863b4a0b62a70ea16e4199f89006c49adefd..ef8b3668b3800f5260b2f15fe5f996d26bb42948 100644
+--- a/module/feedback/ui/create.html.php
++++ b/module/feedback/ui/create.html.php
+@@ -54,6 +54,7 @@ ob_start();
+         <label><?= $escape($feedbackLang->notifyEmail) ?><input class="form-control" type="email" name="notifyEmail" maxlength="100" value="<?= $escape($feedback->notifyEmail ?? '') ?>"></label>
+       </div>
+       <label><input type="hidden" name="public" value="0"><input type="checkbox" name="public" value="1" <?= !empty($feedback->public) ? 'checked' : '' ?>> <?= $escape($feedbackLang->public) ?></label>
++      <label><input type="hidden" name="notify" value="0"><input type="checkbox" name="notify" value="1" <?= !empty($feedback->notify) ? 'checked' : '' ?>> <?= $escape($feedbackLang->notify) ?></label>
+       <div class="flex gap-2">
+         <button class="btn primary" type="submit"><?= $escape($lang->save) ?></button>
+         <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse')) ?>"><?= $escape($feedbackLang->back) ?></a>
+diff --git a/module/feedback/ui/import.html.php b/module/feedback/ui/import.html.php
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b0b416b9555105f3763030f399118b57d01a8d1
+--- /dev/null
++++ b/module/feedback/ui/import.html.php
+@@ -0,0 +1,27 @@
++<?php
++namespace zin;
++
++$feedbackLang = $lang->feedback;
++$escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
++ob_start();
++?>
++<main class="panel mx-auto" style="max-width: 50rem">
++  <div class="panel-heading"><h2 class="panel-title"><?= $escape($feedbackLang->import) ?></h2></div>
++  <div class="panel-body">
++    <?php if(!empty($error)): ?><p class="alert danger" role="alert"><?= $escape($error) ?></p><?php endif; ?>
++    <p><?= $escape($feedbackLang->importHelp) ?></p>
++    <?php if(\common::hasPriv('feedback', 'export')): ?>
++      <a class="btn my-2" href="<?= $escape(helper::createLink('feedback', 'export', 'template=1')) ?>"><?= $escape($feedbackLang->template) ?></a>
++    <?php endif; ?>
++    <ul class="my-2">
++      <?php foreach($products as $id => $name): ?><li>#<?= (int)$id ?> <?= $escape($name) ?></li><?php endforeach; ?>
++    </ul>
++    <form method="post" enctype="multipart/form-data" class="flex gap-2 items-center">
++      <input type="hidden" name="import" value="1">
++      <input type="file" name="workbook" accept=".xlsx" required aria-label="<?= $escape($feedbackLang->import) ?>">
++      <button class="btn primary" type="submit"><?= $escape($feedbackLang->import) ?></button>
++      <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse')) ?>"><?= $escape($feedbackLang->back) ?></a>
++    </form>
++  </div>
++</main>
++<?php html(ob_get_clean());
+diff --git a/module/feedback/ui/view.html.php b/module/feedback/ui/view.html.php
+index ec817b8edaf708a12896b8fa35f451d72d8df590..5f5183987ebe6e106f1e80674358320245924ea6 100644
+--- a/module/feedback/ui/view.html.php
++++ b/module/feedback/ui/view.html.php
+@@ -46,7 +46,7 @@ ob_start();
+     <?php if($feedback->result && isset($feedbackLang->conversionTypes[$feedback->solution])): ?>
+       <p class="mt-4">
+         <?= $escape($feedbackLang->result) ?>
+-        <?php if(\common::hasPriv($feedback->solution, 'view')): ?>
++        <?php if($feedback->solution !== 'ticket' && \common::hasPriv($feedback->solution, 'view')): ?>
+           <a href="<?= $escape(helper::createLink($feedback->solution, 'view', array((int)$feedback->result))) ?>"><?= $escape($feedbackLang->conversionTypes[$feedback->solution]) ?> #<?= (int)$feedback->result ?></a>
+         <?php else: ?>
+           <?= $escape($feedbackLang->conversionTypes[$feedback->solution]) ?> #<?= (int)$feedback->result ?>
+@@ -57,6 +57,39 @@ ob_start();
+       <h3><?= $escape($feedbackLang->desc) ?></h3>
+       <p class="whitespace-pre-wrap"><?= $escape($feedback->desc) ?></p>
+     </section>
++    <?php if($ticket): ?>
++      <section class="border rounded p-4 mt-6">
++        <h3>#<?= (int)$ticket->id ?> <?= $escape($ticket->title) ?></h3>
++        <p><?= $escape(zget($feedbackLang->ticketStatuses, $ticket->status, $ticket->status)) ?></p>
++        <?php
++          $next = array('wait' => 'doing', 'doing' => 'done', 'done' => 'closed')[$ticket->status] ?? '';
++          $mayUpdateTicket = $app->user->admin || $ticket->assignedTo === $app->user->account;
++        ?>
++        <?php if($next && $mayUpdateTicket): ?>
++          <form method="post" action="<?= $escape($link('ticket')) ?>">
++            <button class="btn" type="submit" name="status" value="<?= $escape($next) ?>"><?= $escape($feedbackLang->ticketStatuses[$next]) ?></button>
++          </form>
++        <?php endif; ?>
++      </section>
++    <?php endif; ?>
++    <?php if($attachments || (\common::hasPriv('feedback', 'upload') && $app->control->feedback->canOperate($feedback, 'edit'))): ?>
++      <section class="border rounded p-4 mt-6">
++        <h3><?= $escape($feedbackLang->attachments) ?></h3>
++        <?php if(\common::hasPriv('feedback', 'download')): ?>
++          <ul class="my-2">
++            <?php foreach($attachments as $attachment): ?>
++              <li><a href="<?= $escape(helper::createLink('feedback', 'download', array('fileID' => $attachment->id))) ?>"><?= $escape($attachment->title) ?></a></li>
++            <?php endforeach; ?>
++          </ul>
++        <?php endif; ?>
++        <?php if(\common::hasPriv('feedback', 'upload') && $app->control->feedback->canOperate($feedback, 'edit')): ?>
++          <form method="post" enctype="multipart/form-data" action="<?= $escape($link('upload')) ?>" class="flex gap-2 items-center">
++            <input type="file" name="files" required aria-label="<?= $escape($feedbackLang->attachments) ?>">
++            <button class="btn" type="submit"><?= $escape($feedbackLang->upload) ?></button>
++          </form>
++        <?php endif; ?>
++      </section>
++    <?php endif; ?>
+     <section class="mt-6">
+       <?php foreach($operations as $operation => [$field, $options]): if(!$canOperate($operation) || ($operation === 'convert' && !$conversionTypes)) continue; ?>
+         <details class="border rounded p-3 mb-2">
+diff --git a/module/file/control.php b/module/file/control.php
+index 04d36920f03428456dd58b8116f12db86533963f..00bcb568567e95b4de8a66581d274cb44c4adf77 100644
+--- a/module/file/control.php
++++ b/module/file/control.php
+@@ -65,6 +65,9 @@ class file extends control
+      */
+     public function ajaxUpload(string $uid = '', string $objectType = '', int $objectID = 0, string $extra = '', string $field = 'imgFile', bool $api = false, string $gid = '')
+     {
++        if(strtolower($objectType) === 'feedback' && $this->config->edition === 'open')
++            return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
++
+         $_FILES = validater::filterFiles();
+ 
+         /* extra 只允许空值或 editor，editor 由文档应用(docApp)编辑器图片上传使用，禁止客户端写入其他值。Only allow empty or editor extra. */
+@@ -326,6 +329,11 @@ class file extends control
+             if(empty($file) || !$this->file->fileExists($file)) return $this->send(array('result' => 'fail', 'message' => $this->lang->file->fileNotFound));
+ 
+             $canDelete = $this->file->checkPriv($file);
++            if($canDelete && strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
++            {
++                $feedback = $this->loadModel('feedback')->getByID((int)$file->objectID);
++                $canDelete = $feedback && $this->feedback->canOperate($feedback, 'edit');
++            }
+             if($file->objectType == 'comment')
+             {
+                 $action    = $this->loadModel('action')->fetchBaseInfo($file->objectID);
+@@ -383,6 +391,17 @@ class file extends control
+      */
+     public function edit(int $fileID)
+     {
++        if($this->config->edition === 'open')
++        {
++            $attachment = $this->file->getById($fileID);
++            if($attachment && strtolower($attachment->objectType) === 'feedback')
++            {
++                $feedback = $this->loadModel('feedback')->getByID((int)$attachment->objectID);
++                if(!$this->file->checkPriv($attachment) || !$feedback || !$this->feedback->canOperate($feedback, 'edit'))
++                    return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
++            }
++        }
++
+         if($_POST)
+         {
+             $result = $this->fileZen->updateFileName($fileID);
+@@ -591,6 +610,8 @@ class file extends control
+             }
+             if($file)
+             {
++                if(strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
++                    return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
+                 if($this->viewType === 'json')
+                 {
+                     $this->send(array('result' => 'success', 'file' => array('id' => $file->id, 'title' => $file->title, 'extension' => $file->extension, 'size' => $file->size, 'realPath' => $file->realPath, 'gid' => $file->gid, 'addedBy' => $file->addedBy, 'addedDate' => $file->addedDate, 'objectType' => $file->objectType, 'objectID' => $file->objectID)));
+@@ -607,6 +628,8 @@ class file extends control
+ 
+         if(!empty($title)) $title = urldecode(base64_decode($title));
+         $file = $this->file->query($objectType, $objectID, $title, $extra);
++        if($file && strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
++            return $this->send(array('result' => 'fail', 'message' => $this->lang->file->accessDenied));
+         if(empty($file)) return $this->send(array('result' => 'fail', 'message' => $this->lang->file->fileNotFound, 'load' => helper::createLink('my', 'index'), 'closeModal' => true));
+ 
+         if($this->viewType === 'json')
+diff --git a/module/file/model.php b/module/file/model.php
+index 70373d92fec16d7a427d8600f0ded5c3f171d4ed..55ca477fb07178e68c773264352b240daba95c71 100644
+--- a/module/file/model.php
++++ b/module/file/model.php
+@@ -731,6 +731,11 @@ class fileModel extends model
+     public function checkPriv(object $file): bool
+     {
+         if(!$file->objectType || !$file->objectID) return true;
++        if(strtolower($file->objectType) === 'feedback' && $this->config->edition === 'open')
++        {
++            return $this->loadModel('user')->isLogon() && common::hasPriv('feedback', 'view')
++                && $this->loadModel('feedback')->getByID((int)$file->objectID) !== false;
++        }
+         if(!$this->loadModel('user')->isLogon()) return true;
+         if($file->extra == 'editor') return true;
+ 
+diff --git a/module/group/lang/resource.php b/module/group/lang/resource.php
+index c79d46100d28ef128f5a3678c274c0bfb60ee752..70089c234c616e785b379855720ead455ca1b78b 100644
+--- a/module/group/lang/resource.php
++++ b/module/group/lang/resource.php
+@@ -2413,7 +2413,7 @@ if($config->edition === 'open')
+ {
+     $lang->moduleOrder[252] = 'feedback';
+     $lang->resource->feedback = new stdclass();
+-    foreach(array('browse', 'admin', 'view', 'adminView', 'create', 'edit', 'assignTo', 'review', 'reply', 'ask', 'comment', 'close', 'activate', 'delete', 'convert') as $method)
++    foreach(array('browse', 'admin', 'view', 'adminView', 'create', 'edit', 'assignTo', 'review', 'reply', 'ask', 'comment', 'close', 'activate', 'delete', 'convert', 'ticket', 'upload', 'download', 'batch', 'export', 'import') as $method)
+     {
+         $lang->resource->feedback->$method = $method;
+     }
