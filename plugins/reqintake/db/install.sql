@@ -185,3 +185,10 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeLinkMethod` (
   `method` varchar(10) NOT NULL,
   PRIMARY KEY (`feedback`, `targetType`, `target`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeClosure` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `outcome` varchar(10) NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;

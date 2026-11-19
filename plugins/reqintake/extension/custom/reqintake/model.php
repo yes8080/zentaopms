@@ -801,10 +801,11 @@ class reqintakeModel extends model
         if(!$recent) return array();
 
         $ids = array_map(static fn($item) => (int)$item->id, $recent);
-        $query = $this->dao->select('h.feedback,h.actor,h.action,h.reason,h.createdDate')
+        $query = $this->dao->select('h.feedback,h.actor,h.action,h.reason,h.createdDate,c.outcome')
             ->from($this->config->db->prefix . 'reqintakeHistory')->alias('h')
             ->innerJoin($this->config->db->prefix . 'reqintakeFeedback')->alias('f')->on('h.feedback = f.id')
             ->innerJoin(TABLE_PRODUCT)->alias('p')->on('p.id = f.product')
+            ->leftJoin($this->config->db->prefix . 'reqintakeClosure')->alias('c')->on('c.feedback = h.feedback AND c.version = h.version')
             ->where('p.deleted')->eq('0')->andWhere('h.feedback')->in($ids);
         if(empty($this->app->user->admin)) $query->andWhere('f.product')->in($this->visibleProducts() ?: array(0));
         $history = $query->orderBy('h.feedback,h.version_desc')->fetchAll();
@@ -821,7 +822,7 @@ class reqintakeModel extends model
         return $row ? $this->findFeedback((int)$row->original) : false;
     }
 
-    public function transition(int $id, int $version, string $action, string $reason, int $original = 0): void
+    public function transition(int $id, int $version, string $action, string $reason, int $original = 0, string $outcome = '', bool $verified = false): void
     {
         if(!$this->canAccess('index')) throw new DomainException('product');
 
@@ -850,6 +851,14 @@ class reqintakeModel extends model
                 throw new DomainException('duplicateTarget');
         }
 
+        if($action === 'close')
+        {
+            $outcome = $original ? 'duplicate' : ($outcome ?: 'other');
+            if(!in_array($outcome, array('confirmed', 'withdrawn', 'declined', 'other', 'duplicate'), true)
+                || ($outcome === 'duplicate' && !$original)) throw new InvalidArgumentException('closeOutcome');
+            if($outcome === 'confirmed' && !$verified) throw new InvalidArgumentException('closeVerification');
+        }
+
         $history = $this->config->db->prefix . 'reqintakeHistory';
         $now = helper::now();
         $this->dbh->beginTransaction();
@@ -863,6 +872,12 @@ class reqintakeModel extends model
 
             $query = $this->dbh->prepare("INSERT INTO `$history` (feedback, version, actor, action, reason, createdDate) VALUES (?, ?, ?, ?, ?, ?)");
             $query->execute([$id, $version + 1, $this->app->user->account, $action, $reason, $now]);
+            if($action === 'close')
+            {
+                $closure = $this->config->db->prefix . 'reqintakeClosure';
+                $query = $this->dbh->prepare("INSERT INTO `$closure` (feedback,version,outcome) VALUES (?,?,?)");
+                $query->execute([$id, $version + 1, $outcome]);
+            }
             $this->dbh->commit();
         }
         catch(Throwable $error)

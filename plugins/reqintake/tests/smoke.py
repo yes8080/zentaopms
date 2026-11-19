@@ -354,7 +354,10 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
     remainder = 'Approver column remains outstanding'
     assert confirmation in handle_source(confirmed, intent='handling', kind='reply',
                                          summary='Customer A', details=confirmation, replyChannel='phone')
-    assert '已关闭' in handle_source(confirmed, intent='transition', action='close', reason=confirmation)
+    close = dict(intent='transition', action='close', reason=confirmation, outcome='confirmed')
+    assert '请核实剩余事项' in handle_source(confirmed, **close)
+    result = handle_source(confirmed, **close, verified='1')
+    assert '已关闭' in result and '· 客户确认 ·' in result
     assert upgrade in handle_source(waiting, intent='handling', kind='plan', summary=upgrade, details='')
     assert remainder in handle_source(extra, intent='handling', kind='plan', summary='Check extra requirement',
                                        details=remainder)

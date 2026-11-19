@@ -165,6 +165,7 @@ ob_start();
                                 <label><?= $escape($labels->transitionReason) ?>
                                     <input name="reason" class="form-control" maxlength="500">
                                 </label>
+                                <?php if($item->status !== 'closed') require __DIR__ . '/closure-fields.php'; ?>
                                 <?php foreach(match($item->status) {'pending' => ['start', 'close'], 'tracking' => ['close'], 'closed' => ['reopen'], default => []} as $action): ?>
                                     <button class="btn" type="submit" name="action" value="<?= $escape($action) ?>"><?= $escape($labels->actions[$action]) ?></button>
                                 <?php endforeach; ?>

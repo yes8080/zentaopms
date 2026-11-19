@@ -78,7 +78,8 @@ class reqintake extends control
                 }
                 elseif($intent === 'transition')
                 {
-                    $model->transition((int)$this->formValue('feedbackID'), (int)$this->formValue('version'), $this->formValue('action'), $this->formValue('reason'));
+                    $model->transition((int)$this->formValue('feedbackID'), (int)$this->formValue('version'), $this->formValue('action'), $this->formValue('reason'),
+                        outcome: $this->formValue('outcome'), verified: $this->formValue('verified') === '1');
                 }
                 else
                 {
@@ -184,7 +185,8 @@ class reqintake extends control
             {
                 if($this->formValue('intent') === 'transition')
                 {
-                    $model->transition($id, (int)$this->formValue('version'), $this->formValue('action'), $this->formValue('reason'));
+                    $model->transition($id, (int)$this->formValue('version'), $this->formValue('action'), $this->formValue('reason'),
+                        outcome: $this->formValue('outcome'), verified: $this->formValue('verified') === '1');
                 }
                 elseif($this->formValue('intent') === 'duplicate')
                 {

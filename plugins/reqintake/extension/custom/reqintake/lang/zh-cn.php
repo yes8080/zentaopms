@@ -119,3 +119,9 @@ $lang->reqintake->errors['customerVersion'] = '客户使用版本最多填写 10
 $lang->reqintake->branchStageUnknown = '无该范围的阶段记录';
 
 $lang->reqintake->linkMethods = array('created' => '新建转单', 'linked' => '关联已有单据');
+
+$lang->reqintake->closeOutcome = '结案结果';
+$lang->reqintake->closeOutcomes = array('other' => '其他', 'confirmed' => '客户确认', 'withdrawn' => '客户撤回', 'declined' => '不采纳', 'duplicate' => '重复反馈');
+$lang->reqintake->closeVerification = '已核实剩余事项和约定的客户复测';
+$lang->reqintake->errors['closeOutcome'] = '请选择有效的结案结果。';
+$lang->reqintake->errors['closeVerification'] = '客户确认结案前，请核实剩余事项和约定的复测。';

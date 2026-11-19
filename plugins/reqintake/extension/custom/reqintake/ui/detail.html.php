@@ -51,6 +51,7 @@ ob_start();
         foreach(array_reverse($stateHistory) as $index => $entry)
         {
             $text = $entry->createdDate . ' · ' . $entry->actor . ' · ' . ($labels->actions[$entry->action] ?? $entry->action);
+            if(isset($labels->closeOutcomes[$entry->outcome])) $text .= ' · ' . $labels->closeOutcomes[$entry->outcome];
             if($entry->reason !== '') $text .= ' · ' . $entry->reason;
             $actions[] = array('id' => $index + 1, 'action' => $entry->action, 'hasRendered' => true, 'content' => $escape($text));
         }
@@ -235,6 +236,7 @@ ob_start();
                 <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
                 <input type="hidden" name="version" value="<?= (int)$item->version ?>">
                 <label><?= $escape($labels->transitionReason) ?> <input name="reason" maxlength="500"></label>
+                <?php if($item->status !== 'closed') require __DIR__ . '/closure-fields.php'; ?>
                 <?php foreach(match($item->status) {'pending' => ['start', 'close'], 'tracking' => ['close'], 'closed' => ['reopen'], default => []} as $action): ?>
                     <button type="submit" class="btn" name="action" value="<?= $escape($action) ?>"><?= $escape($labels->actions[$action]) ?></button>
                 <?php endforeach; ?>

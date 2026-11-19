@@ -119,3 +119,9 @@ $lang->reqintake->errors['customerVersion'] = 'Enter a customer product version 
 $lang->reqintake->branchStageUnknown = 'No stage recorded for this scope';
 
 $lang->reqintake->linkMethods = array('created' => 'Created from feedback', 'linked' => 'Linked existing item');
+
+$lang->reqintake->closeOutcome = 'Closure outcome';
+$lang->reqintake->closeOutcomes = array('other' => 'Other', 'confirmed' => 'Customer confirmed', 'withdrawn' => 'Withdrawn', 'declined' => 'Declined', 'duplicate' => 'Duplicate');
+$lang->reqintake->closeVerification = 'Remaining work and agreed customer retest verified';
+$lang->reqintake->errors['closeOutcome'] = 'Select a valid closure outcome.';
+$lang->reqintake->errors['closeVerification'] = 'Verify remaining work and the agreed customer retest before closing as confirmed.';
