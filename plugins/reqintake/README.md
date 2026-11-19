@@ -26,3 +26,9 @@ docker compose exec -u root php sh -c 'mkdir -p /var/www/zentao/extension/pkg &&
 ```sh
 php -r 'require "framework/control.class.php"; require "framework/model.class.php"; require "plugins/reqintake/extension/custom/reqintake/control.php"; require "plugins/reqintake/extension/custom/reqintake/model.php";'
 ```
+
+已安装插件后，可在使用简体中文和 GET 路由的隔离实例中运行 HTTP 回归。先建立名为 `Smoke Product` 的测试产品，并保持未配置负责人；测试会产生一条反馈并执行状态流转。
+
+```sh
+python3 plugins/reqintake/tests/smoke.py http://127.0.0.1:8097 /path/to/test-admin-password
+```
