@@ -51,8 +51,43 @@ ob_start();
             <?php endforeach; ?>
         </details>
     <?php endif; ?>
-    <h3><?= $escape($labels->linkedStories) ?></h3>
+    <h3><?= $escape($labels->followupHistory) ?></h3>
     <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
+    <?php if($followups): ?>
+        <ul>
+            <?php foreach($followups as $entry): ?>
+                <li>
+                    <span><?= $escape($entry->actor) ?> · <?= $escape($entry->createdDate) ?></span>
+                    <?php if($entry->nextAssignee !== ''): ?>
+                        <span><?= $escape(sprintf($labels->transferred, $entry->previousAssignee, $entry->nextAssignee)) ?></span>
+                    <?php endif; ?>
+                    <p class="whitespace-pre-wrap"><?= $escape($entry->message) ?></p>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+    <?php if($canRevise): ?>
+        <?php foreach(array('followup', 'transfer') as $intent): ?>
+            <details>
+                <summary><?= $escape($labels->$intent) ?></summary>
+                <form method="post">
+                    <input type="hidden" name="intent" value="<?= $intent ?>">
+                    <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+                    <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+                    <?php if($intent === 'transfer'): ?>
+                        <label class="block"><?= $escape($labels->transferAssignee) ?>
+                            <input name="assignee" maxlength="30" required>
+                        </label>
+                    <?php endif; ?>
+                    <label class="block"><?= $escape($labels->followupMessage) ?>
+                        <textarea name="message" maxlength="500" required></textarea>
+                    </label>
+                    <button class="btn" type="submit"><?= $escape($labels->$intent) ?></button>
+                </form>
+            </details>
+        <?php endforeach; ?>
+    <?php endif; ?>
+    <h3><?= $escape($labels->linkedStories) ?></h3>
     <ul>
         <?php foreach($linkedStories as $story): ?>
             <li>

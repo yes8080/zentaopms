@@ -85,6 +85,55 @@ class reqintakeModel extends model
         }
     }
 
+    public function followups(object $feedback): array
+    {
+        if(!$this->canAccess('detail') || !$this->canReadProduct((int)$feedback->product)) return array();
+
+        return $this->dao->select('actor,previousAssignee,nextAssignee,message,createdDate')
+            ->from($this->config->db->prefix . 'reqintakeFollowup')->where('feedback')->eq((int)$feedback->id)
+            ->orderBy('version_desc')->fetchAll();
+    }
+
+    public function recordFollowup(object $feedback, int $version, string $message, ?string $assignee): void
+    {
+        if(!$this->canHandle($feedback)) throw new DomainException('handler');
+        if((int)$feedback->version !== $version || $feedback->status === 'closed') throw new DomainException('staleFeedback');
+        $message = trim($message);
+        if($message === '' || mb_strlen($message) > 500) throw new InvalidArgumentException('followupMessage');
+
+        $previousAssignee = '';
+        if($assignee !== null)
+        {
+            $assignee = trim($assignee);
+            if($assignee === '' || mb_strlen($assignee) > 30 || !$this->canAssign((int)$feedback->product, $assignee))
+                throw new DomainException('owner');
+
+            if(!$feedback->assignmentPending && strcasecmp($assignee, $feedback->assignedTo) === 0)
+                throw new DomainException('sameAssignee');
+
+            $previousAssignee = $feedback->assignedTo;
+        }
+
+        $prefix = $this->config->db->prefix;
+        $now = helper::now();
+        $this->dbh->beginTransaction();
+        try
+        {
+            $update = $this->dbh->prepare("UPDATE `{$prefix}reqintakeFeedback` SET assignedTo = ?, assignmentPending = ?, version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status <> 'closed'");
+            $update->execute([$assignee ?? $feedback->assignedTo, $assignee === null ? $feedback->assignmentPending : 0, $now, $feedback->id, $version]);
+            if($update->rowCount() !== 1) throw new DomainException('staleFeedback');
+
+            $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeFollowup` (feedback,version,actor,previousAssignee,nextAssignee,message,createdDate) VALUES (?,?,?,?,?,?,?)");
+            $insert->execute([$feedback->id, $version + 1, $this->app->user->account, $previousAssignee, $assignee ?? '', $message, $now]);
+            $this->dbh->commit();
+        }
+        catch(Throwable $error)
+        {
+            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            throw $error;
+        }
+    }
+
     public function canHandle(object $feedback): bool
     {
         return $this->canAccess('index') && $this->canReadProduct((int)$feedback->product)
@@ -329,7 +378,7 @@ class reqintakeModel extends model
     {
         $user = $this->dao->select('account')->from(TABLE_USER)
             ->where('account')->eq($account)->andWhere('deleted')->eq('0')->fetch();
-        if(!$user) return false;
+        if(!$user || $user->account !== $account) return false;
 
         if(strpos($this->app->company->admins, ",{$user->account},") !== false) return true;
 

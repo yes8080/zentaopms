@@ -126,6 +126,11 @@ class reqintake extends control
                     foreach(array('title', 'description', 'customer', 'channel') as $field) $fields[$field] = $this->formValue($field);
                     $model->revise($feedback, (int)$this->formValue('version'), $fields);
                 }
+                elseif(in_array($this->formValue('intent'), array('followup', 'transfer'), true))
+                {
+                    $assignee = $this->formValue('intent') === 'transfer' ? $this->formValue('assignee') : null;
+                    $model->recordFollowup($feedback, (int)$this->formValue('version'), $this->formValue('message'), $assignee);
+                }
                 else
                 {
                     $model->linkTarget($id, (int)$this->formValue('version'), (int)$this->formValue('storyID'), $this->formValue('linkScope'), $this->formValue('storyType') ?: 'story');
@@ -138,6 +143,7 @@ class reqintake extends control
             }
         }
 
+        $this->view->followups = $model->followups($feedback);
         $this->view->original = $feedback;
         $this->view->revisions = $model->revisions($feedback);
         if($this->view->revisions)

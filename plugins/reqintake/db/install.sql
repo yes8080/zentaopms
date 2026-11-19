@@ -69,3 +69,14 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeRevision` (
   `createdDate` datetime NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeFollowup` (
+  `feedback` int unsigned NOT NULL,
+  `version` int unsigned NOT NULL,
+  `actor` varchar(30) NOT NULL,
+  `previousAssignee` varchar(30) NOT NULL DEFAULT '',
+  `nextAssignee` varchar(30) NOT NULL DEFAULT '',
+  `message` varchar(500) NOT NULL,
+  `createdDate` datetime NOT NULL,
+  PRIMARY KEY (`feedback`, `version`)
+) ENGINE=InnoDB;
