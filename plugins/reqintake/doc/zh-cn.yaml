@@ -10,3 +10,4 @@ releases:
   0.1.0:
     zentao:
       compatible: '22.7'
+      incompatible: ''

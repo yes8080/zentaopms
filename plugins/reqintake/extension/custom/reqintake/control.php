@@ -9,8 +9,12 @@ class reqintake extends control
             return;
         }
 
-        if(empty($this->session->reqintakeFormKey)) $this->session->set('reqintakeFormKey', bin2hex(random_bytes(32)));
         $key = $this->session->reqintakeFormKey;
+        if(!$key)
+        {
+            $key = bin2hex(random_bytes(32));
+            $this->session->set('reqintakeFormKey', $key);
+        }
         $operation = bin2hex(random_bytes(16));
         $fields = array('product' => '', 'title' => '', 'description' => '', 'customer' => '', 'channel' => '');
 
