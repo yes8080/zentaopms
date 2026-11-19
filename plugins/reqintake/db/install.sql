@@ -101,3 +101,13 @@ CREATE TABLE IF NOT EXISTS `zt_reqintakeRichText` (
   `version` int unsigned NOT NULL,
   PRIMARY KEY (`feedback`, `version`)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `zt_reqintakeAttachment` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `feedback` int unsigned NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `data` mediumblob NOT NULL,
+  `removed` tinyint unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `feedback` (`feedback`, `removed`)
+) ENGINE=InnoDB;

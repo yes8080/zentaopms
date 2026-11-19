@@ -122,7 +122,7 @@ class reqintake extends control
         $this->display();
     }
 
-    public function detail(int $id = 0)
+    public function detail(int $id = 0, int $attachmentID = 0)
     {
         if(!$this->loadModel('reqintake')->canAccess('detail'))
         {
@@ -135,6 +135,22 @@ class reqintake extends control
         if(!$feedback)
         {
             http_response_code(404);
+            return;
+        }
+
+        if($attachmentID > 0 && $_SERVER['REQUEST_METHOD'] === 'GET')
+        {
+            $file = $model->attachment($id, $attachmentID);
+            if(!$file)
+            {
+                http_response_code(404);
+                return;
+            }
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename*=UTF-8\'\'' . rawurlencode($file->name));
+            header('X-Content-Type-Options: nosniff');
+            header('Cache-Control: private, no-store');
+            echo $file->data;
             return;
         }
 
@@ -154,7 +170,12 @@ class reqintake extends control
             }
             try
             {
-                if($this->formValue('intent') === 'taskCreate')
+                if($this->formValue('intent') === 'attachment')
+                {
+                    $upload = $_FILES['attachment'] ?? null;
+                    $model->changeAttachment($feedback, (int)$this->formValue('version'), $upload, (int)$this->formValue('removeAttachment'));
+                }
+                elseif($this->formValue('intent') === 'taskCreate')
                 {
                     $execution = (int)$this->formValue('execution');
                     if(!$model->canHandle($feedback) || $feedback->status === 'closed'
@@ -190,6 +211,7 @@ class reqintake extends control
         $this->view->attributes = $model->attributes($id);
         $this->view->attributeOptions = $model->attributeOptions();
         $this->view->followups = $model->followups($feedback);
+        $this->view->attachments = $model->attachments($id);
         $this->view->richVersions = $model->richTextVersions($id);
         $this->view->original = $feedback;
         $this->view->revisions = $model->revisions($feedback);

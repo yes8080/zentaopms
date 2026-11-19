@@ -5,6 +5,7 @@ import html
 import json
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, build_opener, HTTPCookieProcessor
 from uuid import uuid4
@@ -319,3 +320,37 @@ revision = dict(rich, token=token, intent='revise', version=1,
 page = request(source_route, revision)
 assert '<em>Edited and formatted</em>' in page and '<strong>description</strong>' in page
 print('Rich description and acceptance round-trip, preserve history, and support replay')
+
+
+boundary = uuid4().hex
+file_content = b'Attachment binary \x00\xff bytes\r\n'
+parts = []
+for key, value in dict(token=token, intent='attachment', version='2').items():
+    parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"\r\n\r\n{value}\r\n'.encode())
+parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="attachment"; filename="fixture.bin"\r\n'
+             'Content-Type: application/octet-stream\r\n\r\n'.encode() + file_content + b'\r\n')
+parts.append(f'--{boundary}--\r\n'.encode())
+upload = Request(base + source_route, b''.join(parts),
+                 {'Content-Type': f'multipart/form-data; boundary={boundary}', 'Referer': base + source_route})
+with opener.open(upload, timeout=10) as response:
+    page = response.read().decode()
+file_link = html.unescape(re.search(r'href="([^"]+attachmentID=\d+)"', page)[1]).lstrip('/')
+file_id = file_link.rsplit('=', 1)[1]
+with opener.open(base + file_link, timeout=10) as response:
+    assert 'attachment;' in response.headers['Content-Disposition']
+    assert response.read() == file_content
+
+def assert_file_unavailable(path):
+    try:
+        opener.open(base + path, timeout=10)
+    except HTTPError as error:
+        assert error.code == 404
+    else:
+        raise AssertionError('Attachment was accessible outside its permitted link')
+
+assert_file_unavailable(detail_route + id + '&attachmentID=' + file_id)
+remove = dict(token=token, intent='attachment', version=2, removeAttachment=file_id)
+assert '反馈状态已变化' in request(source_route, remove)
+assert 'fixture.bin' not in request(source_route, dict(remove, version=3))
+assert_file_unavailable(file_link)
+print('Attachment bytes round-trip, are bound to the source, and are unavailable after removal')

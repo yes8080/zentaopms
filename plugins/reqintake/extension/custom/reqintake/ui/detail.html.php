@@ -60,6 +60,33 @@ ob_start();
             <?php endforeach; ?>
         </details>
     <?php endif; ?>
+    <h3><?= $escape($labels->attachments) ?></h3>
+    <?php if($attachments): ?>
+        <ul>
+            <?php foreach($attachments as $file): ?>
+                <li>
+                    <a href="<?= $escape(\helper::createLink('reqintake', 'detail', "id={$item->id}&attachmentID={$file->id}")) ?>"><?= $escape($file->name) ?></a>
+                    <?php if($canRevise): ?>
+                        <form method="post" class="inline">
+                            <input type="hidden" name="intent" value="attachment">
+                            <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+                            <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+                            <button class="btn" type="submit" name="removeAttachment" value="<?= (int)$file->id ?>"><?= $escape($labels->removeAttachment) ?></button>
+                        </form>
+                    <?php endif; ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+    <?php if($canRevise): ?>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="intent" value="attachment">
+            <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
+            <input type="hidden" name="version" value="<?= (int)$item->version ?>">
+            <label><?= $escape($labels->attachmentLimit) ?> <input type="file" name="attachment" required></label>
+            <button class="btn" type="submit"><?= $escape($labels->uploadAttachment) ?></button>
+        </form>
+    <?php endif; ?>
     <h3><?= $escape($labels->followupHistory) ?></h3>
     <?php if(isset($formError)): ?><p role="alert"><?= $escape($formError) ?></p><?php endif; ?>
     <?php if($followups): ?>

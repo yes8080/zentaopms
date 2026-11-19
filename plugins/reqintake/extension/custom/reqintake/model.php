@@ -49,6 +49,68 @@ class reqintakeModel extends model
         return $feedback && $this->canReadProduct((int)$feedback->product) ? $feedback : false;
     }
 
+    public function attachments(int $feedback): array
+    {
+        $table = $this->config->db->prefix . 'reqintakeAttachment';
+        return $this->dao->select('id,name')->from($table)
+            ->where('feedback')->eq($feedback)->andWhere('removed')->eq(0)->orderBy('id_asc')->fetchAll();
+    }
+
+    public function attachment(int $feedback, int $id): object|false
+    {
+        if(!$this->findFeedback($feedback)) return false;
+
+        $table = $this->config->db->prefix . 'reqintakeAttachment';
+        $read = $this->dbh->prepare("SELECT name,data FROM `$table` WHERE feedback = ? AND id = ? AND removed = 0");
+        $read->execute([$feedback, $id]);
+        return $read->fetch(PDO::FETCH_OBJ);
+    }
+
+    public function changeAttachment(object $feedback, int $version, ?array $upload, int $remove = 0): void
+    {
+        if(!$this->canHandle($feedback)) throw new DomainException('handler');
+        $name = '';
+        $data = '';
+        if(!$remove)
+        {
+            if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($upload['tmp_name'] ?? null)
+                || !is_uploaded_file($upload['tmp_name'])) throw new InvalidArgumentException('attachment');
+            $size = filesize($upload['tmp_name']);
+            if(!$size || $size > 5 * 1024 * 1024) throw new InvalidArgumentException('attachment');
+            $name = basename(str_replace(chr(92), '/', (string)$upload['name']));
+            if($name === '' || mb_strlen($name) > 255 || preg_match('/[[:cntrl:]]/', $name)) throw new InvalidArgumentException('attachment');
+            $data = file_get_contents($upload['tmp_name']);
+            if($data === false || strlen($data) !== $size) throw new InvalidArgumentException('attachment');
+        }
+
+        $prefix = $this->config->db->prefix;
+        $this->dbh->beginTransaction();
+        try
+        {
+            $update = $this->dbh->prepare("UPDATE `{$prefix}reqintakeFeedback` SET version = version + 1, updatedDate = ? WHERE id = ? AND version = ? AND status <> 'closed'");
+            $update->execute([helper::now(), $feedback->id, $version]);
+            if($update->rowCount() !== 1) throw new DomainException('staleFeedback');
+
+            if($remove)
+            {
+                $update = $this->dbh->prepare("UPDATE `{$prefix}reqintakeAttachment` SET removed = 1 WHERE id = ? AND feedback = ? AND removed = 0");
+                $update->execute([$remove, $feedback->id]);
+                if($update->rowCount() !== 1) throw new DomainException('attachment');
+            }
+            else
+            {
+                $insert = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeAttachment` (feedback,name,data) VALUES (?,?,?)");
+                $insert->execute([$feedback->id, $name, $data]);
+            }
+            $this->dbh->commit();
+        }
+        catch(Throwable $error)
+        {
+            if($this->dbh->inTransaction()) $this->dbh->rollBack();
+            throw $error;
+        }
+    }
+
     public function richTextVersions(int $id): array
     {
         return $this->dao->select('version')->from($this->config->db->prefix . 'reqintakeRichText')
