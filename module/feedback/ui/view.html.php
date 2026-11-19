@@ -1,0 +1,103 @@
+<?php
+namespace zin;
+
+$feedbackLang = $lang->feedback;
+$escape = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$link = static fn($method) => helper::createLink('feedback', $method, "feedbackID=$feedback->id");
+$canOperate = static fn($operation) => \common::hasPriv('feedback', $operation) && $app->control->feedback->canOperate($feedback, $operation);
+$fields = array(
+    'product' => $product,
+    'status' => zget($feedbackLang->statusList, $feedback->status, $feedback->status),
+    'type' => zget($feedbackLang->typeList, $feedback->type, $feedback->type),
+    'pri' => 'P' . $feedback->pri,
+    'openedBy' => zget($users, $feedback->openedBy, $feedback->openedBy),
+    'assignedTo' => $feedback->assignedTo ? zget($users, $feedback->assignedTo, $feedback->assignedTo) : $feedbackLang->unassigned,
+);
+$operations = array(
+    'assignTo' => array('assignedTo', array('' => $feedbackLang->unassigned) + $assignees),
+    'review' => array('reviewResult', $feedbackLang->reviewResultList),
+    'reply' => array('', array()), 'ask' => array('', array()), 'comment' => array('', array()),
+    'convert' => array('target', $conversionTypes),
+    'close' => array('closedReason', $feedbackLang->closedReasonList),
+    'activate' => array('', array()), 'delete' => array('', array()),
+);
+ob_start();
+?>
+<main class="panel mx-auto" style="max-width: 70rem">
+  <div class="panel-heading flex justify-between items-center">
+    <h2 class="panel-title">#<?= (int)$feedback->id ?> <?= $escape($feedback->title) ?></h2>
+    <div class="flex gap-2">
+      <?php if($canOperate('edit')): ?><a class="btn" href="<?= $escape($link('edit')) ?>"><?= $escape($feedbackLang->edit) ?></a><?php endif; ?>
+      <a class="btn" href="<?= $escape(helper::createLink('feedback', 'browse')) ?>"><?= $escape($feedbackLang->back) ?></a>
+    </div>
+  </div>
+  <div class="panel-body">
+    <dl class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <?php foreach($fields as $field => $value): ?>
+        <div><dt class="text-muted"><?= $escape($feedbackLang->$field) ?></dt><dd><?= $escape($value) ?></dd></div>
+      <?php endforeach; ?>
+    </dl>
+    <?php if($repeat): ?>
+      <p class="mt-4">
+        <?= $escape($feedbackLang->repeatFeedback) ?>
+        <a href="<?= $escape(helper::createLink('feedback', 'view', "feedbackID=$repeat->id")) ?>">#<?= (int)$repeat->id ?> <?= $escape($repeat->title) ?></a>
+      </p>
+    <?php endif; ?>
+    <?php if($feedback->result && isset($feedbackLang->conversionTypes[$feedback->solution])): ?>
+      <p class="mt-4">
+        <?= $escape($feedbackLang->result) ?>
+        <?php if(\common::hasPriv($feedback->solution, 'view')): ?>
+          <a href="<?= $escape(helper::createLink($feedback->solution, 'view', array((int)$feedback->result))) ?>"><?= $escape($feedbackLang->conversionTypes[$feedback->solution]) ?> #<?= (int)$feedback->result ?></a>
+        <?php else: ?>
+          <?= $escape($feedbackLang->conversionTypes[$feedback->solution]) ?> #<?= (int)$feedback->result ?>
+        <?php endif; ?>
+      </p>
+    <?php endif; ?>
+    <section class="mt-6">
+      <h3><?= $escape($feedbackLang->desc) ?></h3>
+      <p class="whitespace-pre-wrap"><?= $escape($feedback->desc) ?></p>
+    </section>
+    <section class="mt-6">
+      <?php foreach($operations as $operation => [$field, $options]): if(!$canOperate($operation) || ($operation === 'convert' && !$conversionTypes)) continue; ?>
+        <details class="border rounded p-3 mb-2">
+          <summary><?= $escape($feedbackLang->$operation) ?></summary>
+          <form method="post" action="<?= $escape($link($operation)) ?>" class="flex flex-col gap-2 mt-2">
+            <input type="hidden" name="submitAction" value="1">
+            <?php if($field): ?>
+              <select class="form-control" name="<?= $escape($field) ?>" aria-label="<?= $escape($feedbackLang->$operation) ?>">
+                <?php foreach($options as $key => $label): ?>
+                  <option value="<?= $escape($key) ?>" <?= $operation === 'assignTo' && $key === $feedback->assignedTo ? 'selected' : '' ?>><?= $escape($label) ?></option>
+                <?php endforeach; ?>
+              </select>
+            <?php endif; ?>
+            <?php if($operation === 'close'): ?>
+              <label><?= $escape($feedbackLang->repeatFeedback) ?>
+                <input class="form-control" type="number" min="1" name="repeatFeedback">
+              </label>
+            <?php endif; ?>
+            <?php if($operation === 'delete'): ?>
+              <p><?= $escape($feedbackLang->deleteConfirm) ?></p>
+            <?php elseif(!in_array($operation, array('activate', 'convert'), true)): ?>
+              <textarea class="form-control" name="comment" aria-label="<?= $escape($feedbackLang->comment) ?>" placeholder="<?= $escape($feedbackLang->comment) ?>" <?= in_array($operation, array('comment', 'reply', 'ask'), true) ? 'required' : '' ?>></textarea>
+            <?php endif; ?>
+            <button class="btn <?= $operation === 'delete' ? 'danger' : 'primary' ?> self-start" type="submit"><?= $escape($feedbackLang->$operation) ?></button>
+          </form>
+        </details>
+      <?php endforeach; ?>
+    </section>
+    <section class="mt-6">
+      <h3><?= $escape($feedbackLang->activity) ?></h3>
+      <ol class="mt-2">
+        <?php foreach($actions as $action): ?>
+          <li class="border-t py-2">
+            <strong><?= $escape(zget($users, $action->actor, $action->actor)) ?></strong>
+            <?= $escape(zget($feedbackLang->actionLabels, $action->action, $action->action)) ?>
+            <time class="text-muted"><?= $escape($action->date) ?></time>
+            <?php if($action->comment): ?><p class="whitespace-pre-wrap"><?= $escape(strip_tags($action->comment)) ?></p><?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ol>
+    </section>
+  </div>
+</main>
+<?php html(ob_get_clean());

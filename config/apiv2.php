@@ -320,6 +320,11 @@ $routes['/products/:productID/feedbacks'] = array('redirect' => '/feedbacks?para
 $routes['/feedbacks/:feedbackID/todos']   = array('post' => array('redirect' => '/todo/create?date=today&from=feedback&param=:feedbackID', 'data' => 'feedback=:feedbackID&type=feedback'));
 $routes['/feedbacks/:feedbackID/stories'] = array('post' => array('redirect' => '/story/create?productID=0&branch=0&extra=fromType=feedback,fromID=:feedbackID', 'data' => 'feedback=:feedbackID'));
 $routes['/feedbacks/:feedbackID']         = array('response' => 'feedback,actions(array)');
+if($this->config->edition === 'open')
+{
+    $routes['/feedbacks/:feedbackID/assign'] = array('post' => array('redirect' => '/feedbacks/:feedbackID/assignTo', 'response' => '*'));
+}
+
 
 $routes['/tickets']                       = array('response' => 'tickets(array),pager', 'search' => array('enabled' => true));
 $routes['/feedbacks/:feedbackID/tickets'] = array('post' => array('redirect' => '/ticket/create?productID=0&extras=fromType=feedback,fromID=:feedbackID', 'data' => 'feedback=:feedbackID'));

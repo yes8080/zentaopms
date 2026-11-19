@@ -83,6 +83,13 @@ $lang->mainNav->menuOrder[55] = 'doc';
 $lang->mainNav->menuOrder[60] = 'system';
 $lang->mainNav->menuOrder[65] = 'admin';
 
+if($config->edition === 'open')
+{
+    $feedbackLabel = str_starts_with($this->getClientLang(), 'zh') ? '反馈' : 'Feedback';
+    $lang->mainNav->feedback = "<i class='icon icon-chat'></i> {$feedbackLabel}|feedback|browse|";
+    $lang->mainNav->menuOrder[17] = 'feedback';
+}
+
 if($config->systemMode == 'light') unset($lang->mainNav->program, $lang->mainNav->menuOrder[10]);
 
 /* My menu. */

@@ -26,6 +26,7 @@ class feedbackEntry extends entry
         $data = $this->getData();
         if(isset($data->status) and $data->status == 'fail') return $this->sendError(zget($data, 'code', 400), $data->message);
 
+        if(!$data || !isset($data->data->feedback)) return $this->send400('error');
         $feedback = $data->data->feedback;
 
         $feedback->publicStatus = $feedback->public;
@@ -52,6 +53,11 @@ class feedbackEntry extends entry
     {
         $control = $this->loadController('feedback', 'edit');
         $oldFeedback = $this->loadModel('feedback')->getById($feedbackID);
+        if(!$oldFeedback)
+        {
+            $this->getData();
+            return $this->sendError(404, 'Feedback not found');
+        }
 
         $fields = 'module,product,type,title,public,desc,status,feedbackBy,notifyEmail,notify,uid,pri';
         $this->batchSetPost($fields, $oldFeedback);
@@ -79,7 +85,8 @@ class feedbackEntry extends entry
         $control = $this->loadController('feedback', 'delete');
         $control->delete((int)$feedbackID, 'yes');
 
-        $this->getData();
+        $data = $this->getData();
+        if(isset($data->status) && $data->status === 'fail') return $this->sendError(zget($data, 'code', 400), $data->message);
         return $this->sendSuccess(200, 'success');
     }
 }
