@@ -32,10 +32,30 @@ class feedbackModel extends model
     public function getModuleOptions(array $products): array
     {
         if(!$products) return array();
-        $rows = $this->dao->select('id,root,name')->from(TABLE_MODULE)->where('root')->in($products)
-            ->andWhere('type')->in('story,feedback')->andWhere('deleted')->eq(0)->orderBy('grade_asc,order_asc,id_asc')->fetchAll();
+        $rows = $this->dao->select('id,root,parent,name')->from(TABLE_MODULE)->where('root')->in($products)
+            ->andWhere('type')->in('story,feedback')->andWhere('deleted')->eq(0)->orderBy('order_asc,id_asc')->fetchAll('id');
+        $branches = array();
+        foreach($rows as $row)
+        {
+            $parent = $rows[$row->parent] ?? null;
+            $parentID = $parent && $parent->root == $row->root ? (int)$parent->id : 0;
+            $branches[$row->root][$parentID][] = $row;
+        }
+
+        $build = static function(array $branches, int $parentID) use (&$build): array
+        {
+            $items = array();
+            foreach($branches[$parentID] ?? array() as $row)
+            {
+                $item = array('value' => (string)$row->id, 'text' => $row->name, 'keys' => $row->name);
+                if(isset($branches[$row->id])) $item['items'] = $build($branches, (int)$row->id);
+                $items[] = $item;
+            }
+            return $items;
+        };
+
         $options = array();
-        foreach($rows as $row) $options[$row->root][$row->id] = $row->name;
+        foreach($branches as $productID => $branch) $options[$productID] = $build($branch, 0);
         return $options;
     }
 
@@ -43,7 +63,7 @@ class feedbackModel extends model
     {
         $query = $this->visibleQuery()
             ->beginIF($product)->andWhere('product')->eq($product)->fi()
-            ->beginIF($keyword !== '')->andWhere('title')->like("%$keyword%")->fi();
+            ->beginIF($keyword !== '')->andWhere('title', true)->like("%$keyword%")->orWhere('keywords')->like("%$keyword%")->markRight(1)->fi();
 
         if($condition === 'unclosed') $query->andWhere('status')->ne('closed');
         elseif($condition === 'mine') $query->andWhere('openedBy')->eq($this->app->user->account);
@@ -54,11 +74,21 @@ class feedbackModel extends model
         return $query->orderBy($order)->page($pager)->fetchAll();
     }
 
-    private function visibleQuery(): object
+    public function getRepeatOptions(object $feedback): array
+    {
+        $rows = $this->visibleQuery('id,title')->andWhere('product')->eq($feedback->product)
+            ->andWhere('id')->ne($feedback->id)->orderBy('id_desc')->fetchPairs('id', 'title');
+
+        $options = array();
+        foreach($rows as $id => $title) $options[$id] = "#$id " . html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return $options;
+    }
+
+    private function visibleQuery(string $fields = '*'): object
     {
         $admin = $this->app->user->admin;
         $products = $admin ? array() : array_keys($this->getGrantProducts());
-        $query = $this->dao->select('*')->from(TABLE_FEEDBACK)->where('deleted')->eq(0);
+        $query = $this->dao->select($fields)->from(TABLE_FEEDBACK)->where('deleted')->eq(0);
         if($admin) return $query;
 
         $account = $this->app->user->account;
@@ -66,7 +96,7 @@ class feedbackModel extends model
             ->andWhere('public', true)->eq(1)->orWhere('openedBy')->eq($account)->orWhere('assignedTo')->eq($account)->markRight(1);
     }
 
-    public function saveFeedback(array $input, ?object $old = null): int
+    public function saveFeedback(array $input, ?object $old = null, bool $withAttachment = false): int
     {
         $lang = $this->lang->feedback;
         $title = trim($input['title'] ?? '');
@@ -95,26 +125,41 @@ class feedbackModel extends model
 
         $data = array(
             'title' => $title, 'product' => $product, 'module' => $module, 'type' => $type, 'pri' => $priority,
-            'desc' => fixer::stripDataTags($input['desc'] ?? ''), 'public' => (int)!empty($input['public']),
+            'desc' => $this->app->loadClass('purifier')->purify($input['desc'] ?? ''), 'public' => (int)!empty($input['public']),
             'notifyEmail' => $email, 'notify' => (int)!empty($input['notify']), 'feedbackBy' => mb_substr(trim($input['feedbackBy'] ?? ''), 0, 100),
         );
 
-        if($old)
+        foreach(array('source', 'keywords') as $field)
         {
-            if($old->status === 'clarify') $data['status'] = 'noreview';
-            $this->record($old, $data, 'edited');
-            return (int)$old->id;
+            if(array_key_exists($field, $input)) $data[$field] = mb_substr(trim($input[$field]), 0, 255);
         }
 
-        $data += array('status' => 'noreview', 'openedBy' => $this->app->user->account, 'openedDate' => helper::now());
         $ownsTransaction = !$this->dbh->inTransaction();
         if($ownsTransaction) $this->dbh->beginTransaction();
         try
         {
-            $this->dao->insert(TABLE_FEEDBACK)->data($data)->exec();
-            if(dao::isError()) throw new RuntimeException($lang->saveFailed);
-            $id = (int)$this->dao->lastInsertID();
-            $this->logAction($id, 'opened');
+            if($old)
+            {
+                if($old->status === 'clarify') $data['status'] = 'noreview';
+                $this->record($old, $data, 'edited');
+                $id = (int)$old->id;
+            }
+            else
+            {
+                $data += array('status' => 'noreview', 'openedBy' => $this->app->user->account, 'openedDate' => helper::now());
+                $this->dao->insert(TABLE_FEEDBACK)->data($data)->exec();
+                if(dao::isError()) throw new RuntimeException($lang->saveFailed);
+                $id = (int)$this->dao->lastInsertID();
+                $this->logAction($id, 'opened');
+            }
+
+            if($withAttachment)
+            {
+                $current = $this->getByID($id);
+                if(!$current) throw new RuntimeException($lang->saveFailed);
+                $this->attachFile($current);
+            }
+
             if($ownsTransaction) $this->dbh->commit();
             return $id;
         }
@@ -234,7 +279,8 @@ class feedbackModel extends model
         {
             $user = $this->app->user->account;
             $now = helper::now();
-            $desc = nl2br(htmlspecialchars(strip_tags($feedback->desc ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+            $desc = $this->app->loadClass('purifier')->purify((string)$feedback->desc);
+            if(strip_tags($desc) === $desc) $desc = nl2br($desc);
             $title = html_entity_decode($feedback->title, ENT_QUOTES, 'UTF-8');
             $id = match($type) {
                 'bug' => $this->loadModel('bug')->create((object)array(
@@ -295,6 +341,40 @@ class feedbackModel extends model
         ))->exec();
         if(dao::isError()) throw new RuntimeException($this->lang->feedback->saveFailed);
         return (int)$this->dao->lastInsertID();
+    }
+
+    public function getConversionProgress(object $feedback): ?array
+    {
+        $type = $feedback->solution;
+        if(!$feedback->result || !isset($this->lang->feedback->conversionTypes[$type])) return null;
+
+        if($type === 'ticket')
+        {
+            if(!common::hasPriv('feedback', 'ticket')) return null;
+            $ticket = $this->getTicket($feedback);
+            return $ticket ? array('status' => zget($this->lang->feedback->ticketStateLabels, $ticket->status, $ticket->status), 'url' => '') : null;
+        }
+
+        if(!common::hasPriv($type, 'view')) return null;
+        $table = array('bug' => TABLE_BUG, 'story' => TABLE_STORY, 'todo' => TABLE_TODO)[$type];
+        $record = $this->dao->select('*')->from($table)->where('id')->eq($feedback->result)->andWhere('deleted')->eq(0)->fetch();
+        if(!$record) return null;
+
+        if($type === 'todo')
+        {
+            $account = $this->app->user->account;
+            if($record->private && $record->account !== $account) return null;
+            if($record->account !== $account && $record->assignedTo !== $account && !common::hasPriv('my', 'team')) return null;
+        }
+        else
+        {
+            if(!$this->loadModel('product')->checkPriv((int)$record->product)) return null;
+            if($type === 'bug' && $record->execution && !$this->loadModel('execution')->checkPriv((int)$record->execution)) return null;
+        }
+
+        $this->app->loadLang($type);
+        return array('status' => zget($this->lang->$type->statusList, $record->status, $record->status),
+            'url' => helper::createLink($type, 'view', array((int)$feedback->result)));
     }
 
     public function getTicket(object $feedback): object|false

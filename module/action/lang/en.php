@@ -249,6 +249,7 @@ $lang->action->desc->confirmed            = '$date, <strong>$actor</strong> conf
 $lang->action->desc->caseconfirmed        = '$date, <strong>$actor</strong> confirmed the test case change. The uodated one is <strong>#$extra</strong>' . "\n";
 $lang->action->desc->bugconfirmed         = '$date, <strong>$actor</strong> confirmed the Bug.' . "\n";
 $lang->action->desc->frombug              = '$date, <strong>$actor</strong> converted it from a bug. Bug ID <strong>$extra</strong>。';
+$lang->action->desc->fromfeedback         = '$date, <strong>$actor</strong> converted it from feedback <strong>$extra</strong>.';
 $lang->action->desc->started              = '$date, started by <strong>$actor</strong>.' . "\n";
 $lang->action->desc->restarted            = '$date, continued by <strong>$actor</strong>.' . "\n";
 $lang->action->desc->delayed              = '$date, postponed by <strong>$actor</strong>.' . "\n";

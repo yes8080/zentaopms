@@ -250,6 +250,7 @@ $lang->action->desc->confirmed            = '$date, 由 <strong>$actor</strong> 
 $lang->action->desc->caseconfirmed        = '$date, 由 <strong>$actor</strong> 確認用例變動，最新版本為<strong>#$extra</strong>。' . "\n";
 $lang->action->desc->bugconfirmed         = '$date, 由 <strong>$actor</strong> 確認Bug。' . "\n";
 $lang->action->desc->frombug              = '$date, 由 <strong>$actor</strong> Bug轉化而來，Bug編號為 <strong>$extra</strong>。';
+$lang->action->desc->fromfeedback         = '$date, 由 <strong>$actor</strong> 從反饋 <strong>$extra</strong> 轉化而來。';
 $lang->action->desc->started              = '$date, 由 <strong>$actor</strong> 啟動。' . "\n";
 $lang->action->desc->restarted            = '$date, 由 <strong>$actor</strong> 繼續。' . "\n";
 $lang->action->desc->delayed              = '$date, 由 <strong>$actor</strong> 延期。' . "\n";

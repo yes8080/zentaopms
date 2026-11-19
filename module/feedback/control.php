@@ -62,6 +62,8 @@ class feedback extends control
             'id' => $file->id, 'title' => $file->title, 'size' => $file->size,
         ), $this->loadModel('file')->getByObject('feedback', $feedbackID));
         $this->view->feedback->files = array_values($this->view->attachments);
+        $this->view->descriptionHtml = $this->app->loadClass('purifier')->purify((string)$feedback->desc);
+        $this->view->conversionProgress = $this->feedback->getConversionProgress($feedback);
         $this->view->ticket = common::hasPriv('feedback', 'ticket') ? $this->feedback->getTicket($feedback) : false;
         $this->view->actions = $this->loadModel('action')->getList('feedback', $feedbackID);
         $this->view->users = $this->feedback->getFeedbackPairs('');
@@ -90,7 +92,7 @@ class feedback extends control
             ? $this->createLink('feedback', 'edit', array('feedbackID' => (int)$feedback->id))
             : $this->createLink('feedback', 'create', array('productID' => $productID));
         $input = array();
-        foreach(array('title', 'product', 'module', 'type', 'pri', 'desc', 'public', 'feedbackBy', 'notifyEmail', 'notify') as $field)
+        foreach(array('title', 'product', 'module', 'type', 'pri', 'desc', 'public', 'feedbackBy', 'notifyEmail', 'notify', 'source', 'keywords') as $field)
         {
             $input[$field] = $this->input($field, (string)($feedback->$field ?? ''));
         }
@@ -106,7 +108,10 @@ class feedback extends control
             try
             {
                 if(!$_POST) throw new InvalidArgumentException($this->lang->feedback->invalidFields);
-                $id = $this->feedback->saveFeedback($input, $feedback);
+                $withAttachment = isset($_FILES['files']) && ($_FILES['files']['error'] ?? null) !== UPLOAD_ERR_NO_FILE;
+                if($withAttachment && (!common::hasPriv('feedback', 'upload') || !$this->hasValidUpload()))
+                    throw new InvalidArgumentException($this->lang->feedback->uploadError);
+                $id = $this->feedback->saveFeedback($input, $feedback, $withAttachment);
                 if($this->viewType === 'html') $this->session->set('feedbackSavedID', $id);
                 return $this->success($id);
             }
@@ -126,6 +131,7 @@ class feedback extends control
         $this->view->moduleOptions = $moduleOptions;
         $this->view->title = $this->lang->feedback->{$this->methodName === 'edit' ? 'edit' : 'create'};
         $this->view->feedback = $feedback;
+        $this->view->descriptionHtml = $this->app->loadClass('purifier')->purify((string)($feedback->desc ?? ''));
         $this->view->products = $products;
         $this->view->modules = $modules;
         $this->view->productID = $productID;
@@ -162,12 +168,7 @@ class feedback extends control
         if(!$this->feedback->canOperate($feedback, 'edit')) return $this->failure($this->lang->feedback->invalidAction, 403);
         if(($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') return $this->failure($this->lang->feedback->invalidAction, 405);
 
-        $upload = $_FILES['files'] ?? array();
-        if(($upload['error'] ?? null) !== UPLOAD_ERR_OK || !is_string($upload['tmp_name'] ?? null) || !is_uploaded_file($upload['tmp_name'])
-            || $upload['size'] <= 0 || $upload['size'] > 10 * 1024 * 1024)
-        {
-            return $this->failure($this->lang->feedback->uploadError);
-        }
+        if(!$this->hasValidUpload()) return $this->failure($this->lang->feedback->uploadError);
 
         try
         {
@@ -178,6 +179,13 @@ class feedback extends control
         {
             return $this->failure($error->getMessage());
         }
+    }
+
+    private function hasValidUpload(): bool
+    {
+        $upload = $_FILES['files'] ?? array();
+        return ($upload['error'] ?? null) === UPLOAD_ERR_OK && is_string($upload['tmp_name'] ?? null)
+            && is_uploaded_file($upload['tmp_name']) && $upload['size'] > 0 && $upload['size'] <= 10 * 1024 * 1024;
     }
 
     public function download(int $fileID)
@@ -294,9 +302,10 @@ class feedback extends control
         $this->display('feedback', 'import');
     }
 
-    private function spreadsheetFields(): array
+    private function spreadsheetFields(bool $legacy = false): array
     {
-        return array('product', 'title', 'desc', 'module', 'type', 'pri', 'public', 'feedbackBy', 'notifyEmail', 'notify');
+        $fields = array('product', 'title', 'desc', 'module', 'type', 'pri', 'public', 'feedbackBy', 'notifyEmail', 'notify');
+        return $legacy ? $fields : array_merge($fields, array('source', 'keywords'));
     }
 
     private function readSpreadsheet(array $upload): array
@@ -327,7 +336,7 @@ class feedback extends control
         {
             $reader = $excel->createReader();
             $sheets = $reader->listWorksheetInfo($path);
-            if(count($sheets) !== 1 || $sheets[0]['totalRows'] > 201 || $sheets[0]['totalColumns'] > 12)
+            if(count($sheets) !== 1 || $sheets[0]['totalRows'] > 201 || $sheets[0]['totalColumns'] > count($this->spreadsheetFields()) + 2)
                 throw new InvalidArgumentException($error);
             $sheet = $reader->setReadDataOnly(true)->load($path)->getActiveSheet();
         }
@@ -338,7 +347,9 @@ class feedback extends control
 
         $rows = $sheet->toArray('', false);
         $fields = array_shift($rows);
-        if($fields !== $this->spreadsheetFields() && $fields !== array_merge(array('id', 'status'), $this->spreadsheetFields()))
+        $exportPrefix = array('id', 'status');
+        $dataFields = array_slice($fields, 0, 2) === $exportPrefix ? array_slice($fields, 2) : $fields;
+        if($dataFields !== $this->spreadsheetFields() && $dataFields !== $this->spreadsheetFields(true))
             throw new InvalidArgumentException($error);
 
         $result = array();

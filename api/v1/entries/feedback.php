@@ -59,7 +59,7 @@ class feedbackEntry extends entry
             return $this->sendError(404, 'Feedback not found');
         }
 
-        $fields = 'module,product,type,title,public,desc,status,feedbackBy,notifyEmail,notify,uid,pri';
+        $fields = 'module,product,type,title,public,desc,status,feedbackBy,notifyEmail,notify,uid,pri,source,keywords';
         $this->batchSetPost($fields, $oldFeedback);
 
         $control->edit((int)$feedbackID, '');

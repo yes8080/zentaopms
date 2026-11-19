@@ -229,6 +229,13 @@ class actionModel extends model
 
             if($actionName == 'moved' && $action->objectType != 'module') $this->actionTao->processActionExtra(TABLE_PROJECT, $action, 'name', 'execution', 'task');
             if($actionName == 'frombug' && common::hasPriv('bug', 'view')) $action->extra = html::a(helper::createLink('bug', 'view', "bugID={$action->extra}"), $action->extra);
+            if($this->config->edition === 'open' && $actionName === 'fromfeedback' && ctype_digit((string)$action->extra))
+            {
+                $feedbackID = (int)$action->extra;
+                $action->extra = "#$feedbackID";
+                if(common::hasPriv('feedback', 'view') && $this->loadModel('feedback')->getByID($feedbackID))
+                    $action->extra = html::a(helper::createLink('feedback', 'view', "feedbackID=$feedbackID"), $action->extra, '', 'data-app="feedback"');
+            }
             if($actionName == 'importedcard') $this->actionTao->processActionExtra(TABLE_KANBAN, $action, 'name', 'kanban', 'view', true);
             if($actionName == 'createchildren') $this->actionTao->processCreateChildrenActionExtra($action);
             if($actionName == 'createrequirements') $this->actionTao->processCreateRequirementsActionExtra($action);
