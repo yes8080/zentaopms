@@ -4,15 +4,7 @@
 
 ## 首次运行
 
-在仓库根目录创建仅本机可读的 `.env`，为两个数据库账号分别生成随机密码。建议使用 `openssl rand -hex 24`，方便直接填写安装向导。
-
-```dotenv
-MYSQL_DATABASE=zentao
-MYSQL_USER=zentao
-MYSQL_PASSWORD=填写应用数据库密码
-MYSQL_ROOT_PASSWORD=填写另一个随机密码
-ZENTAO_PORT=8080
-```
+仓库根目录自带 `.env`，可以直接启动。默认应用和数据库管理员密码均为 `admin`。用于正式部署时，请在初始化数据库前修改这两个密码。
 
 ```sh
 docker compose up -d --build
@@ -20,7 +12,7 @@ docker compose up -d --build
 
 打开 `http://127.0.0.1:8080/install.php`。数据库主机填 `mysql`，端口填 `3306`，数据库名、用户名和密码填写 `.env` 中对应的应用账号配置。表前缀使用默认值 `zt_`。完成安装并创建管理员后，打开首页登录并进入产品管理。
 
-默认只监听本机。需要局域网访问时可在 `.env` 设置 `ZENTAO_BIND=0.0.0.0`。
+默认监听宿主机所有网络接口的 8080 端口。只在本机访问时，可以在 `.env` 中设置 `ZENTAO_BIND=127.0.0.1`。
 
 ## 数据与重建
 
