@@ -58,7 +58,7 @@ $lang->reqintake->ownerPreviewUnavailable = '暂时无法预览负责人';
 $lang->reqintake->productOwnerSaveFailed = '产品已保存，需求池负责人未保存。请从产品编辑页补配有权办理的账号。';
 $lang->reqintake->createTarget = '新建%s';
 $lang->reqintake->batchCreate = '批量新建一张需求';
-$lang->reqintake->batchCreateSummary = '反馈 #%s · 承接范围 %s';
+$lang->reqintake->batchCreateSummary = '用 %d 条反馈创建 1 条%s';
 $lang->reqintake->taskExecution = '所属执行';
 $lang->reqintake->errors['taskConversionUncertain'] = '任务创建结果待核对，请在执行中核对后关联已有任务。';
 $lang->reqintake->errors['taskConversionMode'] = '请使用单任务模式。';
@@ -135,3 +135,6 @@ $lang->reqintake->filterFeedback = '筛选反馈';
 
 $lang->reqintake->updatedFrom = '更新起始日期';
 $lang->reqintake->updatedTo = '更新结束日期';
+
+$lang->reqintake->sourceScope = '本条承接范围';
+$lang->reqintake->wholeFeedback = '整条反馈';

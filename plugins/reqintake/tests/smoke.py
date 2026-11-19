@@ -308,16 +308,19 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
                  for key in ('operation', 'token')}
         return re.search(r'已登记反馈 #(\d+)', submit(dict(payload, **fresh) | dict(customer=customer)))[1]
 
-    def open_batch(sources):
+    def open_batch(sources, overrides=None):
         data = dict(keys, intent='batchCreate', storyType=kind, linkScope='Shared follow-up',
                     **{'sources[]': sources})
+        for source, scope in (overrides or {}).items():
+            data[f'sourceScopes[{source}]'] = scope
         req = Request(base + route, urlencode(data, doseq=True).encode(), {'Referer': base + route})
         with opener.open(req, timeout=10) as response:
             return response.url.removeprefix(base), response.read().decode()
 
     source_ids = [receive_source(customer) for customer in ('Customer A', 'Customer B', 'Customer C')]
-    native_form, page = open_batch([f'{source}:1' for source in source_ids])
-    assert 'Shared follow-up' in page and all(f'#{source}' in page for source in source_ids)
+    partial = 'Exports only; leave approver column pending'
+    native_form, page = open_batch([f'{source}:1' for source in source_ids], {source_ids[2]: partial})
+    assert 'Shared follow-up' in page and partial in page and all(f'#{source}' in page for source in source_ids)
     assert payload['description'] not in page
     native_title = 'Batch conversion ' + uuid4().hex
     native_fields.update(title=native_title)
@@ -327,7 +330,9 @@ for kind in (kind for kind in args.conversion if kind != 'bug'):
     assert second['changes']['objectList'] == first['changes']['objectList']
     for source in source_ids:
         page = request(detail_route + source)
-        assert all(text in page for text in (native_title, 'Shared follow-up', '跟进中', '<span>新建转单</span>'))
+        expected_scope = partial if source == source_ids[2] else 'Shared follow-up'
+        assert all(text in page for text in (native_title, expected_scope, '跟进中', '<span>新建转单</span>'))
+        assert ('<span>' + partial + '</span>' in page) == (source == source_ids[2])
 
     target_id, = first['changes']['objectList']
     fourth = receive_source('Customer D')

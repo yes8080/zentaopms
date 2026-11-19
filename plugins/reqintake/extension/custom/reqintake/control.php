@@ -87,13 +87,24 @@ class reqintake extends control
                         if(!is_string($source) || !preg_match('/\A([1-9][0-9]{0,9}):([1-9][0-9]{0,9})\z/', $source, $parts)) throw new DomainException('batchSelection');
                         $sources[(int)$parts[1]] = (int)$parts[2];
                     }
+                    $overrides = $_POST['sourceScopes'] ?? array();
+                    if(!is_array($overrides) || count($overrides) > 50) throw new InvalidArgumentException('linkScope');
+                    $defaultScope = trim($this->formValue('linkScope'));
+                    $scopes = array();
+                    foreach($sources as $source => $version)
+                    {
+                        $override = $overrides[$source] ?? '';
+                        if(!is_string($override)) throw new InvalidArgumentException('linkScope');
+                        $override = trim($override);
+                        $scopes[$source] = $override !== '' ? $override : $defaultScope;
+                    }
                     if($intent === 'batchCreate')
                     {
-                        $url = $model->prepareBatchConversion($operation, $sources, $type, trim($this->formValue('linkScope')));
+                        $url = $model->prepareBatchConversion($operation, $sources, $type, $scopes);
                         header('Location: ' . $url, true, 303);
                         return;
                     }
-                    $model->linkTargets($sources, (int)$this->formValue('storyID'), $this->formValue('linkScope'), $type);
+                    $model->linkTargets($sources, (int)$this->formValue('storyID'), $scopes, $type);
                     $this->view->batchCount = count($sources);
                 }
                 elseif($intent === 'transition')

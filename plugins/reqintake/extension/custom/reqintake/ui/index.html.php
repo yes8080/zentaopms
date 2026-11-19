@@ -159,6 +159,8 @@ ob_start();
                         <?php if($batchTypes): ?><td>
                             <?php if($item->status !== 'closed' && ($isAdmin || ($item->assignedTo === $currentAccount && !$item->assignmentPending))): ?>
                                 <input form="reqintake-batch-link" type="checkbox" name="sources[]" value="<?= (int)$item->id ?>:<?= (int)$item->version ?>" aria-label="<?= $escape($labels->batchSelect . ' #' . $item->id) ?>">
+                                <input form="reqintake-batch-link" name="sourceScopes[<?= (int)$item->id ?>]" maxlength="500"
+                                    placeholder="<?= $escape($labels->sourceScope) ?>" aria-label="<?= $escape($labels->sourceScope . ' #' . $item->id) ?>">
                             <?php endif; ?>
                         </td><?php endif; ?>
                         <td>#<?= (int)$item->id ?></td>

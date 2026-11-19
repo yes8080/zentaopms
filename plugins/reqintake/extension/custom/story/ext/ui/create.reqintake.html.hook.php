@@ -14,8 +14,16 @@ try
     {
         $batch = $model->batchConversion($token, data('type'));
         $app->loadLang('reqintake');
-        $caption = htmlspecialchars(sprintf($app->lang->reqintake->batchCreateSummary, implode(', #', array_keys($batch['sources'])), $batch['scope']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        query('formGridPanel')->before(div(setClass('panel p-3 mb-2'), html($caption)));
+        $escape = static fn($value) => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $labels = $app->lang->reqintake;
+        $caption = $escape(sprintf($labels->batchCreateSummary, count($batch['sources']), $labels->storyTypes[$batch['type']]));
+        $rows = array();
+        foreach($batch['sources'] as $id => $version)
+        {
+            $scope = is_array($batch['scope']) ? $batch['scope'][$id] : $batch['scope'];
+            $rows[] = '<li>#' . (int)$id . ' · ' . $escape($scope === '' ? $labels->wholeFeedback : $scope) . '</li>';
+        }
+        query('formGridPanel')->before(div(setClass('panel p-3 mb-2'), html($caption . '<ul>' . implode('', $rows) . '</ul>')));
         return;
     }
     $feedback = $model->conversionSource($token, data('type'));

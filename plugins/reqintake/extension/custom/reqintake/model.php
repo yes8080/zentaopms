@@ -649,15 +649,17 @@ class reqintakeModel extends model
         return $id;
     }
 
-    public function prepareBatchConversion(string $id, array $sources, string $type, string $scope): string
+    public function prepareBatchConversion(string $id, array $sources, string $type, array $scopes): string
     {
         if(in_array($type, array('bug', 'task'), true)) throw new DomainException('linkTarget');
-        if(!$sources || mb_strlen($scope) > 500) throw new DomainException('batchSelection');
+        if(!$sources) throw new DomainException('batchSelection');
+        foreach($scopes as $scope) if(mb_strlen($scope) > 500) throw new InvalidArgumentException('linkScope');
         $product = $this->conversionProduct($sources, $type, true);
         ksort($sources, SORT_NUMERIC);
-        $operation = hash_hmac('sha256', json_encode(array($id, $this->app->user->account, $type, $sources, $scope), JSON_THROW_ON_ERROR), $this->session->reqintakeFormKey);
+        ksort($scopes, SORT_NUMERIC);
+        $operation = hash_hmac('sha256', json_encode(array($id, $this->app->user->account, $type, $sources, $scopes), JSON_THROW_ON_ERROR), $this->session->reqintakeFormKey);
         $operations = (array)$this->session->reqintakeBatchConversions;
-        $operations[$operation] = array('sources' => $sources, 'scope' => $scope, 'type' => $type, 'account' => $this->app->user->account);
+        $operations[$operation] = array('sources' => $sources, 'scope' => $scopes, 'type' => $type, 'account' => $this->app->user->account);
         $this->session->set('reqintakeBatchConversions', array_slice($operations, -32, null, true));
         $token = 'batch.' . $operation;
         return helper::createLink($type, 'create', "productID=$product&branch=&moduleID=0&storyID=0&objectID=0&bugID=0&planID=0&todoID=0&extra=riOperation=$token&storyType=$type");
@@ -762,7 +764,7 @@ class reqintakeModel extends model
         }
     }
 
-    public function linkTargets(array $sources, int $targetID, string $scope, string $type, bool $created = false): void
+    public function linkTargets(array $sources, int $targetID, string|array $scope, string $type, bool $created = false): void
     {
         if(!$sources || count($sources) > 50) throw new DomainException('batchSelection');
         if(!in_array($type, $this->visibleTargetTypes(), true)) throw new DomainException('handler');
@@ -776,8 +778,11 @@ class reqintakeModel extends model
             if($product !== (int)$feedback->product) throw new DomainException('batchProduct');
         }
 
-        $scope = trim($scope);
-        if(mb_strlen($scope) > 500) throw new InvalidArgumentException('linkScope');
+        $scopes = is_array($scope) ? $scope : array_fill_keys(array_keys($sources), trim($scope));
+        foreach($sources as $feedbackID => $version)
+        {
+            if(!isset($scopes[$feedbackID]) || mb_strlen($scopes[$feedbackID]) > 500) throw new InvalidArgumentException('linkScope');
+        }
         if(!$this->targetForProduct($type, $targetID, $product)) throw new DomainException('linkTarget');
 
         ksort($sources, SORT_NUMERIC);
@@ -798,7 +803,7 @@ class reqintakeModel extends model
                 $existing = $query->fetchColumn();
                 if($existing !== false)
                 {
-                    if($existing !== $scope) throw new DomainException('linkScope');
+                    if($existing !== $scopes[$feedbackID]) throw new DomainException('linkScope');
                     continue;
                 }
 
@@ -808,7 +813,7 @@ class reqintakeModel extends model
                 if($query->rowCount() !== 1) throw new DomainException('staleFeedback');
 
                 $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLink` (feedback,targetType,target,scope,createdBy,createdDate) VALUES (?,?,?,?,?,?)");
-                $query->execute([$feedbackID, $type, $targetID, $scope, $this->app->user->account, $now]);
+                $query->execute([$feedbackID, $type, $targetID, $scopes[$feedbackID], $this->app->user->account, $now]);
 
                 $query = $this->dbh->prepare("INSERT INTO `{$prefix}reqintakeLinkMethod` (feedback,targetType,target,method) VALUES (?,?,?,?)");
                 $query->execute([$feedbackID, $type, $targetID, $created ? 'created' : 'linked']);

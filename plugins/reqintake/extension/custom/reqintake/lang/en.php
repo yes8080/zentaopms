@@ -58,7 +58,7 @@ $lang->reqintake->ownerPreviewUnavailable = 'Assignment preview unavailable';
 $lang->reqintake->productOwnerSaveFailed = 'The product was saved, but its intake owner could not be saved. Choose an eligible account on the product edit page.';
 $lang->reqintake->createTarget = 'Create %s';
 $lang->reqintake->batchCreate = 'Create one requirement for selected feedback';
-$lang->reqintake->batchCreateSummary = 'Feedback #%s · Scope %s';
+$lang->reqintake->batchCreateSummary = 'Create one %2$s from %1$d feedback items';
 $lang->reqintake->taskExecution = 'Execution';
 $lang->reqintake->errors['taskConversionUncertain'] = 'Check the execution for a task created by this operation before linking it.';
 $lang->reqintake->errors['taskConversionMode'] = 'Choose a mode that creates one task.';
@@ -135,3 +135,6 @@ $lang->reqintake->filterFeedback = 'Filter feedback';
 
 $lang->reqintake->updatedFrom = 'Updated from';
 $lang->reqintake->updatedTo = 'Updated through';
+
+$lang->reqintake->sourceScope = 'Scope for this feedback';
+$lang->reqintake->wholeFeedback = 'Entire feedback';
