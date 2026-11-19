@@ -145,7 +145,16 @@ class reqintakeModel extends model
 
         if(strpos($this->app->company->admins, ",{$user->account},") !== false) return true;
 
-        $view = $this->loadModel('user')->computeUserView($user->account, true);
+        $users = $this->loadModel('user');
+        $authorization = $users->authorize($user->account);
+        if(empty($authorization['rights']['reqintake']['index'])) return false;
+
+        /* ZenTao stores only restricted products in the computed user view. */
+        $isOpen = $this->dao->select('id')->from(TABLE_PRODUCT)
+            ->where('id')->eq($product)->andWhere('deleted')->eq('0')->andWhere('acl')->eq('open')->fetch();
+        if($isOpen) return true;
+
+        $view = $users->computeUserView($user->account, true);
         return in_array((string)$product, explode(',', (string)($view->products ?? '')), true);
     }
 
