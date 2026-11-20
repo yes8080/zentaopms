@@ -5,22 +5,32 @@
 <title>许愿池 · 交互原型</title>
 <style>
 *{box-sizing:border-box}
-:root{--blue:#0c64eb;--ink:#202c3c;--muted:#59697c;--line:#dce4ee;--surface:#fff}
-body{margin:0;font:14px/1.55 system-ui,sans-serif;color:var(--ink);background:#f4f6f9}
-header{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 24px;height:50px}
-header strong{font-size:17px;color:var(--blue);border-bottom:3px solid var(--blue);align-self:stretch;display:grid;align-items:center}
-header span{margin-left:auto;color:var(--muted)}
-main{max-width:1440px;margin:auto;padding:12px 18px 85px}
-h1,h2{margin:0}h1{font-size:22px}h2{font-size:16px}p{margin:10px 0}.bar,.filters,.actions,.feature{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.bar,.feature{justify-content:space-between;margin-bottom:12px}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:16px;margin-bottom:12px}
-.primary{background:var(--blue);color:#fff;border-color:var(--blue)}button,input,select,textarea{font:inherit;border:1px solid #c8d3e0;border-radius:4px;padding:6px 10px;background:#fff;color:inherit}button{cursor:pointer}button:hover{filter:brightness(.96)}.link{border:0;background:transparent;color:#075dc7;text-align:left;padding:3px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}td,th{padding:10px;text-align:left;border-bottom:1px solid #e7edf4}th{background:#f2f5f9;color:#40546a;font-weight:600}tbody tr:hover{background:#f5f9ff}.pill{color:#275e98}.muted{color:var(--muted)}
-.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(235px,1fr);gap:12px}.browse{display:grid;grid-template-columns:205px minmax(0,1fr);gap:12px}.browse .panel{min-width:0}.tree button{display:block;width:100%;text-align:left;margin-top:5px;border-color:transparent}.tree [aria-pressed=true]{background:#eaf2ff;color:#075dc7}.tree .child{padding-left:23px}.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent}.tabs button[aria-pressed=true]{color:#075dc7;border-bottom-color:var(--blue);font-weight:600}.count{padding:10px}.record-title{justify-content:flex-start}.section{padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px}.section:last-child{border:0;margin:0}.detail-tabs{border-bottom:1px solid var(--line);margin-bottom:13px}
+:root{--blue:#3883fa;--ink:#30394a;--muted:#59697c;--line:#e5e8ec;--surface:#fff;--page:#f8f9fa}
+body{margin:0;font:13px/1.5 -apple-system,"Noto Sans","Helvetica Neue",Helvetica,Arial,"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--page)}
+/* ZUI default theme: white application strip and blue module navigation. */
+.apps-bar{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.apps-bar strong{font-size:15px}.apps-bar span{color:var(--muted)}
+header{background:var(--blue);color:#fff;display:flex;align-items:center;gap:15px;padding:0 16px;height:40px}
+header strong{font-size:15px;align-self:stretch;display:grid;align-items:center;border-bottom:2px solid #cce0ff}
+header button{color:#fff;background:transparent;border:0;padding-inline:8px}header button:hover{background:#ffffff24}
+main{max-width:1440px;margin:auto;padding:10px 12px 70px}
+h1,h2{margin:0}h1{font-size:18px}h2{font-size:14px}p{margin:10px 0}.bar,.filters,.actions,.feature{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.bar,.feature{justify-content:space-between;margin-bottom:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:8px}
+.primary{background:var(--blue);color:#fff;border-color:var(--blue)}button,input,select,textarea{font:inherit;min-height:32px;border:1px solid #d4dae3;border-radius:4px;padding:4px 10px;background:#fff;color:inherit}button{cursor:pointer}button:hover{filter:brightness(.96)}.link{border:0;background:transparent;color:#1b6de2;text-align:left;padding:3px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}td,th{padding:8px 10px;text-align:left;border-bottom:1px solid #e7edf4}th{background:#f1f3f5;color:var(--ink);font-weight:600}tbody tr:hover{background:#f5f9ff}.pill{display:inline-flex;gap:5px;align-items:center;color:var(--muted)}.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:#ffad32}.pill[data-state="跟进中"]::before{background:var(--blue)}.pill[data-state="已关闭"]::before{background:#97a1b1}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(235px,1fr);gap:12px}.browse{display:grid;grid-template-columns:205px minmax(0,1fr);gap:12px}.browse .panel{min-width:0}.tree button{display:block;width:100%;text-align:left;margin-top:5px;border-color:transparent}.tree [aria-pressed=true]{background:#eaf2ff;color:#1b6de2}.tree .child{padding-left:23px}.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent}.tabs button[aria-pressed=true]{color:#1b6de2;border-bottom-color:var(--blue);font-weight:600}.count{padding:10px}.record-title{justify-content:flex-start}.section{padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px}.section:last-child{border:0;margin:0}.detail-tabs{border-bottom:1px solid var(--line);margin-bottom:13px}
 dl{margin:0;display:grid;grid-template-columns:88px 1fr;gap:10px}dt{color:var(--muted)}dd{margin:0}
-.dock{position:fixed;z-index:2;bottom:14px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);background:#263548;color:#fff;border-radius:6px;padding:7px;box-shadow:0 4px 12px #26354840}.dock button,.dock summary{background:transparent;color:inherit;border:0;padding:6px 9px;cursor:pointer}.dock button:hover,.dock summary:hover{background:#3c4d62}.dock details{position:relative}.dock-menu{position:absolute;right:0;bottom:calc(100% + 9px);background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:5px;min-width:145px;box-shadow:0 5px 15px #26354830}.dock-menu button{display:block;text-align:left;width:100%}.dock-menu button:hover{background:#eaf2ff}
-dialog{border:1px solid #c5d1e0;border-radius:7px;width:min(640px,94vw);max-height:90vh;padding:18px}dialog::backdrop{background:#26354870}label{display:grid;gap:5px;margin:10px 0;min-width:0}textarea{min-height:80px;resize:vertical}form .actions{justify-content:flex-end;margin-top:15px}#notice:not(:empty){padding:6px 10px;background:#e8f6ef;color:#17573d;margin-bottom:9px}#error{color:#9d261a}.editor{max-width:1030px;margin:0 auto}.editor .actions{justify-content:flex-start}.form-group{border:0;border-bottom:1px solid var(--line);margin:0 0 15px;padding:0 0 12px;min-width:0}.form-group legend{font-weight:650}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 15px}.full{grid-column:1/-1}
+.dock{position:fixed;z-index:2;bottom:14px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);background:#151a23d9;color:#fff;border-radius:4px;padding:5px;backdrop-filter:blur(8px);box-shadow:0 4px 12px #26354840}.dock button,.dock summary{background:transparent;color:inherit;border:0;padding:6px 9px;cursor:pointer}.dock button:hover,.dock summary:hover{background:#3c4d62}.dock details{position:relative}.dock-menu{position:absolute;right:0;bottom:calc(100% + 9px);background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:5px;min-width:145px;box-shadow:0 5px 15px #26354830}.dock-menu button{display:block;text-align:left;width:100%}.dock-menu button:hover{background:#eaf2ff}
+dialog{border:1px solid #c5d1e0;border-radius:4px;width:min(640px,94vw);max-height:90vh;padding:0}dialog::backdrop{background:#26354870}dialog h2{padding:10px 16px;border-bottom:1px solid var(--line);font-size:16px}
+dialog #fields,dialog #error{padding-inline:16px}
+dialog form>.actions{margin:10px 0 0;border-top:1px solid var(--line);padding:9px 16px}
+label{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px;align-items:start;margin:7px 0;min-width:0}
+label span{text-align:right;padding-top:6px}
+label input,label select,label textarea{width:100%;min-width:0}
+label b{color:#df3444;font-weight:400}textarea{min-height:80px;resize:vertical}form .actions{justify-content:flex-end;margin-top:15px}#notice:not(:empty){padding:6px 10px;background:#e8f6ef;color:#17573d;margin-bottom:9px}#error{color:#9d261a}.editor{max-width:1000px;margin:0 auto;padding:16px 20px}.editor h1{padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:12px}.editor .actions{justify-content:flex-start;margin-left:98px}.form-group{border:0;border-bottom:1px solid var(--line);margin:0 0 15px;padding:0 0 12px;min-width:0}.form-group legend{font-weight:650}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 15px}.full{grid-column:1/-1}
 @media(max-width:720px){.grid,.browse,.form-grid{grid-template-columns:1fr}.tree button{display:inline-block;width:auto}.dock{justify-content:center}main{padding-inline:10px}}
 </style>
-<header><strong>许愿池</strong><span>交互原型 · 模拟数据</span></header>
+<div class="apps-bar"><strong>禅道</strong><span>交互原型 · 模拟数据</span></div>
+<header><strong>许愿池</strong><button type="button" id="poolNav">许愿列表</button></header>
 <main><div id="notice" role="status"></div><div id="app"></div></main>
 <dialog id="dialog"><form id="form"><h2 id="dialogTitle"></h2><div id="fields"></div><div id="error" role="alert"></div><div class="actions"><button type="button" id="cancel">取消</button><button class="primary" id="confirm">保存</button></div></form></dialog>
 <script>
@@ -46,7 +56,7 @@ function list(){
   '<div class="browse"><aside class="panel tree"><h2>产品模块</h2>'+tree()+Object.keys(products).map(product=>tree(product)+modules[product].map(module=>tree(product,module)).join('')).join('')+'</aside>'+
   '<section class="panel"><div id="searchPanel" hidden><div class="filters"><select aria-label="状态" id="statusFilter"><option value="">所有状态</option>'+options(states,filters.status)+'</select><input aria-label="搜索" id="search" placeholder="编号、标题、客户" value="'+esc(filters.search)+'"><button id="apply">筛选</button><button id="clear">清除</button></div></div><div class="scroll"><table><thead><tr><th>编号</th><th>优先级</th><th>标题</th><th>产品</th><th>客户</th><th>状态</th><th>负责人</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><div id="count" class="muted count"></div></section></div>';
  const rows=wishes.filter(w=>(tab==='全部'||(tab==='我提交的'?w.reporter===currentUser:w.owner===currentUser&&w.status!=='已关闭'))&&(!filters.product||w.product===filters.product)&&(!filters.module||w.module===filters.module)&&(!filters.status||w.status===filters.status)&&(w.id+' '+w.title+' '+w.customer).includes(filters.search));
- app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td>'+esc(w.priority)+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td><td><button class="link" data-edit="'+w.id+'" aria-label="编辑许愿 '+w.id+'">编辑</button></td></tr>').join('')||'<tr><td colspan="9">没有符合条件的许愿</td></tr>';
+ app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td>'+esc(w.priority)+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill" data-state="'+w.status+'">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td><td><button class="link" data-edit="'+w.id+'" aria-label="编辑许愿 '+w.id+'">编辑</button></td></tr>').join('')||'<tr><td colspan="9">没有符合条件的许愿</td></tr>';
  app.querySelector('#count').textContent='共 '+rows.length+' 条许愿';
  const searchToggle=app.querySelector('#toggleSearch');
  const searchPanel=app.querySelector('#searchPanel');
@@ -67,7 +77,7 @@ function detail(w, active='基本信息'){
  const related=targets.filter(t=>w.links[t]).map(t=>'<p><button class="link" data-related="'+t+'">'+t+' #'+w.links[t].id+' · '+esc(w.links[t].title)+'</button></p>').join('');
  const section=(heading,body)=>'<div class="section"><h2>'+heading+'</h2>'+body+'</div>';
  const description=(heading,value)=>section(heading,'<p>'+esc(value)+'</p>');
- app.innerHTML='<div class="bar record-title"><button class="link" id="back">← 返回许愿列表</button><span class="muted">#'+w.id+'</span><h1>'+esc(w.title)+'</h1><span class="pill">'+w.status+'</span></div>'+
+ app.innerHTML='<div class="bar record-title"><button class="link" id="back">← 返回许愿列表</button><span class="muted">#'+w.id+'</span><h1>'+esc(w.title)+'</h1><span class="pill" data-state="'+w.status+'">'+w.status+'</span></div>'+
   '<div class="grid"><section class="panel">'+description('许愿描述',w.desc||'暂无描述')+description('验收标准',w.verify||'待补充')+(w.reason?description('结案记录',w.reason):'')+section('历史记录',w.history.map(h=>'<p>'+esc(h)+'</p>').join(''))+'</section>'+
   '<aside><section class="panel"><div class="actions tabs detail-tabs">'+['基本信息','承接单据'].map(t=>'<button data-detail-tab="'+t+'" aria-pressed="'+(t===active)+'">'+t+(t==='承接单据'?' ('+Object.keys(w.links).length+')':'')+'</button>').join('')+'</div>'+
   (active==='基本信息'?'<dl>'+fields.map(([k,v])=>'<dt>'+k+'</dt><dd>'+esc(v||'—')+'</dd>').join('')+'</dl>':related||'<p class="muted">暂无承接单据</p>')+'</section></aside></div>'+
@@ -81,9 +91,10 @@ function detail(w, active='基本信息'){
  });
  app.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>handle(w,b.dataset.action));
 }
-const input=(label,name,value='',required=false,type='text')=>'<label>'+label+(required?' *':'')+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+'></label>';
-const area=(label,name,value='',required=false)=>'<label>'+label+(required?' *':'')+'<textarea name="'+name+'" '+(required?'required':'')+'>'+esc(value)+'</textarea></label>';
-const select=(label,name,values,value='',required=false)=>'<label>'+label+(required?' *':'')+'<select name="'+name+'" '+(required?'required':'')+'><option value="">请选择</option>'+options(values,value)+'</select></label>';
+const fieldLabel=(label,required)=>'<span>'+label+(required?' <b aria-hidden="true">*</b>':'')+'</span>';
+const input=(label,name,value='',required=false,type='text')=>'<label>'+fieldLabel(label,required)+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+'></label>';
+const area=(label,name,value='',required=false)=>'<label>'+fieldLabel(label,required)+'<textarea name="'+name+'" '+(required?'required':'')+'>'+esc(value)+'</textarea></label>';
+const select=(label,name,values,value='',required=false)=>'<label>'+fieldLabel(label,required)+'<select name="'+name+'" '+(required?'required':'')+'><option value="">请选择</option>'+options(values,value)+'</select></label>';
 function modal(title,fields,save,action='保存'){
  document.querySelector('#dialogTitle').textContent=title;
  document.querySelector('#fields').innerHTML=fields;
@@ -160,6 +171,7 @@ function conversion(w,target){
  form.elements.product.onchange=()=>{form.elements.module.innerHTML='<option value="">请选择</option>'+options(form.elements.product.value==='库存管理'?['库存查询','库存导出']:['工单处理','客户档案'])};
  }
 }
+document.querySelector('#poolNav').onclick=list;
 list();
 </script>
 </html>
