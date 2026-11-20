@@ -156,3 +156,8 @@ $lang->reqintake->submitRetry = 'The submission did not finish. Try again.';
 
 $lang->reqintake->replyAndClose = 'Record reply and close';
 $lang->reqintake->replyAndCloseReason = 'Resolution and closure reason';
+$lang->reqintake->createFeedback = 'Create feedback';
+$lang->reqintake->configureOwner = 'Configure owner';
+$lang->reqintake->supplementaryFields = 'More fields';
+
+$lang->reqintake->manageLinkedWork = 'Create or link work';

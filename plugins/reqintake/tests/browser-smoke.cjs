@@ -27,9 +27,8 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await page.goto(base+'index.php?m=reqintake&f=index&_single=1',{referer:base+'index.php?m=user&f=login'});
         const app = page;
         const form = app.locator('#reqintake-receive');
-        await form.waitFor({timeout:8000});
-        assert.equal(await page.locator('zen-editor').count(), 2);
-        assert.equal(await form.locator('zen-editor').count(), 2);
+        await form.waitFor({state:'attached',timeout:8000});
+        assert.equal(await form.isVisible(), false);
         const columns = app.locator('#reqintake-column-settings');
         await columns.locator('summary').click();
         await columns.locator('input[value=customer]').uncheck();
@@ -40,6 +39,10 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await columns.locator('summary').click();
         await columns.locator('input[value=customer]').check();
         await customerHeader.waitFor({state:'visible'});
+        await app.locator('[data-reqintake-create]').click();
+        await form.waitFor({state:'visible'});
+        assert.equal(await customerHeader.isVisible(), false);
+        assert.equal(await form.locator('zen-editor').count(), 2);
         const previousProduct = process.env.REQINTAKE_PREVIEW_RACE_PRODUCT;
         const productPicker = form.locator('[name=product]');
         if (previousProduct) {
@@ -102,6 +105,8 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await form.locator('input[name=attachment]').setInputFiles({
             name:'initial-attachment.bin', mimeType:'application/octet-stream', buffer:attachmentBytes
         });
+        await form.locator('summary').getByText('更多字段',{exact:true}).click();
+        await form.locator('[name=customer]').fill('Browser intake customer');
         await form.locator('[name=estimate]').fill('-1');
         await form.getByRole('button',{name:'提交需求'}).click();
         await form.getByRole('alert').getByText(/请选择有效来源/).waitFor();
@@ -112,8 +117,9 @@ if (!url || !passwordFile) throw new Error('Usage: node browser-smoke.cjs BASE_U
         await form.getByRole('button',{name:'提交需求'}).click();
         await app.getByText(/已登记反馈 #\d+/).waitFor();
         assert.match(page.url(), /[?&]f=detail(?:&|$)/);
-        await app.getByRole('heading',{name:new RegExp(title)}).waitFor();
+        await app.locator('.detail-header .entity-title-text').getByText(title,{exact:true}).waitFor();
         await app.locator('dl').getByText('Browser acceptance',{exact:true}).waitFor();
+        await app.locator('.reqintake-detail-info').getByText('Browser intake customer',{exact:true}).waitFor();
         assert.equal(await app.locator('dd img').count(),1);
         const attachment = app.getByRole('link',{name:'initial-attachment.bin',exact:true});
         const download = await api.get(new URL(await attachment.getAttribute('href'),base).href);

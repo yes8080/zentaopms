@@ -1,4 +1,6 @@
+<?php $attributeGroup = $attributeGroup ?? 'all'; ?>
 <?php foreach($attributeOptions as $field => $options): ?>
+    <?php if($attributeGroup !== 'all' && $attributeGroup !== (in_array($field, array('category', 'priority'), true) ? 'basic' : 'extra')) continue; ?>
     <label class="block mb-2"><?= $escape($labels->fields[$field]) ?>
         <select class="form-control" name="<?= $field ?>">
             <?php if($field === 'suggestedGrade' && !isset($options[$values[$field]])) $options[$values[$field]] = $values[$field]; ?>
@@ -9,6 +11,7 @@
         </select>
     </label>
 <?php endforeach; ?>
+<?php if(in_array($attributeGroup, array('all', 'scope'), true)): ?>
 <?php foreach(array('branch' => $scopeOptions['branches'] ?? array(0 => ''), 'module' => $scopeOptions['modules'][$values['branch']] ?? array(0 => ''), 'plan' => $scopeOptions['plans'][$values['branch']] ?? array(0 => '')) as $field => $options): ?>
     <label class="block mb-2"><?= $escape($labels->fields[$field]) ?>
         <select class="form-control" name="<?= $field ?>" data-initial="<?= $escape($values[$field]) ?>">
@@ -24,14 +27,19 @@
     <legend><?= $escape($labels->additionalBranches) ?></legend>
     <div data-reqintake-branches></div>
 </fieldset>
+<?php endif; ?>
 <?php foreach(array('sourceNote' => 255, 'keywords' => 255, 'estimate' => 11, 'customerVersion' => 100, 'suggestedParent' => 10) as $field => $limit): ?>
+    <?php if($attributeGroup !== 'all' && $attributeGroup !== ($field === 'estimate' ? 'basic' : 'extra')) continue; ?>
     <label class="block mb-2"><?= $escape($labels->fields[$field]) ?>
         <input class="form-control" name="<?= $field ?>" value="<?= $escape($values[$field]) ?>" maxlength="<?= $limit ?>" <?= $field === 'estimate' ? 'inputmode="decimal"' : ($field === 'suggestedParent' ? 'inputmode="numeric"' : '') ?>>
     </label>
 <?php endforeach; ?>
+<?php if(in_array($attributeGroup, array('all', 'content'), true)): ?>
 <label class="block mb-2"><?= $escape($labels->fields['acceptance']) ?>
     <?= $renderEditor('acceptance', $values['acceptance'], $rich) ?>
 </label>
+<?php endif; ?>
+<?php if(in_array($attributeGroup, array('all', 'extra'), true)): ?>
 <?php foreach(array('mailto', 'suggestedReviewers') as $field): ?>
     <?php
     $selectedAccounts = array_filter(explode(',', $values[$field]), static fn($account) => $account !== '');
@@ -56,3 +64,4 @@
         ?>
     </div>
 <?php endforeach; ?>
+<?php endif; ?>

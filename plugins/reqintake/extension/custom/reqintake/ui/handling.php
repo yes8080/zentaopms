@@ -2,7 +2,8 @@
 $plans = array_values(array_filter($handling, static fn($entry) => $entry->kind === 'plan'));
 $plan = $plans[0] ?? null;
 ?>
-<h3><?= $escape($labels->handlingPlan) ?></h3>
+<section class="detail-section">
+<h3 class="detail-section-title text-md py-1 font-bold"><?= $escape($labels->handlingPlan) ?></h3>
 <?php if($plan): ?>
     <dl>
         <dt><?= $escape($labels->handlingNext) ?></dt>
@@ -15,28 +16,28 @@ $plan = $plans[0] ?? null;
     <?php foreach(array('plan', 'reply') as $kind): ?>
         <details>
             <summary><?= $escape($kind === 'plan' ? $labels->handlingEdit : $labels->handlingReply) ?></summary>
-            <form method="post">
+            <form method="post" class="reqintake-form">
                 <input type="hidden" name="intent" value="handling">
                 <input type="hidden" name="kind" value="<?= $kind ?>">
                 <input type="hidden" name="token" value="<?= $escape($linkToken) ?>">
                 <input type="hidden" name="version" value="<?= (int)$item->version ?>">
                 <label class="block"><?= $escape($kind === 'plan' ? $labels->handlingNext : $labels->handlingRecipient) ?>
-                    <input name="summary" maxlength="500" value="<?= $escape($kind === 'plan' ? ($plan->summary ?? '') : $item->customer) ?>" <?= $kind === 'reply' ? 'required' : '' ?>>
+                    <input class="form-control" name="summary" maxlength="500" value="<?= $escape($kind === 'plan' ? ($plan->summary ?? '') : $item->customer) ?>" <?= $kind === 'reply' ? 'required' : '' ?>>
                 </label>
                 <?php if($kind === 'reply'): ?>
                     <label class="block"><?= $escape($labels->fields['channel']) ?>
-                        <input name="replyChannel" value="<?= $escape($item->channel) ?>" maxlength="64" required>
+                        <input class="form-control" name="replyChannel" value="<?= $escape($item->channel) ?>" maxlength="64" required>
                     </label>
                 <?php endif; ?>
                 <label class="block"><?= $escape($kind === 'plan' ? $labels->handlingRemaining : $labels->handlingContent) ?>
-                    <textarea name="details" maxlength="2000" <?= $kind === 'reply' ? 'required' : '' ?>><?= $escape($kind === 'plan' ? ($plan->details ?? '') : '') ?></textarea>
+                    <textarea class="form-control" name="details" maxlength="2000" <?= $kind === 'reply' ? 'required' : '' ?>><?= $escape($kind === 'plan' ? ($plan->details ?? '') : '') ?></textarea>
                 </label>
                 <button class="btn" type="submit"><?= $escape($kind === 'plan' ? $labels->handlingEdit : $labels->handlingReply) ?></button>
                 <?php if($kind === 'reply'): ?>
                     <fieldset class="mt-2">
                         <legend><?= $escape($labels->replyAndClose) ?></legend>
                         <label class="block"><?= $escape($labels->replyAndCloseReason) ?>
-                            <input name="reason" maxlength="500">
+                            <input class="form-control" name="reason" maxlength="500">
                         </label>
                         <label class="block"><input type="checkbox" name="verified" value="1"> <?= $escape($labels->closeVerification) ?></label>
                         <button class="btn" type="submit" name="closeAfterReply" value="1"><?= $escape($labels->replyAndClose) ?></button>
@@ -60,3 +61,4 @@ $plan = $plans[0] ?? null;
         </ul>
     </details>
 <?php endif; ?>
+</section>

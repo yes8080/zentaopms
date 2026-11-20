@@ -156,3 +156,8 @@ $lang->reqintake->submitRetry = '提交未完成，请重试。';
 
 $lang->reqintake->replyAndClose = '记录答复并结案';
 $lang->reqintake->replyAndCloseReason = '处理办法和结案原因';
+$lang->reqintake->createFeedback = '新建反馈';
+$lang->reqintake->configureOwner = '配置负责人';
+$lang->reqintake->supplementaryFields = '更多字段';
+
+$lang->reqintake->manageLinkedWork = '新建或关联单据';
