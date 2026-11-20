@@ -50,6 +50,13 @@ class RedisDriver implements CacheInterface
      */
     private $connector;
 
+    /**
+     * Redis connection.
+     *
+     * @var \Redis
+     */
+    private $redis;
+
     public function __construct($namespace = '', $defaultLifetime = 0, $scope = '', $connector = '', $setting = null)
     {
         $this->namespace       = $namespace;
