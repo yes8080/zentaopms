@@ -4,7 +4,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>许愿池 · 交互原型</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;color:#192a42;background:#f3f6fa}header{background:#142843;color:white;padding:16px 5%;display:flex;justify-content:space-between;align-items:center}header strong{font-size:19px}header span{color:#c6d6e8}main{max-width:1180px;margin:auto;padding:36px 24px}h1{margin:0;font-size:30px}h2{margin:0 0 18px;font-size:19px}p{line-height:1.65}.bar,.filters,.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.bar{justify-content:space-between;margin-bottom:22px}.panel{background:white;border:1px solid #dce4ee;border-radius:12px;padding:20px;margin-bottom:16px}.primary{background:#165dc0;color:white;border-color:#165dc0}button,input,select,textarea{font:inherit;border:1px solid #c5d1e0;border-radius:7px;padding:9px 12px;background:white;color:inherit}button{cursor:pointer}button:hover{filter:brightness(.94)}.link{border:0;background:transparent;color:#165dc0;text-align:left;padding:4px 0}.actions{margin-top:18px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;margin-top:15px;white-space:nowrap}td,th{padding:13px 9px;text-align:left;border-bottom:1px solid #e7edf4}th{color:#48617c;font-size:13px}.pill{background:#e8f1ff;color:#2054a0;padding:3px 9px;border-radius:12px}.muted{color:#526982}.grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}dl{margin:0;display:grid;grid-template-columns:90px 1fr;gap:12px}dt{color:#526982}dd{margin:0}dialog{border:1px solid #c5d1e0;border-radius:14px;width:min(580px,94vw);max-height:90vh;padding:22px}dialog::backdrop{background:#14284380}label{display:grid;gap:5px;margin:10px 0}textarea{min-height:84px}form .actions{justify-content:flex-end}#notice{min-height:22px;color:#155b42}.empty{padding:15px 0}.tabs{margin-bottom:14px}.tabs button[aria-pressed=true]{background:#e8f1ff;color:#165dc0;border-color:#165dc0}@media(max-width:700px){.grid{grid-template-columns:1fr}main{padding:22px 12px}}
+*{box-sizing:border-box}
+:root{--blue:#0c64eb;--ink:#202c3c;--muted:#59697c;--line:#dce4ee;--surface:#fff}
+body{margin:0;font:14px/1.55 system-ui,sans-serif;color:var(--ink);background:#f4f6f9}
+header{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 24px;height:50px}
+header strong{font-size:17px;color:var(--blue);border-bottom:3px solid var(--blue);align-self:stretch;display:grid;align-items:center}
+header span{margin-left:auto;color:var(--muted)}
+main{max-width:1440px;margin:auto;padding:12px 18px 85px}
+h1,h2{margin:0}h1{font-size:22px}h2{font-size:16px}p{margin:10px 0}.bar,.filters,.actions,.feature{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.bar,.feature{justify-content:space-between;margin-bottom:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:16px;margin-bottom:12px}
+.primary{background:var(--blue);color:#fff;border-color:var(--blue)}button,input,select,textarea{font:inherit;border:1px solid #c8d3e0;border-radius:4px;padding:6px 10px;background:#fff;color:inherit}button{cursor:pointer}button:hover{filter:brightness(.96)}.link{border:0;background:transparent;color:#075dc7;text-align:left;padding:3px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}td,th{padding:10px;text-align:left;border-bottom:1px solid #e7edf4}th{background:#f2f5f9;color:#40546a;font-weight:600}tbody tr:hover{background:#f5f9ff}.pill{color:#275e98}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(235px,1fr);gap:12px}.browse{display:grid;grid-template-columns:205px minmax(0,1fr);gap:12px}.browse .panel{min-width:0}.tree button{display:block;width:100%;text-align:left;margin-top:5px;border-color:transparent}.tree [aria-pressed=true]{background:#eaf2ff;color:#075dc7}.tree .child{padding-left:23px}.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent}.tabs button[aria-pressed=true]{color:#075dc7;border-bottom-color:var(--blue);font-weight:600}.count{padding:10px}.record-title{justify-content:flex-start}.section{padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px}.section:last-child{border:0;margin:0}.detail-tabs{border-bottom:1px solid var(--line);margin-bottom:13px}
+dl{margin:0;display:grid;grid-template-columns:88px 1fr;gap:10px}dt{color:var(--muted)}dd{margin:0}
+.dock{position:fixed;z-index:2;bottom:14px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);background:#263548;color:#fff;border-radius:6px;padding:7px;box-shadow:0 4px 12px #26354840}.dock button,.dock summary{background:transparent;color:inherit;border:0;padding:6px 9px;cursor:pointer}.dock button:hover,.dock summary:hover{background:#3c4d62}.dock details{position:relative}.dock-menu{position:absolute;right:0;bottom:calc(100% + 9px);background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:5px;min-width:145px;box-shadow:0 5px 15px #26354830}.dock-menu button{display:block;text-align:left;width:100%}.dock-menu button:hover{background:#eaf2ff}
+dialog{border:1px solid #c5d1e0;border-radius:7px;width:min(640px,94vw);max-height:90vh;padding:18px}dialog::backdrop{background:#26354870}label{display:grid;gap:5px;margin:10px 0;min-width:0}textarea{min-height:80px;resize:vertical}form .actions{justify-content:flex-end;margin-top:15px}#notice:not(:empty){padding:6px 10px;background:#e8f6ef;color:#17573d;margin-bottom:9px}#error{color:#9d261a}.editor{max-width:1030px;margin:0 auto}.editor .actions{justify-content:flex-start}.form-group{border:0;border-bottom:1px solid var(--line);margin:0 0 15px;padding:0 0 12px;min-width:0}.form-group legend{font-weight:650}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 15px}.full{grid-column:1/-1}
+@media(max-width:720px){.grid,.browse,.form-grid{grid-template-columns:1fr}.tree button{display:inline-block;width:auto}.dock{justify-content:center}main{padding-inline:10px}}
 </style>
 <header><strong>许愿池</strong><span>交互原型 · 模拟数据</span></header>
 <main><div id="notice" role="status"></div><div id="app"></div></main>
@@ -12,34 +26,59 @@
 <script>
 const app=document.querySelector('#app'), dialog=document.querySelector('#dialog'), form=document.querySelector('#form'), notice=document.querySelector('#notice');
 const products={'库存管理':'王晓','客户服务':'陈晨'};
+const modules={'库存管理':['库存查询','库存导出'],'客户服务':['工单处理','客户档案']};
 const targets=['反馈','Bug','工单','待办','需求','任务'];
 const states=['待评估','跟进中','已关闭'];
 const currentUser='林然';
 const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Shanghai'});
 const wishes=[
- {id:104,title:'库存导出支持按仓库筛选',product:'库存管理',customer:'华东仓储',channel:'客户拜访',desc:'导出库存时，希望先选择仓库，以便仓库主管查看各自的数据。',verify:'导出结果仅包含所选仓库的库存。',owner:'王晓',reporter:'林然',priority:'高',status:'待评估',date:'2026-11-20',links:{},history:['林然登记了许愿']},
- {id:103,title:'工单详情展示最近一次答复',product:'客户服务',customer:'南区服务团队',channel:'群聊',desc:'客服接手工单时需要快速看到上一位同事的答复。',verify:'详情中能看到最近答复和时间。',owner:'林然',reporter:'陈晨',priority:'中',status:'跟进中',date:'2026-11-19',links:{需求:{id:62,title:'工单详情展示最近一次答复'}},history:['陈晨创建了研发需求 #62']},
- {id:102,title:'库存列表默认显示可用数量',product:'库存管理',customer:'北区仓储',channel:'电话',desc:'希望进页面即可看到可用库存。',verify:'默认列包含可用库存。',owner:'王晓',reporter:'林然',priority:'低',status:'已关闭',date:'2026-11-18',reason:'已指导开启可用库存列，客户确认。',links:{},history:['王晓记录答复并关闭许愿']}
+ {id:104,module:'库存导出',title:'库存导出支持按仓库筛选',product:'库存管理',customer:'华东仓储',channel:'客户拜访',desc:'导出库存时，希望先选择仓库，以便仓库主管查看各自的数据。',verify:'导出结果仅包含所选仓库的库存。',owner:'王晓',reporter:'林然',priority:'高',status:'待评估',date:'2026-11-20',links:{},history:['林然登记了许愿']},
+ {id:103,module:'工单处理',title:'工单详情展示最近一次答复',product:'客户服务',customer:'南区服务团队',channel:'群聊',desc:'客服接手工单时需要快速看到上一位同事的答复。',verify:'详情中能看到最近答复和时间。',owner:'林然',reporter:'陈晨',priority:'中',status:'跟进中',date:'2026-11-19',links:{需求:{id:62,title:'工单详情展示最近一次答复'}},history:['陈晨创建了研发需求 #62']},
+ {id:102,module:'库存查询',title:'库存列表默认显示可用数量',product:'库存管理',customer:'北区仓储',channel:'电话',desc:'希望进页面即可看到可用库存。',verify:'默认列包含可用库存。',owner:'王晓',reporter:'林然',priority:'低',status:'已关闭',date:'2026-11-18',reason:'已指导开启可用库存列，客户确认。',links:{},history:['王晓记录答复并关闭许愿']}
 ];
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let selected=null, tab='全部', filters={product:'',status:'',search:''}, nextTarget=200;
+let tab='全部', filters={product:'',module:'',status:'',search:''}, nextTarget=200;
 const options=(values,selected='')=>values.map(v=>'<option'+(v===selected?' selected':'')+'>'+esc(v)+'</option>').join('');
 function list(){
- selected=null;
- app.innerHTML='<div class="bar"><h1>许愿池</h1><button class="primary" id="new">提交许愿</button></div><section class="panel"><div class="actions tabs">'+['全部','我提交的','待我处理'].map(t=>'<button data-tab="'+t+'" aria-pressed="'+(tab===t)+'">'+t+'</button>').join('')+'</div><div class="filters"><select aria-label="产品" id="productFilter"><option value="">所有产品</option>'+options(Object.keys(products),filters.product)+'</select><select aria-label="状态" id="statusFilter"><option value="">所有状态</option>'+options(states,filters.status)+'</select><input aria-label="搜索" id="search" placeholder="搜索编号、标题、客户" value="'+esc(filters.search)+'"><button id="apply">筛选</button></div><div class="scroll"><table><thead><tr><th>编号</th><th>标题</th><th>产品</th><th>客户</th><th>状态</th><th>负责人</th><th>更新时间</th></tr></thead><tbody id="rows"></tbody></table></div></section>';
- const rows=wishes.filter(w=>(tab==='全部'||(tab==='我提交的'?w.reporter===currentUser:w.owner===currentUser&&w.status!=='已关闭'))&&(!filters.product||w.product===filters.product)&&(!filters.status||w.status===filters.status)&&(w.id+' '+w.title+' '+w.customer).includes(filters.search));
- app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td></tr>').join('')||'<tr><td colspan="7">没有符合条件的许愿</td></tr>';
+ const tree=(product='',module='')=>'<button type="button" data-product="'+product+'" data-module="'+module+'" class="'+(module?'child':'')+'" aria-pressed="'+(filters.product===product&&filters.module===module)+'">'+(module||product||'所有产品')+'</button>';
+ app.innerHTML=
+  '<div class="feature"><div class="actions tabs">'+['全部','我提交的','待我处理'].map(t=>'<button data-tab="'+t+'" aria-pressed="'+(tab===t)+'">'+t+'</button>').join('')+'<button id="toggleSearch" aria-expanded="false">搜索</button></div><button class="primary" id="new">＋ 提交许愿</button></div>'+
+  '<div class="browse"><aside class="panel tree"><h2>产品模块</h2>'+tree()+Object.keys(products).map(product=>tree(product)+modules[product].map(module=>tree(product,module)).join('')).join('')+'</aside>'+
+  '<section class="panel"><div id="searchPanel" hidden><div class="filters"><select aria-label="状态" id="statusFilter"><option value="">所有状态</option>'+options(states,filters.status)+'</select><input aria-label="搜索" id="search" placeholder="编号、标题、客户" value="'+esc(filters.search)+'"><button id="apply">筛选</button><button id="clear">清除</button></div></div><div class="scroll"><table><thead><tr><th>编号</th><th>优先级</th><th>标题</th><th>产品</th><th>客户</th><th>状态</th><th>负责人</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><div id="count" class="muted count"></div></section></div>';
+ const rows=wishes.filter(w=>(tab==='全部'||(tab==='我提交的'?w.reporter===currentUser:w.owner===currentUser&&w.status!=='已关闭'))&&(!filters.product||w.product===filters.product)&&(!filters.module||w.module===filters.module)&&(!filters.status||w.status===filters.status)&&(w.id+' '+w.title+' '+w.customer).includes(filters.search));
+ app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td>'+esc(w.priority)+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td><td><button class="link" data-edit="'+w.id+'" aria-label="编辑许愿 '+w.id+'">编辑</button></td></tr>').join('')||'<tr><td colspan="9">没有符合条件的许愿</td></tr>';
+ app.querySelector('#count').textContent='共 '+rows.length+' 条许愿';
+ const searchToggle=app.querySelector('#toggleSearch');
+ const searchPanel=app.querySelector('#searchPanel');
+ const toggle=open=>{searchPanel.hidden=!open;searchToggle.setAttribute('aria-expanded',String(open))};
+ toggle(Boolean(filters.search||filters.status));
+ searchToggle.onclick=()=>toggle(searchPanel.hidden);
  app.querySelector('#new').onclick=()=>wishForm();
- app.querySelector('#apply').onclick=()=>{filters={product:app.querySelector('#productFilter').value,status:app.querySelector('#statusFilter').value,search:app.querySelector('#search').value.trim()};list()};
+ app.querySelector('#apply').onclick=()=>{filters.status=app.querySelector('#statusFilter').value;filters.search=app.querySelector('#search').value.trim();list()};
+ app.querySelector('#clear').onclick=()=>{filters.status='';filters.search='';list()};
  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;list()});
+ app.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>{filters.product=b.dataset.product;filters.module=b.dataset.module;list()});
  app.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>detail(wishes.find(w=>w.id===Number(b.dataset.id))));
+ app.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>wishForm(wishes.find(w=>w.id===Number(b.dataset.edit)),list));
 }
-function detail(w){
- selected=w;
+function detail(w, active='基本信息'){
  const closed=w.status==='已关闭';
- app.innerHTML='<button class="link" id="back">← 返回许愿列表</button><div class="bar"><h1>'+esc(w.title)+'</h1><span class="pill">'+w.status+'</span></div><div class="grid"><section class="panel"><h2>客户诉求</h2><p>'+esc(w.desc||'暂无描述')+'</p><h2>验收标准</h2><p>'+esc(w.verify||'待补充')+'</p>'+(w.reason?'<h2>结案记录</h2><p>'+esc(w.reason)+'</p>':'')+'<h2>承接单据</h2>'+targets.filter(t=>w.links[t]).map(t=>'<p>'+t+' #'+w.links[t].id+' · '+esc(w.links[t].title)+'</p>').join('')+(Object.keys(w.links).length?'':'<p class="muted">暂无承接单据</p>')+'<h2>办理历史</h2>'+w.history.map(h=>'<p>'+esc(h)+'</p>').join('')+'</section><aside><section class="panel"><h2>基本信息</h2><dl>'+Object.entries({'编号':w.id,'产品':w.product,'客户':w.customer,'渠道':w.channel,'优先级':w.priority,'提报人':w.reporter,'负责人':w.owner}).map(([k,v])=>'<dt>'+k+'</dt><dd>'+esc(v||'—')+'</dd>').join('')+'</dl></section><section class="panel"><h2>办理</h2><div class="actions">'+(closed?'<button data-action="重开">重新打开</button>':'<button data-action="编辑">编辑</button><button data-action="转交">转交</button><button data-action="关闭">记录答复并关闭</button>')+'</div>'+(closed?'':'<div class="actions">'+targets.map(t=>'<button data-target="'+t+'">'+(w.links[t]?'查看':'转')+t+'</button>').join('')+'</div>')+'</section></aside></div>';
+ const fields=Object.entries({'产品':w.product,'所属模块':w.module,'客户':w.customer,'采集渠道':w.channel,'优先级':w.priority,'提报人':w.reporter,'指派给':w.owner});
+ const related=targets.filter(t=>w.links[t]).map(t=>'<p><button class="link" data-related="'+t+'">'+t+' #'+w.links[t].id+' · '+esc(w.links[t].title)+'</button></p>').join('');
+ const section=(heading,body)=>'<div class="section"><h2>'+heading+'</h2>'+body+'</div>';
+ const description=(heading,value)=>section(heading,'<p>'+esc(value)+'</p>');
+ app.innerHTML='<div class="bar record-title"><button class="link" id="back">← 返回许愿列表</button><span class="muted">#'+w.id+'</span><h1>'+esc(w.title)+'</h1><span class="pill">'+w.status+'</span></div>'+
+  '<div class="grid"><section class="panel">'+description('许愿描述',w.desc||'暂无描述')+description('验收标准',w.verify||'待补充')+(w.reason?description('结案记录',w.reason):'')+section('历史记录',w.history.map(h=>'<p>'+esc(h)+'</p>').join(''))+'</section>'+
+  '<aside><section class="panel"><div class="actions tabs detail-tabs">'+['基本信息','承接单据'].map(t=>'<button data-detail-tab="'+t+'" aria-pressed="'+(t===active)+'">'+t+(t==='承接单据'?' ('+Object.keys(w.links).length+')':'')+'</button>').join('')+'</div>'+
+  (active==='基本信息'?'<dl>'+fields.map(([k,v])=>'<dt>'+k+'</dt><dd>'+esc(v||'—')+'</dd>').join('')+'</dl>':related||'<p class="muted">暂无承接单据</p>')+'</section></aside></div>'+
+  '<div class="actions dock" aria-label="许愿操作"><button id="dockBack">返回</button>'+(closed?'<button data-action="重开">重新打开</button>':'<button data-action="编辑">编辑</button><button data-action="转交">指派</button><button data-action="关闭">记录答复并关闭</button><details><summary>转单</summary><div class="dock-menu">'+targets.map(t=>'<button data-target="'+t+'">'+(w.links[t]?'查看':'转')+t+'</button>').join('')+'</div></details>')+'</div>';
  app.querySelector('#back').onclick=list;
- app.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>conversion(w,b.dataset.target));
+ app.querySelector('#dockBack').onclick=list;
+ app.querySelectorAll('[data-detail-tab]').forEach(b=>b.onclick=()=>detail(w,b.dataset.detailTab));
+ app.querySelectorAll('[data-target],[data-related]').forEach(b=>b.onclick=()=>{
+  const menu=b.closest('details');if(menu)menu.open=false;
+  conversion(w,b.dataset.target||b.dataset.related);
+ });
  app.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>handle(w,b.dataset.action));
 }
 const input=(label,name,value='',required=false,type='text')=>'<label>'+label+(required?' *':'')+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+'></label>';
@@ -54,16 +93,31 @@ function modal(title,fields,save,action='保存'){
  dialog.showModal();
 }
 document.querySelector('#cancel').onclick=()=>dialog.close();
-function wishForm(w){
- modal(w?'编辑许愿':'提交许愿',select('所属产品','product',Object.keys(products),w?.product,true)+'<p id="assignee" class="muted"></p>'+input('标题','title',w?.title,true)+input('客户／提出者','customer',w?.customer)+select('采集渠道','channel',['电话','群聊','客户拜访','现场服务','其他'],w?.channel)+select('优先级','priority',['高','中','低'],w?.priority||'中',true)+area('客户诉求','desc',w?.desc,true)+area('验收标准','verify',w?.verify),data=>{
- if(!data.title.trim()||!data.desc.trim())return '请填写标题和客户诉求。';
- if(w){Object.assign(w,data,{date:today});w.history.push(currentUser+'更新了许愿');detail(w)}
- else{const entry={...data,id:Math.max(...wishes.map(x=>x.id))+1,owner:products[data.product]||currentUser,reporter:currentUser,date:today,status:'待评估',links:{},history:[currentUser+'登记了许愿']};wishes.unshift(entry);detail(entry)}
- notice.textContent='许愿已保存';
- });
- const product=form.elements.product;
- const update=()=>document.querySelector('#assignee').textContent=product.value?(w?'当前负责人：'+w.owner:'预计负责人：'+(products[product.value]||currentUser)):'选择产品后显示预计负责人';
- product.onchange=update;update();
+function wishForm(w, back=()=>w?detail(w):list()){
+ const group=(title,fields)=>'<fieldset class="form-group"><legend>'+title+'</legend><div class="form-grid">'+fields+'</div></fieldset>';
+ const full=html=>'<div class="full">'+html+'</div>';
+ app.innerHTML='<section class="panel editor"><h1>'+(w?'编辑许愿':'提交许愿')+'</h1><form id="wishForm">'+
+  group('所属范围',select('所属产品','product',Object.keys(products),w?.product,true)+select('所属模块','module',modules[w?.product]||[],w?.module)+full('<p id="assignee" class="muted"></p>'))+
+  group('许愿内容',full(input('标题','title',w?.title,true))+select('优先级','priority',['高','中','低'],w?.priority||'中',true)+full(area('许愿描述','desc',w?.desc,true))+full(area('验收标准','verify',w?.verify)))+
+  group('反馈来源',input('客户／提出者','customer',w?.customer)+select('采集渠道','channel',['电话','群聊','客户拜访','现场服务','其他'],w?.channel))+
+  '<div id="wishError" role="alert"></div><div class="actions"><button class="primary" type="submit">保存</button><button id="formBack" type="button">返回</button></div></form></section>';
+ const editor=app.querySelector('#wishForm');
+ const product=editor.elements.product;
+ const update=()=>app.querySelector('#assignee').textContent=product.value?(w?'当前负责人：'+w.owner:'预计负责人：'+(products[product.value]||currentUser)):'选择产品后显示预计负责人';
+ product.onchange=()=>{
+  editor.elements.module.innerHTML='<option value="">请选择</option>'+options(modules[product.value]||[]);
+  update();
+ };
+ update();
+ app.querySelector('#formBack').onclick=back;
+ editor.onsubmit=e=>{
+  e.preventDefault();
+  const data=Object.fromEntries(new FormData(editor));
+  if(!data.title.trim()||!data.desc.trim()){app.querySelector('#wishError').textContent='请填写标题和许愿描述。';return}
+  if(w){Object.assign(w,data,{date:today});w.history.push(currentUser+'更新了许愿');detail(w)}
+  else{const entry={...data,id:Math.max(...wishes.map(x=>x.id))+1,owner:products[data.product]||currentUser,reporter:currentUser,date:today,status:'待评估',links:{},history:[currentUser+'登记了许愿']};wishes.unshift(entry);detail(entry)}
+  notice.textContent='许愿已保存';
+ };
 }
 function handle(w,action){
  if(action==='编辑'){wishForm(w);return}
@@ -100,7 +154,7 @@ function conversion(w,target){
  w.links[target]={...data,id:++nextTarget};
  w.status='跟进中';w.date=today;
  w.history.push(currentUser+'模拟创建了'+target+' #'+nextTarget);
- detail(w);notice.textContent='已模拟创建'+target+' #'+nextTarget;
+ detail(w,'承接单据');notice.textContent='已模拟创建'+target+' #'+nextTarget;
  },'模拟创建'+target);
  if(target==='工单'){
  form.elements.product.onchange=()=>{form.elements.module.innerHTML='<option value="">请选择</option>'+options(form.elements.product.value==='库存管理'?['库存查询','库存导出']:['工单处理','客户档案'])};
