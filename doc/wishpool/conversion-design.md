@@ -175,7 +175,7 @@ sequenceDiagram
 
 | 记录 | 建议字段 |
 |---|---|
-| 许愿 `wishpool_wish` | `id`、`product`、`module`（可空）、`title`、`description`、`priority`、`status`、`assignedTo`、`createdBy`、`createdAt`、`updatedBy`、`updatedAt`、`closedBy`、`closedAt`、`closeReason`、`deleted`。业务允许外部提交时再增加 `source` 和 `requesterName`。 |
+| 许愿 `wishpool_wish` | `id`、`product`、`module`（可空）、`title`、`description`、`priority`、`status`、`assignedTo`、`createdBy`、`createdAt`、`updatedBy`、`updatedAt`、`closedBy`、`closedAt`、`closeReason`、`duplicateWishID`（可空）、`deleted`。业务允许外部提交时再增加 `source` 和 `requesterName`。 |
 | 转单关系 `wishpool_conversion` | `id`、`wishID`、`targetType`、`targetID`（创建前为空）、`targetProductID`（可空）、`targetExecutionID`（可空）、`requestKey`、`state`、`createdBy`、`createdAt`、`updatedAt`。记录简短错误码或失败原因时避免保存凭证及敏感正文。 |
 
 表使用实例的数据库前缀。第一版建议一条许愿可以转多个类型，每类最多保留一个有效目标，用数据库唯一键保证并发一致性。许愿状态沿用开放、处理中、关闭，转单状态由各条关系记录单独展示，成功转单后由用户决定是否关闭许愿。单独记录目标类型与 ID，支持原生模块和插件分别管理生命周期；用户只有拥有目标读取权限时才显示详情链接。
@@ -190,3 +190,20 @@ sequenceDiagram
 - 转 Bug 单独映射至 Bug 创建；其余转单路由和字段注入见反馈路由。 [Bug 路由](../../config/apiv2.php#L191) · [反馈路由](../../config/apiv2.php#L318)
 - 原生创建字段和默认值。 [Bug 表单](../../module/bug/config/form.php#L10) · [待办表单](../../module/todo/config/form.php#L13) · [需求创建](../../module/story/control.php#L53) · [任务创建](../../module/task/control.php#L44)
 - 原生反馈记录通过自身字段保存处理结果；插件用关系表承载多种去向。 [反馈表](../../db/zentao.sql#L2687) · [原生需求池表](../../db/zentao.sql#L14937)
+
+## 关闭与激活
+
+研发需求的手动关闭表单要求选关闭原因，选「重复」时再要求填写重复需求。普通备注按实例配置决定是否必填。原生原因字典包含「已拆分」，手动关闭表单移除该项，草稿还会移除「已取消」。发现未完成任务时，原生表单在提交前要求二次确认。 [关闭控制器](../../module/story/control.php#L1053) · [原因字典](../../module/story/lang/zh-cn.php#L290) · [关闭校验](../../module/story/js/close.ui.js)
+
+| 许愿池关闭原因 | 适用场景 |
+|---|---|
+| 已完成 `done` | 已直接处理或承接工作完成，负责人确认可以结案 |
+| 重复 `duplicate` | 与同产品另一条可访问许愿重复，必须选择那条许愿，不能指向自己 |
+| 延期 `postponed` | 暂缓处理，备注可补充恢复条件 |
+| 不做 `willnotdo` | 评估后决定不采纳 |
+| 已取消 `cancel` | 提出者撤回或办理取消 |
+| 设计如此 `bydesign` | 现有行为符合设计，已记录处理意见 |
+
+待评估和跟进中的许愿均可关闭。插件无草稿态，也无原生需求拆分动作。关闭保存 `closeReason`、`closedBy`、`closedAt`，重复时额外保存 `duplicateWishID`，备注和变更写入历史。切走「重复」时清除重复项。关闭态的指派显示为「已关闭」，历史保留经办信息。存在未完成的承接任务时需明确确认，承接单据继续独立流转。正式实现应在服务端复核关闭权限、状态和重复对象的产品及可见性。
+
+激活时按原生交互提供指派和备注，默认指派给关闭人。许愿池回到「跟进中」，清除本次关闭字段，保留关闭历史、承接关系和激活日志。研发需求原生激活会另外根据需求历史计算恢复状态。 [激活表单](../../module/story/ui/activate.field.php) · [激活模型](../../module/story/model.php#L2355)
