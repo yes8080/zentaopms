@@ -17,7 +17,17 @@ main{max-width:1440px;margin:auto;padding:10px 12px 70px}
 h1,h2{margin:0}h1{font-size:18px}h2{font-size:14px}p{margin:10px 0}.bar,.filters,.actions,.feature{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.bar,.feature{justify-content:space-between;margin-bottom:12px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:8px}
 .primary{background:var(--blue);color:#fff;border-color:var(--blue)}button,input,select,textarea{font:inherit;min-height:32px;border:1px solid #d4dae3;border-radius:4px;padding:4px 10px;background:#fff;color:inherit}button{cursor:pointer}button:hover{filter:brightness(.96)}.link{border:0;background:transparent;color:#1b6de2;text-align:left;padding:3px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}td,th{padding:8px 10px;text-align:left;border-bottom:1px solid #e7edf4}th{background:#f1f3f5;color:var(--ink);font-weight:600}tbody tr:hover{background:#f5f9ff}.pill{display:inline-flex;gap:5px;align-items:center;color:var(--muted)}.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:#ffad32}.pill[data-state="跟进中"]::before{background:var(--blue)}.pill[data-state="已关闭"]::before{background:#97a1b1}.muted{color:var(--muted)}
-.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(235px,1fr);gap:12px}.browse{display:grid;grid-template-columns:205px minmax(0,1fr);gap:12px}.browse .panel{min-width:0}.tree button{display:block;width:100%;text-align:left;margin-top:5px;border-color:transparent}.tree [aria-pressed=true]{background:#eaf2ff;color:#1b6de2}.tree .child{padding-left:23px;overflow-wrap:anywhere}.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent}.tabs button[aria-pressed=true]{color:#1b6de2;border-bottom-color:var(--blue);font-weight:600}.count{padding:10px}.record-title{justify-content:flex-start}.section{padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px}.section:last-child{border:0;margin:0}.detail-tabs{border-bottom:1px solid var(--line);margin-bottom:13px}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(235px,1fr);gap:12px}.browse{display:grid;grid-template-columns:205px minmax(0,1fr);gap:12px;align-items:start}.browse .panel{min-width:0}.tree ul{list-style:none;padding:0;margin:4px 0}
+.tree details>ul{border-left:1px solid var(--line);margin-left:8px;padding-left:8px}
+.tree .tree-node{min-height:27px;border:0;background:transparent;text-align:left;padding:3px 5px;overflow-wrap:anywhere}
+.tree .tree-node[aria-pressed=true]{background:#eaf2ff;color:#1b6de2}
+.tree summary{display:flex;align-items:baseline;list-style:none;cursor:pointer}
+.tree summary::-webkit-details-marker{display:none}
+.tree summary::before{content:"";height:6px;width:6px;flex:none;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(-45deg);margin:0 5px 0 3px}
+.tree details[open]>summary::before{transform:rotate(45deg) translateY(-2px)}
+.tree li:not(:has(>details))>.tree-node{margin-left:12px}
+.tree>h2{margin-bottom:6px}
+.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent}.tabs button[aria-pressed=true]{color:#1b6de2;border-bottom-color:var(--blue);font-weight:600}.count{padding:10px}.record-title{justify-content:flex-start}.section{padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px}.section:last-child{border:0;margin:0}.detail-tabs{border-bottom:1px solid var(--line);margin-bottom:13px}
 dl{margin:0;display:grid;grid-template-columns:88px 1fr;gap:10px}dt{color:var(--muted)}dd{margin:0}
 .dock{position:fixed;z-index:2;bottom:14px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);background:#151a23d9;color:#fff;border-radius:4px;padding:5px;backdrop-filter:blur(8px);box-shadow:0 4px 12px #26354840}.dock button,.dock summary{background:transparent;color:inherit;border:0;padding:6px 9px;cursor:pointer}.dock button:hover,.dock summary:hover{background:#3c4d62}.dock details{position:relative}.dock-menu{position:absolute;right:0;bottom:calc(100% + 9px);background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:5px;min-width:145px;box-shadow:0 5px 15px #26354830}.dock-menu button{display:block;text-align:left;width:100%}.dock-menu button:hover{background:#eaf2ff}
 dialog{border:1px solid #c5d1e0;border-radius:4px;width:min(640px,94vw);max-height:90vh;padding:0}dialog::backdrop{background:#26354870}dialog h2{padding:10px 16px;border-bottom:1px solid var(--line);font-size:16px}
@@ -27,7 +37,7 @@ label{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px;align-items
 label span{text-align:right;padding-top:6px}
 label input,label select,label textarea{width:100%;min-width:0}
 label b{color:#df3444;font-weight:400}textarea{min-height:80px;resize:vertical}form .actions{justify-content:flex-end;margin-top:15px}#notice:not(:empty){padding:6px 10px;background:#e8f6ef;color:#17573d;margin-bottom:9px}#error{color:#9d261a}.editor{max-width:1000px;margin:0 auto;padding:16px 20px}.editor h1{padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:12px}.editor .actions{justify-content:flex-start;margin-left:98px}.form-group{border:0;border-bottom:1px solid var(--line);margin:0 0 15px;padding:0 0 12px;min-width:0}.form-group legend{font-weight:650}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 15px}.full{grid-column:1/-1}
-@media(max-width:720px){.grid,.browse,.form-grid{grid-template-columns:1fr}.tree button{display:inline-block;width:auto}.dock{justify-content:center}main{padding-inline:10px}}
+@media(max-width:720px){.grid,.browse,.form-grid{grid-template-columns:1fr}.dock{justify-content:center}main{padding-inline:10px}}
 .picker{min-width:0;margin:7px 0}
 .picker-row{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px;align-items:start}
 .picker-row>span{text-align:right;padding-top:6px}.picker-row b{color:#df3444;font-weight:400}
@@ -102,13 +112,41 @@ const wishes=[
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let tab='全部', filters={product:'',module:'',status:'',search:''}, nextTarget=200;
 const options=(values,selected='')=>values.map(v=>'<option'+(v===selected?' selected':'')+'>'+esc(v)+'</option>').join('');
+function buildModuleTree(product){
+ const root={name:product,key:'',ids:[],children:new Map()};
+ for(const branch of Object.values(productScopes[product].branches)){
+  for(const [id,path] of Object.entries(branch.modules)){
+   let node=root;
+   for(const name of path.split('/').filter(Boolean)){
+    if(!node.children.has(name))node.children.set(name,{name,key:node.key+'/'+name,ids:[],children:new Map()});
+    node=node.children.get(name);
+    node.ids.push(id);
+   }
+  }
+ }
+ return root;
+}
+const moduleTrees=Object.fromEntries(Object.keys(products).map(product=>[product,buildModuleTree(product)]));
+const collapsedNodes=new Set(Object.entries(moduleTrees).flatMap(([product,node])=>{
+ if(productScopes[product].type==='normal')return [];
+ return [product+':',...Array.from(node.children.values()).filter(child=>child.name!=='主干').map(child=>product+':'+child.key)];
+}));
+function renderModuleNode(product,node){
+ const selected=filters.product===product&&filters.module===node.key;
+ const button='<button type="button" class="tree-node" data-product="'+esc(product)+'" data-module="'+esc(node.key)+'" data-ids="'+node.ids.join(',')+'" aria-pressed="'+selected+'">'+esc(node.name)+'</button>';
+ if(!node.children.size)return '<li>'+button+'</li>';
+ const key=esc(product+':'+node.key);
+ const children=Array.from(node.children.values(),child=>renderModuleNode(product,child)).join('');
+ return '<li><details data-tree-key="'+key+'" '+(collapsedNodes.has(product+':'+node.key)?'':'open')+'><summary>'+button+'</summary><ul>'+children+'</ul></details></li>';
+}
 function list(){
- const tree=(product='',module='',path='')=>'<button type="button" data-product="'+product+'" data-module="'+module+'" class="'+(module?'child':'')+'" aria-pressed="'+(filters.product===product&&filters.module===module)+'">' +esc(path||product||'所有产品')+'</button>';
+ const all='<button type="button" class="tree-node" data-product="" data-module="" data-ids="" aria-pressed="'+!filters.product+'">所有产品</button>';
+ const tree='<ul>'+Object.entries(moduleTrees).map(([product,node])=>renderModuleNode(product,node)).join('')+'</ul>';
  app.innerHTML=
   '<div class="feature"><div class="actions tabs">'+['全部','我提交的','待我处理'].map(t=>'<button data-tab="'+t+'" aria-pressed="'+(tab===t)+'">'+t+'</button>').join('')+'<button id="toggleSearch" aria-expanded="false">搜索</button></div><button class="primary" id="new">＋ 提交许愿</button></div>'+
-  '<div class="browse"><aside class="panel tree"><h2>产品模块</h2>'+tree()+Object.keys(products).map(product=>tree(product)+Object.values(productScopes[product].branches).map(branch=>Object.entries(branch.modules).map(([id,path])=>tree(product,id,path)).join('')).join('')).join('')+'</aside>'+
+  '<div class="browse"><aside class="panel tree"><h2>产品模块</h2>'+all+tree+'</aside>'+
   '<section class="panel"><div id="searchPanel" hidden><div class="filters"><select aria-label="状态" id="statusFilter"><option value="">所有状态</option>'+options(states,filters.status)+'</select><input aria-label="搜索" id="search" placeholder="编号、标题、客户" value="'+esc(filters.search)+'"><button id="apply">筛选</button><button id="clear">清除</button></div></div><div class="scroll"><table><thead><tr><th>编号</th><th>优先级</th><th>标题</th><th>产品</th><th>客户</th><th>状态</th><th>负责人</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><div id="count" class="muted count"></div></section></div>';
- const rows=wishes.filter(w=>(tab==='全部'||(tab==='我提交的'?w.reporter===currentUser:w.owner===currentUser&&w.status!=='已关闭'))&&(!filters.product||w.product===filters.product)&&(!filters.module||w.scopes.some(scope=>scope.module===filters.module))&&(!filters.status||w.status===filters.status)&&(w.id+' '+w.title+' '+w.customer).includes(filters.search));
+ const rows=wishes.filter(w=>(tab==='全部'||(tab==='我提交的'?w.reporter===currentUser:w.owner===currentUser&&w.status!=='已关闭'))&&(!filters.product||w.product===filters.product)&&(!filters.module||w.scopes.some(scope=>filters.moduleIDs.includes(scope.module)))&&(!filters.status||w.status===filters.status)&&(w.id+' '+w.title+' '+w.customer).includes(filters.search));
  app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td>'+esc(w.priority)+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill" data-state="'+w.status+'">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td><td><button class="link" data-edit="'+w.id+'" aria-label="编辑许愿 '+w.id+'">编辑</button></td></tr>').join('')||'<tr><td colspan="9">没有符合条件的许愿</td></tr>';
  app.querySelector('#count').textContent='共 '+rows.length+' 条许愿';
  const searchToggle=app.querySelector('#toggleSearch');
@@ -120,7 +158,16 @@ function list(){
  app.querySelector('#apply').onclick=()=>{filters.status=app.querySelector('#statusFilter').value;filters.search=app.querySelector('#search').value.trim();list()};
  app.querySelector('#clear').onclick=()=>{filters.status='';filters.search='';list()};
  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;list()});
- app.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>{filters.product=b.dataset.product;filters.module=b.dataset.module;list()});
+ app.querySelectorAll('[data-tree-key]').forEach(node=>node.ontoggle=()=>{
+  const key=node.dataset.treeKey;
+  if(node.open)collapsedNodes.delete(key);else collapsedNodes.add(key);
+ });
+ app.querySelectorAll('[data-product]').forEach(b=>b.onclick=e=>{
+  e.preventDefault();
+  filters.product=b.dataset.product;filters.module=b.dataset.module;filters.moduleIDs=b.dataset.ids.split(',');
+  collapsedNodes.delete(b.dataset.product+':'+b.dataset.module);
+  list();
+ });
  app.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>detail(wishes.find(w=>w.id===Number(b.dataset.id))));
  app.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>wishForm(wishes.find(w=>w.id===Number(b.dataset.edit)),list));
 }
