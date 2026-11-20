@@ -311,18 +311,28 @@ class zdb
      */
     public function import($fileName)
     {
+        if(!is_readable($fileName) || !($fp = fopen($fileName, 'rb')))
+        {
+            return (object)array('result' => false, 'error' => 'Cannot open SQL backup.');
+        }
+
+        try
+        {
+            return $this->importStream($fp);
+        }
+        finally
+        {
+            fclose($fp);
+        }
+    }
+
+    /** Import SQL starting at the current position of a caller-owned stream. */
+    public function importStream($fp)
+    {
         $return = new stdclass();
         $return->result = true;
         $return->error  = '';
 
-        if(!file_exists($fileName))
-        {
-            $return->result = false;
-            $return->error  = "File is not exists";
-            return $return;
-        }
-
-        $fp        = fopen($fileName, 'r');
         $sql       = '';
         $startTags = '^DROP TABLE|^CREATE TABLE|^INSERT INTO|^SET|^DROP VIEW|^CREATE .*VIEW';
         $isInsert  = false;

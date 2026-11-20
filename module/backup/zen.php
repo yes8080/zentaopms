@@ -149,7 +149,6 @@ class backupZen extends backup
         $backupFile = $this->backup->getBackupFile($fileName, 'sql');
         if(!$backupFile || !is_readable($backupFile)) return array('result' => 'fail', 'message' => $this->lang->backup->notice->unknownVersion);
 
-        /* The SQL importer skips non-SQL lines, including the PHP protection header. */
         $result = $this->backup->restoreSQL($backupFile);
 
         if(!$result->result) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->restoreSQL, $result->error));

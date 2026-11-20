@@ -138,20 +138,35 @@ class backupModel extends model
      */
     public function restoreSQL(string $backupFile): object
     {
-        $zdb       = $this->app->loadClass('zdb');
-        $allTables = $zdb->getAllTables();
-        foreach($allTables as $tableName => $tableType)
+        $input = fopen($backupFile, 'rb');
+        if(!$input) return (object)array('result' => false, 'error' => 'Cannot open SQL backup.');
+
+        try
         {
-            try
+            if(str_ends_with($backupFile, '.sql.php') && !$this->readProtectionHeader($input))
             {
-                $this->dbh->exec("DROP $tableType IF EXISTS `$tableName`");
+                return (object)array('result' => false, 'error' => 'Invalid backup protection header.');
             }
-            catch(PDOException $e){}
+            if(ftell($input) >= fstat($input)['size']) return (object)array('result' => false, 'error' => 'Empty SQL backup.');
+
+            $zdb       = $this->app->loadClass('zdb');
+            $allTables = $zdb->getAllTables();
+            foreach($allTables as $tableName => $tableType)
+            {
+                try
+                {
+                    $this->dbh->exec("DROP $tableType IF EXISTS `$tableName`");
+                }
+                catch(PDOException $e){}
+            }
+
+            $this->dao->clearCache();
+            return $zdb->importStream($input);
         }
-
-        $this->dao->clearCache();
-
-        return $zdb->import($backupFile);
+        finally
+        {
+            fclose($input);
+        }
     }
 
     /**
@@ -186,6 +201,12 @@ class backupModel extends model
         return $this->rewriteFileHeader($fileName, $output ?? $fileName, false);
     }
 
+    /** Consume the protection line written before the SQL dump. */
+    private function readProtectionHeader($input): bool
+    {
+        return preg_match('/^<\?php\s+(?:die|exit)\s*\(\s*\)\s*;\s*\?>\s*$/i', (string)fgets($input, 1024)) === 1;
+    }
+
     /** Replace a complete file atomically without exposing the original SQL while copying. */
     private function rewriteFileHeader(string $source, string $output, bool $add): bool
     {
@@ -207,7 +228,7 @@ class backupModel extends model
                 $header = "<?php die();?>" . "\n";
                 if(fwrite($writer, $header) !== strlen($header)) return false;
             }
-            elseif(!preg_match('/^<\?php\s+(?:die|exit)\s*\(\s*\)\s*;\s*\?>\s*$/i', (string)fgets($input, 1024)))
+            elseif(!$this->readProtectionHeader($input))
             {
                 return false;
             }
