@@ -45,7 +45,7 @@ $lang->cron->introduction  = <<<EOD
 EOD;
 
 $lang->cron->confirmOpen = <<<EOD
-<p>是否开启该功能？<a href="%s"'><strong>打开计划任务</strong></a></p>
+<p>是否开启该功能？<a href="%s" class="ajax-submit" %s><strong>打开计划任务</strong></a></p>
 EOD;
 
 $lang->cron->notice = new stdclass();

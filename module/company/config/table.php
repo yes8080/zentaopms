@@ -9,6 +9,7 @@ if(!empty($config->sso->turnon))
     $config->company->user->actionList['unbind']['hint']         = $lang->user->unbind;
     $config->company->user->actionList['unbind']['url']          = array('module' => 'user', 'method' => 'unbind', 'params' => 'userID={id}');
     $config->company->user->actionList['unbind']['className']    = 'ajax-submit';
+    $config->company->user->actionList['unbind']['csrf']         = true;
     $config->company->user->actionList['unbind']['data-confirm'] = $lang->user->confirmUnbind;
 }
 
@@ -17,6 +18,7 @@ $config->company->user->actionList['unlock']['text']         = $lang->user->unlo
 $config->company->user->actionList['unlock']['hint']         = $lang->user->unlock;
 $config->company->user->actionList['unlock']['url']          = array('module' => 'user', 'method' => 'unlock', 'params' => 'userID={id}');
 $config->company->user->actionList['unlock']['className']    = 'ajax-submit';
+$config->company->user->actionList['unlock']['csrf']         = true;
 $config->company->user->actionList['unlock']['data-confirm'] = $lang->user->confirmUnlock;
 
 $config->company->user->actionList['edit']['icon'] = 'edit';

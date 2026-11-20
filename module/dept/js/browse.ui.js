@@ -14,6 +14,8 @@ window.operateDept = function(event, item, index)
     else if($target.hasClass('icon-trash') || $target.children('.icon-trash').length > 0)
     {
         $button.attr('data-confirm', deleteTip);
+        $button.attr('data-method', 'POST');
+        $button.attr('data-data', JSON.stringify({csrfToken: deptCsrfToken}));
         $button.attr('data-url', deleteLink.replace('{id}', deptID));
         $button.addClass('ajax-submit');
     }

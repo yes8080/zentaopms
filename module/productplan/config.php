@@ -90,6 +90,7 @@ $config->productplan->actionList['delete']['text']         = $lang->productplan-
 $config->productplan->actionList['delete']['url']          = helper::createLink('productplan', 'delete', 'planID={id}');
 $config->productplan->actionList['delete']['data-confirm'] = array('message' => $lang->productplan->confirmDelete, 'icon' => 'icon-exclamation-sign', 'iconClass' => 'warning-pale rounded-full icon-2x');
 $config->productplan->actionList['delete']['innerClass']   = 'ajax-submit';
+$config->productplan->actionList['delete'] += helper::csrfAjaxAttributes();
 
 $config->productplan->actionList['unlinkBug']['icon'] = 'unlink';
 $config->productplan->actionList['unlinkBug']['hint'] = $lang->productplan->unlinkBug;

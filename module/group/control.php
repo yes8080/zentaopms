@@ -292,6 +292,7 @@ class group extends control
      */
     public function delete(int $groupID)
     {
+        $this->requireWriteRequest();
         $group = $this->group->getByID($groupID);
         $this->group->remove($groupID);
 

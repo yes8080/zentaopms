@@ -3467,16 +3467,16 @@ class repoModel extends model
      * @access public
      * @return array
      */
-    public function getGitLabRepos(string $apiRoot): array
+    public function getGitLabRepos(object $apiRoot): array
     {
         if(!$apiRoot) return array();
 
-        $url = sprintf($apiRoot, "/projects");
+        $url = sprintf($apiRoot->url, "/projects");
 
         $allResults = array();
         for($page = 1; true; $page++)
         {
-            $results = json_decode(commonModel::http($url . "&simple=true&page={$page}&per_page=100"));
+            $results = json_decode(commonModel::http($url . "?simple=true&page={$page}&per_page=100", null, array(), $apiRoot->header));
             if(!is_array($results)) break;
             if(!empty($results)) $allResults = array_merge($allResults, $results);
             if(count($results) < 100) break;
@@ -3493,17 +3493,17 @@ class repoModel extends model
      * @access public
      * @return array
      */
-    public function getGiteaRepos(string $apiRoot): array
+    public function getGiteaRepos(object $apiRoot): array
     {
         if(empty($apiRoot)) return array();
 
-        $url = sprintf($apiRoot, "/repos/search");
+        $url = sprintf($apiRoot->url, "/repos/search");
 
         $page       = 1;
         $allResults = array();
         while(true)
         {
-            $results = json_decode(commonModel::http($url . "&page={$page}&limit=50"));
+            $results = json_decode(commonModel::http($url . "?page={$page}&limit=50", null, array(), $apiRoot->header));
             if(empty($results->data) || !is_array($results->data)) break;
 
             $allResults = array_merge($allResults, $results->data);
@@ -3523,19 +3523,16 @@ class repoModel extends model
      * @access public
      * @return array
      */
-    public function getGogsRepos(string $apiRoot): array
+    public function getGogsRepos(object $apiRoot): array
     {
         if(empty($apiRoot)) return array();
 
-        $url = sprintf($apiRoot, "/user/repos");
-
-        $headers = array();
-        if(preg_match('/[?&]token=([^&]+)/', $url, $matches)) $headers[] = 'Authorization: token ' . urldecode($matches[1]);
+        $url = sprintf($apiRoot->url, "/user/repos");
 
         $allResults = array();
         for($page = 1; true; $page++)
         {
-            $results = json_decode(commonModel::http($url . "&page={$page}&limit=50", '', array(), $headers));
+            $results = json_decode(commonModel::http($url . "?page={$page}&limit=50", null, array(), $apiRoot->header));
             if(!is_array($results)) break;
             if(!empty($results)) $allResults = array_merge($allResults, $results);
             if(count($results) < 50) break;
@@ -3556,7 +3553,7 @@ class repoModel extends model
     {
         if(empty($formData->providerID)) return false;
 
-        $provider = $this->loadModel('provider')->fetchByID((int)$formData->providerID);
+        $provider = $this->loadModel('provider')->getByID((int)$formData->providerID);
         if(empty($provider)) return false;
 
          /* 提取嵌套三元：仅在非 Subversion 时按 provider 类型拼仓库标识并调用接口取仓库，与原三元短路语义一致。 */
@@ -3661,8 +3658,8 @@ class repoModel extends model
         $apiRoot = $this->loadModel('provider')->getApiRoot($provider);
         if(empty($apiRoot)) return false;
 
-        $url  = $provider->type == 'GitLab' ? sprintf($apiRoot, "/projects/{$repoID}") : sprintf($apiRoot, "/repos/{$repoID}");
-        $repo = json_decode(commonModel::http($url));
+        $url  = $provider->type == 'GitLab' ? sprintf($apiRoot->url, "/projects/{$repoID}") : sprintf($apiRoot->url, "/repos/{$repoID}");
+        $repo = json_decode(commonModel::http($url, null, array(), $apiRoot->header));
         if(empty($repo) || isset($repo->message)) return false;
 
         return $repo;
@@ -3776,7 +3773,7 @@ class repoModel extends model
             $userAccount[] = $user->account;
         }
 
-        $providerList = $this->loadModel('provider')->getList();
+        $this->loadModel('provider');
 
         $oldName = array();
         foreach($oldRepos as $oldRepo)
@@ -3819,7 +3816,7 @@ class repoModel extends model
 
             if($oldRepo->SCM === 'Gitlab' && empty($oldRepo->path))
             {
-                $provider = $providerList[$oldRepo->serviceHost];
+                $provider = $this->provider->getByID((int)$oldRepo->serviceHost);
                 if(empty($provider) || $provider->type != 'GitLab') continue;
                 $repoInfo = $this->getProviderRepo($provider, $oldRepo->serviceProject);
 

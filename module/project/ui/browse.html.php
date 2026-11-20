@@ -16,6 +16,7 @@ jsVar('param', $param);
 jsVar('recTotal', $pager->recTotal);
 jsVar('recPerPage', $pager->recPerPage);
 jsVar('pageID', $pager->pageID);
+jsVar('projectCsrfToken', helper::csrfToken());
 jsVar('confirmDeleteTip', $lang->project->confirmDelete);
 
 unset($programs[0]);

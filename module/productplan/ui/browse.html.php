@@ -18,6 +18,7 @@ $privs = array
 );
 
 jsVar('productID',       $productID);
+jsVar('planDeleteAttrs', helper::csrfAjaxAttributes());
 jsVar('productplanLang', $lang->productplan);
 jsVar('privs',           $privs);
 jsVar('rawModule',       $app->rawModule);

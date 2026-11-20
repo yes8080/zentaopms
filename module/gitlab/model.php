@@ -22,12 +22,12 @@ class gitlabModel extends model
      * @access public
      * @return object|array|null
      */
-    public function apiGet(int|string $host, string $api): object|array|null
+    public function apiGet(int|string $host, string $api, string $token = ''): object|array|null
     {
         if(strpos($host, 'http://') !== 0 and strpos($host, 'https://') !== 0) return null;
 
         $url = sprintf($host, $api);
-        return json_decode(commonModel::http($url));
+        return json_decode(commonModel::http($url, null, array(), array('PRIVATE-TOKEN: ' . $token)));
     }
 
     /**
@@ -48,49 +48,56 @@ class gitlabModel extends model
         $user = $this->checkTokenAccess($url, $token);
         if(!$user || !isset($user->id)) return false;
 
-        $apiRoot     = rtrim($url, '/') . "/api/v4%s?private_token={$token}";
-        $systemURL   = dirname(common::getSysURL() . $_SERVER['REQUEST_URI']);
-        $callbackURL = $systemURL . '/api.php/v1/gitlab/webhook?pipelineID=' . $pipelineID;
+        $apiRoot     = rtrim($url, '/') . '/api/v4%s';
+        $systemURL   = getenv('ZT_GITLAB_CALLBACK_BASE_URL') ?: '';
+        $callbackURL = rtrim($systemURL, '/') . '/api.php/v1/gitlab/webhook?pipelineID=' . $pipelineID;
 
-        /* Check if webhook already exists. */
-        if($this->isWebhookExists($url, $token, $projectID, $callbackURL)) return true;
+        $scopedToken = self::webhookToken('pipeline', (int)$pipelineID, rtrim($url, '/') . '/' . $projectID);
+        if(parse_url($callbackURL, PHP_URL_SCHEME) !== 'https' || $scopedToken === '') return false;
+        $headers = array('PRIVATE-TOKEN: ' . $token);
+        $hookURL = sprintf($apiRoot, "/projects/{$projectID}/hooks");
+        $hookID  = $this->findWebhook($hookURL, $headers, $callbackURL);
+        if($hookID === false) return false;
 
         $hook = new stdClass;
         $hook->url                      = $callbackURL;
-        if($callbackToken) $hook->token = $callbackToken;
-        $hook->enable_ssl_verification  = "false";
+        $hook->token                    = $scopedToken;
+        $hook->enable_ssl_verification  = true;
         $hook->push_events              = true;
         $hook->merge_requests_events    = true;
         $hook->tag_push_events          = true;
 
-        $result = json_decode(commonModel::http(sprintf($apiRoot, "/projects/{$projectID}/hooks"), $hook, array(), array(), 'json'));
+        $result = json_decode(commonModel::http($hookID ? "$hookURL/$hookID" : $hookURL, $hook, array(), $headers, 'json', $hookID ? 'PUT' : 'POST'));
         if(!empty($result->id)) return true;
         if(!empty($result->message)) return array('result' => 'fail', 'message' => $this->lang->gitlab->failCreateWebhook);
         return false;
     }
 
-    /**
-     * 检查webhook是否存在。
-     * Check if Webhook exists.
-     *
-     * @param  string $url
-     * @param  string $token
-     * @param  string $projectID
-     * @param  string $callbackURL
-     * @return bool
-     */
+    public static function webhookToken(string $scope, int $id, string $binding = ''): string
+    {
+        $key = commonModel::integrationKey('zentao-gitlab-webhook-v1');
+        return $key === '' || $id <= 0 ? '' : hash_hmac('sha256', "$scope:$id:$binding", $key);
+    }
+
     public function isWebhookExists(string $url, string $token, string $projectID, string $callbackURL = ''): bool
     {
-        $apiRoot  = rtrim($url, '/') . "/api/v4%s?private_token={$token}";
-        $hookList = json_decode(commonModel::http(sprintf($apiRoot, "/projects/{$projectID}/hooks") . '&per_page=100'));
-        if(!is_array($hookList)) return false;
+        $url = rtrim($url, '/') . "/api/v4/projects/{$projectID}/hooks";
+        return $this->findWebhook($url, array('PRIVATE-TOKEN: ' . $token), $callbackURL) > 0;
+    }
 
-        foreach($hookList as $hook)
+    /** Return the matching id, zero for a new hook, or false on lookup failure. */
+    private function findWebhook(string $url, array $headers, string $callbackURL): int|false
+    {
+        for($page = 1; ; $page++)
         {
-            if(empty($hook->url)) continue;
-            if($hook->url == $callbackURL) return true;
+            $hooks = json_decode(commonModel::http("$url?per_page=100&page=$page", null, array(), $headers));
+            if(!is_array($hooks)) return false;
+            foreach($hooks as $hook)
+            {
+                if(isset($hook->id, $hook->url) && preg_replace('~^http://~i', 'https://', $hook->url) === $callbackURL) return (int)$hook->id;
+            }
+            if(count($hooks) < 100) return 0;
         }
-        return false;
     }
 
     /**
@@ -104,15 +111,7 @@ class gitlabModel extends model
      */
     public function checkTokenAccess(string $url = '', string $token = ''): object|array|null|false
     {
-        $apiRoot  = rtrim($url, '/') . '/api/v4%s' . "?private_token={$token}";
-        $url      = sprintf($apiRoot, "/users") . "&per_page=5&active=true";
-        $response = commonModel::http($url);
-        $users    = json_decode($response);
-        if(empty($users)) return false;
-        if(isset($users->message) or isset($users->error)) return null;
-
-        $apiRoot .= '&sudo=' . $users[0]->id;
-        return $this->apiGet($apiRoot, '/user');
+        return $this->apiGet(rtrim($url, '/') . '/api/v4%s', '/user', $token);
     }
 
     /**
@@ -130,9 +129,9 @@ class gitlabModel extends model
     public function apiCreatePipeline(string $url, string $token, string $projectID, object $params): object|array|null
     {
         if(!is_string($params)) $params = json_encode($params);
-        $apiRoot  = rtrim($url, '/') . '/api/v4%s' . "?private_token={$token}";
+        $apiRoot  = rtrim($url, '/') . '/api/v4%s';
         $url = sprintf($apiRoot, "/projects/{$projectID}/pipeline");
-        return json_decode(commonModel::http($url, $params, array(), array("Content-Type: application/json")));
+        return json_decode(commonModel::http($url, $params, array(), array("Content-Type: application/json", "PRIVATE-TOKEN: " . $token)));
     }
 
     /**
@@ -198,10 +197,10 @@ class gitlabModel extends model
     {
         if(empty($provider->token) || empty($provider->url)) return array();
 
-        $url = rtrim($provider->url, '/') . '/api/v4%s' . "?private_token={$provider->token}";
+        $url = rtrim($provider->url, '/') . '/api/v4%s';
         $url = sprintf($url, "/projects/{$pipelineName}/pipelines/{$number}");
 
-        $response = json_decode(common::http($url, null, array(), array('Accept: application/json'), 'json'));
+        $response = json_decode(common::http($url, null, array(), array('Accept: application/json', 'PRIVATE-TOKEN: ' . $provider->token), 'json'));
         if(empty($response) || empty($response->status)) return array();
         return $response;
     }
@@ -220,9 +219,9 @@ class gitlabModel extends model
     {
         if(empty($provider->token) || empty($provider->url)) return '';
 
-        $apiURL = rtrim($provider->url, '/') . '/api/v4%s' . "?private_token={$provider->token}";
+        $apiURL = rtrim($provider->url, '/') . '/api/v4%s';
         $url    = sprintf($apiURL, "/projects/{$pipelineName}/pipelines/{$buildNumber}/jobs");
-        $jobs   = json_decode(commonModel::http($url));
+        $jobs   = json_decode(commonModel::http($url, null, array(), array('PRIVATE-TOKEN: ' . $provider->token)));
         if(empty($jobs)) return '';
 
         $this->loadModel('ci');
@@ -236,7 +235,7 @@ class gitlabModel extends model
             $logs .= "Job URL: <a href=\"{$gitlabJob->web_url}\" target='_blank'>$gitlabJob->web_url</a> \r\n";
 
             $jobLogUrl = sprintf($apiURL, "/projects/{$pipelineName}/jobs/{$gitlabJob->id}/trace");
-            $jobLog    = commonModel::http($jobLogUrl);
+            $jobLog    = commonModel::http($jobLogUrl, null, array(), array('PRIVATE-TOKEN: ' . $provider->token));
             if(empty($jobLog)) continue;
 
             $logs .= $this->ci->transformAnsiToHtml($jobLog);

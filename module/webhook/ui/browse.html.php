@@ -36,7 +36,7 @@ foreach($webhooks as $webhook)
     if($canBind)  $webhook->actions[] = array('name' => 'bind', 'url' => createLink('webhook', 'bind',       "webhookID={$webhook->id}"), 'title' => $lang->webhook->bind);
     $webhook->actions[] = array('name' => 'log',    'disabled' => !$canSeeLog, 'url' => createLink('webhook', 'log',    "webhookID={$webhook->id}"), 'title' => $lang->webhook->log);
     $webhook->actions[] = array('name' => 'edit',   'disabled' => !$canEdit,   'url' => createLink('webhook', 'edit',   "webhookID={$webhook->id}"), 'title' => $lang->webhook->edit);
-    $webhook->actions[] = array('name' => 'delete', 'disabled' => !$canDelete, 'url' => createLink('webhook', 'delete', "webhookID={$webhook->id}&confirm=yes"), 'title' => $lang->webhook->delete, 'className' => 'ajax-submit', 'data-confirm' => $lang->webhook->confirmDelete);
+    $webhook->actions[] = array('name' => 'delete', 'disabled' => !$canDelete, 'url' => createLink('webhook', 'delete', "webhookID={$webhook->id}&confirm=yes"), 'title' => $lang->webhook->delete, 'className' => 'ajax-submit', 'data-confirm' => $lang->webhook->confirmDelete) + helper::csrfAjaxAttributes();
 
     $webhook->type = zget($lang->webhook->typeList, $webhook->type);
     $data[] = $webhook;

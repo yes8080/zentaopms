@@ -310,7 +310,9 @@ $headingColor = $isTaskClosed ? 'dark' : ($isTaskDone ? 'success' : 'pri-' . $ta
   common::printIcon('task', 'edit',           "taskID=$task->id", $task, 'button', '', '', '', false, "data-display='modal' data-placement='bottom'", $lang->edit);
   if(empty($task->team) or empty($task->children)) common::printIcon('task', 'batchCreate', "execution=$task->execution&storyID=$task->story&moduleID=$task->module&taskID=$task->id", $task, 'button', '', '', '', false, "data-display='modal' data-placement='bottom'", $lang->task->children);
 
-  if(common::hasPriv('task', 'delete')) echo html::a($this->createLink('task', 'delete', "executionID=$task->execution&taskID=$task->id"), $lang->delete, 'hiddenwin');
+  if(common::hasPriv('task', 'delete')): ?>
+    <a href="#" onclick="document.getElementById('deleteTaskSubmit').click();return false"><?php echo $lang->delete;?></a>
+  <?php endif;
   if(common::hasPriv('action', 'comment', $task)) echo html::a('#commentBox', $lang->comment, '', "data-display data-backdrop='true'");
   ?>
   <a class='moreActionMenu hidden' data-display='dropdown' data-placement='beside-top'><?php echo $lang->more;?></a>
@@ -318,6 +320,13 @@ $headingColor = $isTaskClosed ? 'dark' : ($isTaskDone ? 'success' : 'pri-' . $ta
   </nav>
 </div>
 
+<form hidden id="deleteTaskForm" method="post" target="hiddenwin"
+      action="<?php echo htmlspecialchars($this->createLink('task', 'delete', "taskID=$task->id"), ENT_QUOTES, 'UTF-8');?>"
+      onsubmit="return window.confirm(this.dataset.confirm)"
+      data-confirm="<?php echo htmlspecialchars($task->isParent ? $lang->task->confirmDeleteParent : $lang->task->confirmDelete, ENT_QUOTES, 'UTF-8');?>">
+  <input type="hidden" name="csrfToken" value="<?php echo helper::csrfToken();?>">
+  <button type="submit" id="deleteTaskSubmit"></button>
+</form>
 <div id='commentBox' class='enter-from-bottom hidden affix layer'>
   <div class='heading'>
     <div class='title'><?php echo $lang->comment;?></div>

@@ -1069,6 +1069,7 @@ class task extends control
      */
     public function delete(int $taskID, string $from = '')
     {
+        $this->requireWriteRequest();
         $task = $this->task->fetchByID($taskID);
 
         /* 如果是父任务，先删除所有子任务 */

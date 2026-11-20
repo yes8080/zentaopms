@@ -295,6 +295,7 @@ class stakeholder extends control
     */
     public function delete(int $userID)
     {
+        $this->requireWriteRequest();
         $stakeholder = $this->stakeholder->getByID($userID);
         $this->stakeholder->delete(TABLE_STAKEHOLDER, $userID);
         $project = $this->session->project ? array($this->session->project) : array();

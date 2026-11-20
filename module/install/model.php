@@ -298,7 +298,7 @@ class installModel extends model
         $admin   = new stdclass();
         $admin->account  = $data->account;
         $admin->realname = $data->account;
-        $admin->password = md5($data->password);
+        $admin->password = helper::hashAccountPassword($data->password);
         $admin->gender   = 'f';
         $admin->visions  = $visions;
         $this->dao->insert(TABLE_USER)->data($admin)->exec();

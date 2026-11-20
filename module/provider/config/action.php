@@ -11,4 +11,5 @@ $config->provider->actionList['delete']['text']         = $lang->provider->delet
 $config->provider->actionList['delete']['hint']         = $lang->provider->delete;
 $config->provider->actionList['delete']['url']          = array('module' => 'provider', 'method' => 'delete', 'params' => 'id={id}');
 $config->provider->actionList['delete']['className']    = 'ajax-submit';
+$config->provider->actionList['delete']['csrf']         = true;
 $config->provider->actionList['delete']['data-confirm'] = array('message' => $lang->provider->notice->confirmDelete, 'icon' => 'icon-exclamation-sign', 'iconClass' => 'warning-pale rounded-full icon-2x');

@@ -10,6 +10,7 @@
 namespace zin;
 
 jsVar('delayInfo', $lang->project->delayInfo);
+jsVar('projectCsrfToken', helper::csrfToken());
 jsVar('confirmDeleteTip', $lang->project->confirmDelete);
 
 featurebar

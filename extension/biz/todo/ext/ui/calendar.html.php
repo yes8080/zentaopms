@@ -163,6 +163,7 @@ sidebar
     )
 );
 
+jsVar('todoCsrfToken', helper::csrfToken());
 jsVar('ajaxFinishUrl', createLink('todo', 'finish', 'id={id}'));
 jsVar('ajaxActivateUrl', createLink('todo', 'activate', 'id={id}'));
 jsVar('ajaxGetTodosUrl', createLink('todo', 'ajaxGetTodos', "userID={$app->user->id}&year={year}"));

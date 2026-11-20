@@ -114,6 +114,7 @@ class entry extends control
      */
     public function delete(int $id)
     {
+        $this->requireWriteRequest();
         $this->entry->delete(TABLE_ENTRY, $id);
         if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 

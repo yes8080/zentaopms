@@ -9,6 +9,8 @@
  */
 namespace zin;
 
+jsVar('teamCsrfToken', helper::csrfToken());
+
 foreach($teamMembers as $member)
 {
     $member->days    = $member->days . $this->lang->execution->day;

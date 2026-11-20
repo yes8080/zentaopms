@@ -414,9 +414,10 @@ class userEntry extends entry
         $setPassword = $password ? md5($password) . $this->app->session->rand : '';
         $this->setPost('password1', $setPassword);
         $this->setPost('password2', $setPassword);
+        $this->setPost('passwordPlain', $this->request('password', zget($_POST, 'password', '')));
         $this->setPost('passwordStrength', 3);
         $this->setPost('passwordLength', strlen($setPassword));
-        $this->setPost('verifyPassword', md5($this->app->user->password . $this->app->session->rand));
+        $this->setPost('verifyPassword', $this->loadModel('user')->apiReauthenticationProof());
 
         $control->edit((int)$userID);
 
@@ -444,7 +445,7 @@ class userEntry extends entry
             $userID = $user->id;
         }
 
-        $this->setPost('verifyPassword', md5($this->app->user->password . $this->app->session->rand));
+        $this->setPost('verifyPassword', $this->loadModel('user')->apiReauthenticationProof());
 
         $control = $this->loadController('user', 'delete');
         $control->delete((int)$userID);

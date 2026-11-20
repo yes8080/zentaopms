@@ -2477,7 +2477,7 @@ class docModel extends model
         {
             foreach($this->app->user->groups as $groupID)
             {
-                if(strpos(",{$doc->groups},", ",{$groupID},") !== false || strpos(",{$doc->readGroups},", ",{$groupID}") !== false) return true;
+                if(strpos(",{$doc->groups},", ",{$groupID},") !== false || strpos(",{$doc->readGroups},", ",{$groupID},") !== false) return true;
             }
         }
 

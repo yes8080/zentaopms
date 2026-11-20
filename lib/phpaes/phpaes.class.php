@@ -1,9 +1,9 @@
 <?php
-define('PHPAES_ROOT', dirname(__FILE__));
+use phpseclib3\Crypt\AES;
+use phpseclib3\Crypt\Random;
 
-include PHPAES_ROOT . '/phpseclib/Crypt/Common/BlockCipher.php';
-include PHPAES_ROOT . '/phpseclib/Crypt/AES.php';
-include PHPAES_ROOT . '/phpseclib/Crypt/Random.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
 class phpAES
 {
     /**
@@ -27,7 +27,7 @@ class phpAES
 
     public function init($key, $iv)
     {
-        $this->aes = new AES(self::MODE_CBC);
+        $this->aes = new AES('cbc');
         $this->aes->setKey($key);
         $this->aes->setIV($iv);
     }
@@ -44,14 +44,14 @@ class phpAES
 
     public function getEngine()
     {
-        switch($this->aes->getEngine())
+        return match($this->aes->getEngine())
         {
-            case self::ENGINE_INTERNAL : return 'ENGINE_INTERNAL';
-            case self::ENGINE_EVAL     : return 'ENGINE_EVAL';
-            case self::ENGINE_MCRYPT   : return 'ENGINE_MCRYPT';
-            case self::ENGINE_OPENSSL  : return 'ENGINE_OPENSSL';
-            default: return 'error';
-        }
+            'PHP'     => 'ENGINE_INTERNAL',
+            'Eval'    => 'ENGINE_EVAL',
+            'mcrypt'  => 'ENGINE_MCRYPT',
+            'OpenSSL' => 'ENGINE_OPENSSL',
+            default   => 'error',
+        };
     }
 
     public static function randomString($length)

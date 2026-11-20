@@ -21,6 +21,7 @@ modalHeader
 formPanel
 (
     on::click('button[type=submit]', 'encryptPassword'),
+    input(set::type('hidden'), set::name('csrfToken'), set::value(helper::csrfToken())),
     formGroup
     (
         set::label($lang->user->verifyPassword),

@@ -154,8 +154,6 @@ class apiZen extends api
                 $param = ltrim($param, ',');
             }
             $url  = rtrim($host, '/') . inlink('getModel',  "moduleName=$moduleName&methodName=$methodName&params=$param", 'json');
-            $url .= strpos($url, '?') === false ? '?' : '&';
-            $url .= $this->config->sessionVar . '=' . session_id();
         }
         else
         {
@@ -166,14 +164,19 @@ class apiZen extends api
                 $param = ltrim($param, '&');
             }
             $url  = rtrim($host, '/') . helper::createLink($moduleName, $methodName, $param, 'json');
-            $url .= strpos($url, '?') === false ? '?' : '&';
-            $url .= $this->config->sessionVar . '=' . session_id();
         }
 
         /* Unlock session. After new request, restart session. */
+        $headers = helper::localSessionHeaders($url);
         session_write_close();
-        $content = file_get_contents($url);
-        session_start();
+        try
+        {
+            $content = common::http($url, null, array(), $headers);
+        }
+        finally
+        {
+            session_start();
+        }
 
         return array('url' => $url, 'content' => $content);
     }

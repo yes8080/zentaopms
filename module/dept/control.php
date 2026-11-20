@@ -105,6 +105,7 @@ class dept extends control
      */
     public function delete(int $deptID)
     {
+        $this->requireWriteRequest();
         /* 部门下有子部门的无法被删除。 */
         $sons = $this->dept->getSons($deptID);
         if($sons)

@@ -188,14 +188,14 @@ class pipelineZen extends pipeline
     public function getJenkinsPipelineList(int $providerID): array
     {
         $provider = $this->loadModel('provider')->getByID($providerID);
-        if(!$provider || $provider->type !== 'Jenkins') return array();
+        if(!$provider || $provider->type !== 'Jenkins' || empty($provider->token)) return array();
 
         $userPWD  = "$provider->account:$provider->token";
         $response = common::http($provider->url . '/api/json/items/list?depth=1', '', array(CURLOPT_USERPWD => $userPWD));
         $response = json_decode($response);
 
         $tasks = array();
-        if(isset($response->jobs)) $tasks = $this->loadModel('jenkins')->getDepthJobs($response->jobs, $userPWD, 1);
+        if(isset($response->jobs)) $tasks = $this->loadModel('jenkins')->getDepthJobs($response->jobs, $userPWD, 1, $provider->url);
 
         return $this->buildJenkinsTree($tasks);
     }

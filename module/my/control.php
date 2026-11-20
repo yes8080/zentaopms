@@ -1757,11 +1757,14 @@ class my extends control
     {
         if($confirm == 'no')
         {
-            return print(js::confirm($this->lang->user->confirmUnbind, $this->createLink('my', 'unbind', "confirm=yes")));
+            $confirmed = array('url' => $this->createLink('my', 'unbind', 'confirm=yes'), 'method' => 'POST', 'data' => array('csrfToken' => helper::csrfToken()));
+            return $this->send(array('result' => 'success', 'load' => array('confirm' => $this->lang->user->confirmUnbind, 'confirmed' => $confirmed)));
         }
         else
         {
+            $this->requireWriteRequest();
             $this->user->unbind($this->app->user->account);
+            if(helper::isAjaxRequest()) return $this->send(array('result' => 'success', 'load' => $this->createLink('my', 'profile')));
             return print(js::locate($this->createLink('my', 'profile'), 'parent'));
         }
     }

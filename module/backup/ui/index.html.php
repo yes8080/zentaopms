@@ -9,6 +9,7 @@
  */
 namespace zin;
 
+jsVar('backupCsrfToken', helper::csrfToken());
 jsvar('backupLang', $lang->backup->common);
 jsvar('rmPHPHeaderLang', $lang->backup->rmPHPHeader);
 jsvar('restoreLang', $lang->backup->restore);

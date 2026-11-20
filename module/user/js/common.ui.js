@@ -1,6 +1,5 @@
 let password1Encrypted = false;
 let password2Encrypted = false;
-let verifyEncrypted    = false;
 
 /**
  * 密码改变时标记密码未加密。
@@ -15,7 +14,6 @@ function changePassword(event)
     const targetID = $(event.target).attr('id');
     if(targetID == 'password1')      password1Encrypted = false;
     if(targetID == 'password2')      password2Encrypted = false;
-    if(targetID == 'verifyPassword') verifyEncrypted    = false;
 }
 
 /**
@@ -27,27 +25,14 @@ function changePassword(event)
  */
 function encryptPassword()
 {
-    $('#verifyPassword').on('change', function(){verifyEncrypted = false});
 
     const rand = $('input[name=verifyRand]').val();
-
-    /* 加密当前登录用户的密码。*/
-    /* Encrypt password of current user. */
-    if($('input#verifyPassword').length > 0)
-    {
-        const password = $('input#verifyPassword').val().trim();
-        if(password && !verifyEncrypted)
-        {
-            $('input#verifyPassword').val(md5(md5(password) + rand));
-            verifyEncrypted = true;
-        }
-    }
 
     if($('#password1').length == 0 || $('#password2').length == 0) return;
 
     /* 加密新添加用户或被修改用户的密码 1，并记录密码强度和长度。*/
     /* Encrypt password 1 of new or modified user, and record password strength and length. */
-    const password1 = $('#password1').val().trim();
+    const password1 = $('#password1').val();
     if(password1 && !password1Encrypted)
     {
         let $plainField = $('form input[name="passwordPlain"]');
@@ -65,7 +50,7 @@ function encryptPassword()
 
     /* 加密新添加用户或被修改用户的密码 2。*/
     /* Encrypt password 2 of new or modified user. */
-    const password2 = $('#password2').val().trim();
+    const password2 = $('#password2').val();
     if(password2 && !password2Encrypted)
     {
         $('#password2').val(md5(password2) + rand);

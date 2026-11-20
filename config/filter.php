@@ -523,7 +523,6 @@ $filter->user->export->cookie['checkedItem'] = 'reg::checked';
 $filter->user->login->cookie['keepLogin']    = 'equal::on';
 $filter->user->login->get['account']         = 'account';
 $filter->user->login->get['lang']            = 'reg::lang';
-$filter->user->login->get['password']        = 'reg::any';
 $filter->user->edit->get['from']             = 'reg::word';
 $filter->user->ajaxgetmore->get['search']    = 'reg::any';
 $filter->user->ajaxgetmore->get['limit']     = 'int';

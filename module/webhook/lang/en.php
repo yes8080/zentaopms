@@ -110,5 +110,5 @@ $lang->webhook->note->typeList['default']   = 'Get the Webhook URL from the thir
 $lang->webhook->error               = new stdclass();
 $lang->webhook->error->curl         = 'The php-curl extension is required.';
 $lang->webhook->error->noDept       = 'No department selected. Please select the departments to sync first.';
-$lang->webhook->error->url          = 'Webhook url must start with http:// or https://!';
+$lang->webhook->error->url          = 'Webhook url must start with https://!';
 $lang->webhook->error->requestError = 'Request error.';

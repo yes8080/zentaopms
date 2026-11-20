@@ -9,6 +9,8 @@
  */
 namespace zin;
 
+jsVar('teamCsrfToken', helper::csrfToken());
+
 /* zin: Define the set::module('team') feature bar on main menu. */
 featureBar
 (

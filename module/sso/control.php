@@ -277,7 +277,8 @@ class sso extends control
         $user = $userResult['user'];
 
         $this->session->set('rand', '');
-        $user = $this->loadModel('user')->identify($user->account, $user->password);
+        if(!$user || $user->deleted) return $this->showError($this->lang->sso->unbound);
+        $user = $this->loadModel('user')->completeIdentification($user, 3);
         $this->user->login($user);
 
         $this->locate($this->createLink('my', 'index'));

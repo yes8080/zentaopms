@@ -7,6 +7,7 @@ namespace Composer\Autoload;
 class ComposerStaticInitd8f5ceb6dd2b1c87f9f3c117b97ef46e
 {
     public static $files = array (
+        'decc78cc4436b1292c6c0d151b19445c' => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib/bootstrap.php',
         '2cffec82183ee1cea088009cef9a6fc3' => __DIR__ . '/..' . '/ezyang/htmlpurifier/library/HTMLPurifier.composer.php',
         '04c6c5c2f7095ccf6c481d3e53e1776f' => __DIR__ . '/..' . '/mustangostang/spyc/Spyc.php',
         'dc1275c308c5b416beb314b6317daca2' => __DIR__ . '/..' . '/overtrue/pinyin/src/const.php',
@@ -14,6 +15,18 @@ class ComposerStaticInitd8f5ceb6dd2b1c87f9f3c117b97ef46e
     );
 
     public static $prefixLengthsPsr4 = array (
+        'p' =>
+        array (
+            'phpseclib3\\' => 11,
+        ),
+        'M' =>
+        array (
+            'Matrix\\' => 7,
+        ),
+        'Z' =>
+        array (
+            'ZipStream\\' => 10,
+        ),
         'W' => 
         array (
             'WpOrg\\Requests\\' => 15,
@@ -26,6 +39,8 @@ class ComposerStaticInitd8f5ceb6dd2b1c87f9f3c117b97ef46e
         ),
         'P' => 
         array (
+            'ParagonIE\\ConstantTime\\' => 23,
+            'PhpOffice\\WMF\\' => 14,
             'Psr\\SimpleCache\\' => 16,
             'PhpOffice\\PhpWord\\' => 18,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
@@ -42,6 +57,8 @@ class ComposerStaticInitd8f5ceb6dd2b1c87f9f3c117b97ef46e
         ),
         'C' => 
         array (
+            'Complex\\' => 8,
+            'Composer\\Pcre\\' => 14,
             'Cron\\' => 5,
         ),
         'B' => 
@@ -51,6 +68,34 @@ class ComposerStaticInitd8f5ceb6dd2b1c87f9f3c117b97ef46e
     );
 
     public static $prefixDirsPsr4 = array (
+        'phpseclib3\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
+        ),
+        'ParagonIE\\ConstantTime\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
+        ),
+        'PhpOffice\\WMF\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/phpoffice/wmf/src/WMF',
+        ),
+        'Matrix\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
+        ),
+        'Complex\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
+        ),
+        'ZipStream\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
+        ),
+        'Composer\\Pcre\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/composer/pcre/src',
+        ),
         'WpOrg\\Requests\\' => 
         array (
             0 => __DIR__ . '/..' . '/rmccue/requests/src',

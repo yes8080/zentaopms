@@ -199,11 +199,11 @@ class repoZen extends repo
         $repoList    = array();
         $endCursor   = '';
         $hasNextPage = true;
-        $url = rtrim($server->url, '/') . '/api/graphql' . "?private_token={$server->token}";
+        $url = rtrim($server->url, '/') . '/api/graphql';
         while($hasNextPage)
         {
             $query    = 'query { projects(after: "' . $endCursor . '") {pageInfo {endCursor hasNextPage} nodes {nameWithNamespace id name}}}';
-            $response = json_decode(commonModel::http($url, array('query' => $query), array(CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1)));
+            $response = json_decode(commonModel::http($url, array('query' => $query), array(CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1), array('PRIVATE-TOKEN: ' . $server->token)));
             if(!$endCursor && !isset($response->data->projects->nodes)) return array();
 
             foreach($response->data->projects->nodes as $project)
@@ -1634,6 +1634,7 @@ class repoZen extends repo
             }
         }
 
+        if($provider) unset($provider->token);
         $this->view->providers = $providers;
         $this->view->provider  = $provider ? $provider : array();
         $this->view->groups    = $groups;

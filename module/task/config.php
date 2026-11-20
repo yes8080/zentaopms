@@ -158,6 +158,7 @@ $config->task->actionList['delete']['text']         = $lang->task->delete;
 $config->task->actionList['delete']['url']          = array('module' => 'task', 'method' => 'delete', 'params' => 'taskID={id}&from=view');
 $config->task->actionList['delete']['data-confirm'] = array('message' => $lang->task->confirmDelete, 'icon' => 'icon-exclamation-sign', 'iconClass' => 'warning-pale rounded-full icon-2x');
 $config->task->actionList['delete']['class']        = 'ajax-submit';
+$config->task->actionList['delete'] += helper::csrfAjaxAttributes();
 
 $config->task->actionList['view']['icon']     = 'chevron-double-up';
 $config->task->actionList['view']['hint']     = $lang->task->parent;

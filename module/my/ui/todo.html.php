@@ -9,6 +9,8 @@
  */
 namespace zin;
 
+jsVar('todoCsrfToken', helper::csrfToken());
+
 featureBar
 (
     set::current($browseType),

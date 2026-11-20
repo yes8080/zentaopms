@@ -468,15 +468,19 @@ class product extends control
      */
     public function delete(int $productID, string $confirm = 'no')
     {
-        if($confirm == 'no')
+        if($confirm !== 'yes')
         {
             $confirmMessage   = $this->lang->product->confirmDelete;
             $unclosedProjects = $this->product->getUnclosedProjectsByProduct($productID);
             if($unclosedProjects) $confirmMessage = sprintf($this->lang->product->confirmDeleteWithProjects, '#' . implode(', #', array_keys($unclosedProjects)));
 
             $confirmURL = $this->createLink('product', 'delete', "productID={$productID}&confirm=yes");
-            return $this->send(array('result' => 'success', 'load' => array('confirm' => $confirmMessage, 'confirmed' => $confirmURL)));
+            $options = json_encode(array('url' => $confirmURL, 'method' => 'POST', 'data' => array('csrfToken' => helper::csrfToken())));
+            $message = json_encode($confirmMessage);
+            return $this->send(array('result' => 'success', 'callback' => "zui.Modal.confirm($message).then(confirmed => {if(confirmed) $.ajaxSubmit($options);});"));
         }
+
+        $this->requireWriteRequest();
 
         /* Delete product. */
         $this->product->deleteByID($productID);
@@ -811,6 +815,7 @@ class product extends control
      */
     public function unbindWhitelist(int $id = 0, string $confirm = 'no')
     {
+        $this->requireWriteRequest();
         echo $this->fetch('personnel', 'unbindWhitelist', "id=$id&confirm=$confirm");
     }
 

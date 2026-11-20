@@ -481,6 +481,31 @@ class fileModel extends model
     }
 
     /**
+     * Resolve an old inline upload URL to its database record. Both historical
+     * filenames and the current extensionless disk names are in use.
+     */
+    public function getLegacyUpload(string $requestURI): object|false
+    {
+        $path = rawurldecode((string)parse_url($requestURI, PHP_URL_PATH));
+        if(!str_starts_with($path, $this->webPath)) return false;
+        $path = substr($path, strlen($this->webPath));
+        if($path === '' || strlen($path) > 255 || str_contains($path, '\\') || preg_match('~[[:cntrl:]]|(?:^|/)(?:\.|/|$)~', $path)) return false;
+
+        $files = $this->dao->select('*')->from(TABLE_FILE)->where('pathname')->eq($path)
+            ->orWhere('pathname')->like(addcslashes($path, '_%') . '.%')->fetchAll();
+        foreach($files as $file)
+        {
+            if($file->objectType == 'traincourse' || $file->objectType == 'traincontents') continue;
+            $this->setFileWebAndRealPaths($file);
+            if($file->webPath !== $this->webPath . $path) continue;
+            $root = realpath($this->savePath);
+            $diskPath = realpath($file->realPath);
+            if($root && $diskPath && str_starts_with($diskPath, $root . DIRECTORY_SEPARATOR) && $this->checkPriv($file)) return $file;
+        }
+        return false;
+    }
+
+    /**
      * Get export tpl.
      *
      * @param  string $module
@@ -730,54 +755,82 @@ class fileModel extends model
      */
     public function checkPriv(object $file): bool
     {
-        if(!$file->objectType || !$file->objectID) return true;
-        if(!$this->loadModel('user')->isLogon()) return true;
-        if($file->extra == 'editor') return true;
+        if(!empty($file->deleted) || !$this->loadModel('user')->isLogon() || common::isTutorialMode()) return false;
+        $account = $this->app->user->account;
+        if($file->objectType == 'avatar' && in_array($file->extension, $this->config->file->imageExtensions, true)) return true;
+        if(!$file->objectType || !$file->objectID) return !empty($account) && $file->addedBy === $account;
 
         $objectType = $file->objectType;
-        $objectID   = $file->objectID;
-        $table      = zget($this->config->objectTables, $objectType, '');
-
-        if(!$table) return true;
-
-        $groupName = zget($this->config->file->objectGroup, $objectType, '');
-        if(!empty($groupName))
+        $objectID   = (int)$file->objectID;
+        if($objectType == 'comment')
         {
-            $groupID = $this->dao->findByID($objectID)->from($table)->fetch($groupName);
-            if($objectType == 'testcase' && $groupID == 0) return true;
-            return $this->loadModel($groupName)->checkPriv((int)$groupID);
+            $action = $this->dao->findById($objectID)->from(TABLE_ACTION)->fetch();
+            if(!$action || $action->objectType == 'comment') return false;
+            $objectType = $action->objectType;
+            $objectID   = (int)$action->objectID;
         }
-
-        if($objectType == 'build')
+        if(in_array($objectType, array('stepResult', 'caseResult'), true))
         {
-            $build = $this->dao->select('project,execution')->from(TABLE_BUILD)->where('id')->eq($objectID)->fetch();
-            if($build->execution) return $this->loadModel('execution')->checkPriv($build->execution);
-            return $this->loadModel('project')->checkPriv($build->project);
+            $objectID = (int)$this->dao->findById($objectID)->from(TABLE_TESTRESULT)->fetch('case');
+            $objectType = 'testcase';
         }
+        if(!$objectID) return false;
+        if($objectType == 'case') $objectType = 'testcase';
+        if($objectType == 'plan') $objectType = 'productplan';
+        $table = zget($this->config->objectTables, $objectType, '');
+        if(!$table) return !empty($this->app->user->admin);
+        $object = $this->dao->findById($objectID)->from($table)->fetch();
+        if(!$object || !empty($object->deleted)) return false;
 
-        if($objectType == 'release')
+        if($objectType == 'todo') return $object->account === $account || (!$object->private && ($object->assignedTo === $account || common::hasPriv('my', 'team')));
+        if($objectType == 'doc' || $objectType == 'doctemplate') return $this->loadModel('doc')->checkPrivDoc($object);
+        if($objectType == 'doclib' || $objectType == 'docspace') return $this->loadModel('doc')->checkPrivLib($object);
+        if(!empty($this->app->user->admin)) return true;
+
+        if(in_array($objectType, array('program', 'project', 'execution', 'product'), true)) return $this->loadModel($objectType)->checkPriv($objectID);
+        if(in_array($objectType, array('kanban', 'kanbancard', 'kanbanspace'), true))
         {
-            $release = $this->dao->select('project,product')->from(TABLE_RELEASE)->where('id')->eq($objectID)->fetch();
-            return $this->loadModel('product')->checkPriv($release->product);
+            $group = $objectType == 'kanbanspace' ? 'kanbanspace' : 'kanban';
+            $kanbanID = $objectType == 'kanbancard' ? $object->kanban : $objectID;
+            return in_array($kanbanID, $this->loadModel('kanban')->getCanViewObjects($group));
         }
-
-        if($objectType == 'doc')
+        if($objectType == 'testcase' && !$object->product)
         {
-            $doc = $this->dao->findById($objectID)->from(TABLE_DOC)->fetch();
-            return $this->loadModel('doc')->checkPrivDoc($doc);
+            $lib = $this->dao->findById((int)$object->lib)->from(TABLE_TESTSUITE)->fetch();
+            return $lib && empty($lib->deleted) && ($lib->type != 'private' || $lib->addedBy === $account) && common::hasPriv('testcase', 'view');
         }
-
-        if($objectType == 'feedback')
+        if($objectType == 'caselib' || $objectType == 'testsuite')
         {
-            $productID     = $this->dao->findById($objectID)->from(TABLE_FEEDBACK)->fetch('product');
-            $grantProducts = $this->loadModel('feedback')->getGrantProducts();
-            return in_array($productID, array_keys($grantProducts));
+            if($object->type == 'private' && $object->addedBy !== $account) return false;
+            if($object->product && !$this->loadModel('product')->checkPriv((int)$object->product)) return false;
+            return common::hasPriv('testsuite', $objectType == 'caselib' ? 'libview' : 'view');
         }
-
-        return true;
+        if(in_array($objectType, array('ppm', 'pipeline', 'reporeviewflow'), true))
+        {
+            $repoID = $objectType == 'reporeviewflow' ? $object->repo : $object->repoID;
+            if($repoID)
+            {
+                $repo = $this->loadModel('repo')->getByID((int)$repoID);
+                return $repo && empty($repo->deleted) && $this->repo->checkPriv($repo);
+            }
+            if($objectType == 'pipeline' && $object->spaceID) return isset($this->loadModel('space')->getSpacesByAccount($account)[$object->spaceID]);
+            return $objectType == 'pipeline' && $object->scope == 'system' && common::hasPriv('pipeline', 'view');
+        }
+        if($objectType == 'productplan') return $this->loadModel('product')->checkPriv((int)$object->product);
+        $group = zget($this->config->file->objectGroup, $objectType, '');
+        if($group) return $this->loadModel($group)->checkPriv((int)$object->$group);
+        if($objectType == 'build') return $object->execution ? $this->loadModel('execution')->checkPriv((int)$object->execution) : $this->loadModel('project')->checkPriv((int)$object->project);
+        if($objectType == 'release') return $this->loadModel('product')->checkPriv((int)$object->product);
+        if($objectType == 'feedback') return isset($this->loadModel('feedback')->getGrantProducts()[$object->product]);
+        if($objectType == 'testreport' && in_array($object->objectType, array('product', 'project', 'execution'), true))
+        {
+            return $this->loadModel($object->objectType)->checkPriv((int)$object->objectID);
+        }
+        if($objectType == 'testreport' && $object->product) return $this->loadModel('product')->checkPriv((int)$object->product);
+        return false;
     }
 
-	/**
+    /**
      * Compress image to config configured size.
      *
      * @param  string  $rawImage
@@ -1190,6 +1243,7 @@ class fileModel extends model
 
         helper::header('Content-type', $contentType);
         helper::header('Content-Disposition', $attachment);
+        helper::header('Cache-Control', 'private, no-store');
         helper::header('Pragma', 'no-cache');
         helper::header('Expires', '0');
         if($type == 'content') helper::end($content);

@@ -430,6 +430,7 @@ $tbody = function() use($tasks, $lang, $groupBy, $users, $groupByList, $executio
                         (
                             array
                             (
+                                ...helper::csrfAjaxAttributes(),
                                 'url'          => createLink('task', 'delete', "taskID={$task->id}"),
                                 'data-confirm' => $task->isParent ? $lang->task->confirmDeleteParent : $lang->task->confirmDelete,
                                 'class'        => 'btn ghost toolbar-item text-primary square size-sm ajax-submit',

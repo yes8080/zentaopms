@@ -10,6 +10,12 @@
  */
 class todo extends control
 {
+    private function denyTodoWrite()
+    {
+        helper::setStatus(403);
+        return $this->send(array('result' => 'fail', 'code' => 403, 'message' => $this->lang->error->accessDenied));
+    }
+
     /**
      * 构造函数，日期的加载类，配置语言项。
      * Construct function, load class of date, lang of my.
@@ -125,6 +131,7 @@ class todo extends control
      */
     public function edit(int $todoID)
     {
+        if(!$this->todo->canManageTodos(array($todoID))) return $this->denyTodoWrite();
         if(!empty($_POST))
         {
             if($this->post->type != 'custom')
@@ -175,6 +182,7 @@ class todo extends control
         {
             if(!$this->post->todoIdList) return $this->locate($this->session->todoList ? $this->session->todoList : createLink('my', 'todo'));
 
+            if(!$this->todo->canManageTodos((array)$this->post->todoIdList)) return $this->denyTodoWrite();
             $this->todoZen->batchEditFromMyTodo($this->post->todoIdList, $type, $userID, $status);
         }
 
@@ -183,6 +191,7 @@ class todo extends control
         {
             $this->config->todo->edit->requiredFields = str_replace(',name,', ',', ",{$this->config->todo->edit->requiredFields},");
             $formData   = form::batchData($this->config->todo->batchEdit->form)->get();
+            if(!$this->todo->canManageTodos(array_keys($formData))) return $this->denyTodoWrite();
             $todos      = $this->todoZen->beforeBatchEdit($formData);
             if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
@@ -205,6 +214,8 @@ class todo extends control
      */
     public function start(int $todoID)
     {
+        $this->requireWriteRequest();
+        if(!$this->todo->canManageTodos(array($todoID))) return $this->denyTodoWrite();
         $todo = $this->todo->getByID($todoID);
         if($todo->status == 'wait')
         {
@@ -227,6 +238,8 @@ class todo extends control
      */
     public function activate(int $todoID)
     {
+        $this->requireWriteRequest();
+        if(!$this->todo->canManageTodos(array($todoID))) return $this->denyTodoWrite();
         $todo = $this->todo->getByID($todoID);
 
         if($todo->status == 'done' || $todo->status == 'closed')
@@ -249,6 +262,8 @@ class todo extends control
      */
     public function close(int $todoID)
     {
+        $this->requireWriteRequest();
+        if(!$this->todo->canManageTodos(array($todoID))) return $this->denyTodoWrite();
         /* Close the todo with status done. */
         $todo = $this->todo->getByID($todoID);
         if($todo->status == 'done')
@@ -277,6 +292,7 @@ class todo extends control
      */
     public function assignTo(int $todoID)
     {
+        if(!$this->todo->canManageTodos(array($todoID))) return $this->denyTodoWrite();
         if(!empty($_POST))
         {
             $formData = form::data($this->config->todo->assignTo->form);
@@ -344,19 +360,20 @@ class todo extends control
      */
     public function delete(int $todoID, string $confirm = 'no')
     {
-        if($confirm == 'no') return $this->send(array('result' => 'success', 'load' => array('confirm' => $this->lang->todo->confirmDelete, 'confirmed' => $this->createLink('todo', 'delete', "todoID={$todoID}&confirm=yes"), 'canceled' => $this->session->todoList ? $this->session->todoList : $this->createLink('my', 'todo'))));
-
-        $todo        = $this->todo->getByID($todoID);
-        $allowDelete = true;
-        if(!$this->app->user->admin && $todo && $todo->account != $this->app->user->account && $todo->assignedTo != $this->app->user->account) $allowDelete = false;
-        if(!$allowDelete)
+        if($confirm === 'no')
         {
-            if(isonlybody()) return print(js::alert($this->lang->error->accessDenied));
-            if(helper::isApiRequest()) return $this->send(array('status' => 'fail', 'message' => $this->lang->error->accessDenied));
-            if(helper::isAjaxRequest()) return $this->send(array('result' => 'fail', 'message' => $this->lang->error->accessDenied));
+            if(!$this->todo->canManageTodos(array($todoID))) return $this->denyTodoWrite();
+            $confirmAction = array('url' => $this->createLink('todo', 'delete', "todoID={$todoID}&confirm=yes"), 'method' => 'POST', 'data' => array('csrfToken' => helper::csrfToken()));
+            return $this->send(array('result' => 'success', 'load' => array('confirm' => $this->lang->todo->confirmDelete, 'confirmed' => $confirmAction, 'canceled' => $this->session->todoList ? $this->session->todoList : $this->createLink('my', 'todo'))));
         }
 
-        $this->todo->delete(TABLE_TODO, $todoID);
+        if($confirm !== 'yes') return $this->denyTodoWrite();
+        $this->requireWriteRequest();
+        if(!$this->todo->deleteManagedTodo($todoID))
+        {
+            if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
+            return $this->denyTodoWrite();
+        }
         if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
         if(helper::isApiRequest()) return $this->send(array('status' => 'success'));
@@ -373,6 +390,8 @@ class todo extends control
      */
     public function finish(int $todoID)
     {
+        $this->requireWriteRequest();
+        if(!$this->todo->canManageTodos(array($todoID))) return $this->denyTodoWrite();
         $todo = $this->todo->getByID($todoID);
         if($todo->status != 'done' && $todo->status != 'closed')
         {
@@ -420,7 +439,9 @@ class todo extends control
      */
     public function batchFinish()
     {
+        $this->requireWriteRequest();
         $todoIdList = form::data($this->config->todo->batchFinish->form)->get('todoIdList');
+        if(!$this->todo->canManageTodos((array)$todoIdList)) return $this->denyTodoWrite();
         $todoList   = $this->todo->getByList($todoIdList);
         foreach($todoList as $todoID => $todo)
         {
@@ -442,8 +463,10 @@ class todo extends control
      */
     public function batchClose()
     {
+        $this->requireWriteRequest();
         $waitIdList = array();
         $todoIdList = form::data($this->config->todo->batchClose->form)->get('todoIdList');
+        if(!$this->todo->canManageTodos((array)$todoIdList)) return $this->denyTodoWrite();
         foreach($todoIdList as $todoID)
         {
             $todoID = (int)$todoID;
@@ -466,6 +489,7 @@ class todo extends control
      */
     public function import2Today(string $todoID = '')
     {
+        $this->requireWriteRequest();
         if(!$_POST) $this->locate($this->createLink('my', 'todo'));
 
         $formData   = form::data($this->config->todo->editDate->form);
@@ -473,6 +497,7 @@ class todo extends control
         $date       = !empty($formData->data->date) ? $formData->data->date : date::today();
         if(!$todoIdList) $this->locate((string)$this->session->todoList);
 
+        if(!$this->todo->canManageTodos((array)$todoIdList)) return $this->denyTodoWrite();
         $allChanges = $this->todo->editDate((array)$todoIdList, (string)$date);
         if(!empty($allChanges))
         {

@@ -11,6 +11,7 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
     if($(this).attr('id') == 'changeDate') form.append('date', $('#formDate').val());
     if($(this).hasClass('ajax-btn'))
     {
+        form.append('csrfToken', todoCsrfToken);
         $.ajaxSubmit({url, data: form});
     }
     else

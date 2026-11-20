@@ -455,7 +455,8 @@ class pipelineModel extends model
     public function execJenkinsPipeline(object $pipeline, string $triggerType = 'manual'): bool
     {
         $provider = $this->loadModel('provider')->getByID($pipeline->providerID);
-        $baseUrl  = $provider->url . $pipeline->externalPipeline;
+        if(!$provider || empty($provider->token)) return false;
+        $baseUrl  = rtrim($provider->url, '/') . '/' . ltrim($pipeline->externalPipeline, '/');
         $userPWD  = $provider->account . ':' . $provider->token;
 
         $params = array();
@@ -1204,13 +1205,15 @@ class pipelineModel extends model
         $externalPipelines = $this->getExternalPipeline($syncStatus);
         if(empty($externalPipelines)) return true;
 
-        $providerList = $this->loadModel('provider')->getList();
+        $this->loadModel('provider');
+        $providerList = array();
 
         $this->loadModel('jenkins');
         $this->loadModel('gitlab');
         foreach($externalPipelines as $externalPipeline)
         {
-            if(!isset($providerList[$externalPipeline->providerID])) continue;
+            $providerList[$externalPipeline->providerID] ??= $this->provider->getByID((int)$externalPipeline->providerID);
+            if(empty($providerList[$externalPipeline->providerID]->token)) continue;
 
             $provider = $providerList[$externalPipeline->providerID];
             $engine   = $externalPipeline->engine;

@@ -44,6 +44,7 @@ $config->personnel->whitelist->actionList['unbindWhitelist']['text']         = $
 $config->personnel->whitelist->actionList['unbindWhitelist']['show']         = true;
 $config->personnel->whitelist->actionList['unbindWhitelist']['url']          = array('module' => 'personnel', 'method' => 'unbindWhitelist', 'params' => 'userID={id}&confim=yes');
 $config->personnel->whitelist->actionList['unbindWhitelist']['className']    = 'ajax-submit';
+$config->personnel->whitelist->actionList['unbindWhitelist']['csrf']         = true;
 $config->personnel->whitelist->actionList['unbindWhitelist']['data-confirm'] = json_encode(array('message' => array('html' => "<strong><i class='icon icon-exclamation-sign text-warning text-lg mr-2'></i>{$lang->personnel->confirmDelete}</strong>")));
 
 $config->personnel->whitelist->dtable->fieldList['id']['name']  = 'id';

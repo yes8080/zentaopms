@@ -274,6 +274,7 @@ class productplan extends control
      */
     public function delete(int $planID)
     {
+        $this->requireWriteRequest();
         $plan = $this->productplan->getByID($planID);
         if(!$plan || $plan->parent < 0) return $this->sendError($this->lang->productplan->cannotDeleteParent);
 

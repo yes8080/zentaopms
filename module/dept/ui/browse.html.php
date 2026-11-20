@@ -78,6 +78,7 @@ for($i = 0; $i < $config->dept->newChildCount; $i ++)
 
 jsVar('editLinkTemp', createLink('dept', 'edit', "deptID={id}"));
 jsVar('deleteLinkTemp', createLink('dept', 'delete', "deptID={id}"));
+jsVar('deptCsrfToken', helper::csrfToken());
 jsVar('deleteTip', $lang->dept->confirmDelete);
 
 sidebar

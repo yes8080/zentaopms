@@ -115,6 +115,7 @@ class webhook extends control
      */
     public function delete(int $id)
     {
+        $this->requireWriteRequest();
         $this->webhook->delete(TABLE_WEBHOOK, $id);
         if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 

@@ -44,7 +44,7 @@ $lang->cron->introduction  = <<<EOD
 <p>Scheduled Task is set to do scheduled actions such as update burndown chart, backup, etc.</p>
 EOD;
 $lang->cron->confirmOpen = <<<EOD
-<p>Do you want to turn it on?<a href="%s"><strong>Turn On Scheduled Task<strong></a></p>
+<p>Do you want to turn it on?<a href="%s" class="ajax-submit" %s><strong>Turn On Scheduled Task<strong></a></p>
 EOD;
 
 $lang->cron->notice = new stdclass();

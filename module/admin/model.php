@@ -79,8 +79,14 @@ class adminModel extends model
      * @access public
      * @return bool
      */
-    public function checkWeak(object $user): bool
+    public function checkWeak(object $user, ?string $password = null): bool
     {
+        if($password !== null)
+        {
+            $weak = array_merge(array_map('trim', explode(',', $this->config->safe->weak)), array($user->account, $user->phone, $user->mobile, $user->birthday));
+            return in_array($password, $weak, true);
+        }
+
         $weaks = array();
         foreach(explode(',', $this->config->safe->weak) as $weak)
         {
@@ -442,8 +448,8 @@ class adminModel extends model
         curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $timeout);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
         $connected = curl_exec($curl);
         curl_close($curl);
 

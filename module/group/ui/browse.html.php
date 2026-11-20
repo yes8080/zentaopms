@@ -27,7 +27,8 @@ toolbar
     $canCreateGroup ? item(set($createItem)) : null
 );
 
-jsVar('confirmDelete', $lang->group->confirmDelete);
+jsVar('groupCsrfToken', helper::csrfToken());
+jsVar('deleteGroupMessage', $lang->group->confirmDelete);
 $tableData = initTableData($groups, $config->group->dtable->fieldList, $this->group);
 dtable
 (

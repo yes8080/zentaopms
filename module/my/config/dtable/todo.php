@@ -40,6 +40,12 @@ $config->my->todo->actionList['delete']['text'] = $lang->todo->delete;
 $config->my->todo->actionList['delete']['hint'] = $lang->todo->delete;
 $config->my->todo->actionList['delete']['url']  = array('module' => 'todo', 'method' => 'delete', 'params' => 'todoID={id}&confirm=no');
 
+foreach(array('start', 'activate', 'close', 'finish') as $action)
+{
+    $config->my->todo->actionList[$action]['csrf'] = true;
+    $config->my->todo->actionList[$action]['className'] = 'ajax-submit';
+}
+
 $config->my->todo->dtable = new stdclass();
 $config->my->todo->dtable->fieldList['id']['name']  = 'id';
 $config->my->todo->dtable->fieldList['id']['title'] = $lang->idAB;

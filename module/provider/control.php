@@ -32,7 +32,8 @@ class provider extends control
         $pager = new pager($recTotal, $recPerPage, $pageID);
 
         $this->view->title     = $this->lang->provider->browse;
-        $this->view->providers = $this->provider->getList($orderBy, $pager);
+        $providers = $this->provider->getList($orderBy, $pager);
+        $this->view->providers = $providers;
         $this->view->orderBy   = $orderBy;
         $this->view->users     = $this->loadModel('user')->getPairs('noletter');
         $this->view->pager     = $pager;
@@ -58,7 +59,8 @@ class provider extends control
                 ->skipSpecial('name')
                 ->get();
 
-            if(!empty($formData->account && $type == 'Jenkins'))
+            $formData->type = $type;
+            if($type === 'Jenkins')
             {
                 $formData->token = base64_encode($formData->account . ':' . $formData->token);
             }
@@ -110,7 +112,8 @@ class provider extends control
                 ->skipSpecial('name')
                 ->get();
 
-            if(!empty($formData->account && $provider->type == 'Jenkins'))
+            $formData->type = $provider->type;
+            if($provider->type === 'Jenkins')
             {
                 $formData->token = base64_encode($formData->account . ':' . $formData->token);
             }
@@ -127,6 +130,7 @@ class provider extends control
 
         $this->view->title    = $this->lang->provider->edit;
         $this->view->type     = $provider->type;
+        unset($provider->token);
         $this->view->provider = $provider;
         $this->display();
     }
@@ -141,6 +145,7 @@ class provider extends control
      */
     public function delete(int $id)
     {
+        $this->requireWriteRequest();
         $repos = $this->provider->getReposByProviderID($id, true);
         if(!empty($repos)) return $this->sendError($this->lang->provider->notice->hasRepos);
 

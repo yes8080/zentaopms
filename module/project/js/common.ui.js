@@ -350,10 +350,10 @@ window.getDateMenu = function()
  * @access public
  * @return void
  */
-window.confirmDeleteExecution = function(executionID, confirmDeleteTip)
+window.confirmDeleteExecution = function(executionID, confirmDeleteTip, csrfToken)
 {
     zui.Modal.confirm({message: confirmDeleteTip, icon:'icon-exclamation-sign', iconClass: 'warning-pale rounded-full icon-2x'}).then((res) =>
     {
-        if(res) $.ajaxSubmit({url: $.createLink('execution', 'delete', 'executionID=' + executionID + '&comfirm=yes')});
+        if(res) $.ajaxSubmit({method: 'POST', data: {csrfToken}, url: $.createLink('execution', 'delete', 'executionID=' + executionID + '&confirm=yes')});
     });
 }

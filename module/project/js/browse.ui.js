@@ -74,7 +74,7 @@ window.confirmDelete = function(projectID, projectName)
 {
     zui.Modal.confirm({message: confirmDeleteTip.replace('%s', projectName), icon:'icon-exclamation-sign', iconClass: 'warning-pale rounded-full icon-2x'}).then((res) =>
     {
-        if(res) $.ajaxSubmit({url: $.createLink('project', 'delete', 'projectID=' + projectID)});
+        if(res) $.ajaxSubmit({method: 'POST', data: {csrfToken: projectCsrfToken}, url: $.createLink('project', 'delete', 'projectID=' + projectID)});
     });
 };
 

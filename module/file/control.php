@@ -146,8 +146,9 @@ class file extends control
     public function download(int $fileID, string $mouse = '')
     {
         $file = $this->file->getById($fileID);
-        if(empty($file) || !$this->file->fileExists($file))
+        if(empty($file) || !$this->file->checkPriv($file) || !$this->file->fileExists($file))
         {
+            http_response_code(404);
             $this->view->error = $this->lang->file->fileNotFound;
             if(helper::isApiRequest()) return $this->send(array('status' => 'fail', 'code' => 404, 'message' => $this->view->error));
             if(isInModal()) return $this->display();
@@ -156,12 +157,6 @@ class file extends control
 
         /* Unset the menu. */
         if(!empty($this->lang->{$this->app->tab}->menu)) $this->lang->{$this->app->tab}->menu = array();
-
-        if(!$this->file->checkPriv($file))
-        {
-            if(isInModal()) return $this->send(array('result' => 'success', 'message' => $this->lang->file->accessDenied, 'closeModal' => true, 'load' => true));
-            return $this->send(array('result' => 'success', 'message' => $this->lang->file->accessDenied, 'load' => helper::createLink('my', 'index')));
-        }
 
         /* Judge the mode, down or open. */
         $mode = $this->fileZen->getDownloadMode($file, $mouse);
@@ -326,10 +321,11 @@ class file extends control
             if(empty($file) || !$this->file->fileExists($file)) return $this->send(array('result' => 'fail', 'message' => $this->lang->file->fileNotFound));
 
             $canDelete = $this->file->checkPriv($file);
+            if($file->objectType == 'avatar') $canDelete = $canDelete && ($file->addedBy === $this->app->user->account || $this->app->user->admin);
             if($file->objectType == 'comment')
             {
                 $action    = $this->loadModel('action')->fetchBaseInfo($file->objectID);
-                $canDelete = ($this->app->user->admin || empty($action) || $action->actor == $this->app->user->account);
+                $canDelete = $canDelete && $action && ($this->app->user->admin || $action->actor == $this->app->user->account);
             }
             if(!$canDelete) return $this->send(array('result' => 'fail',  'message' => $this->lang->file->accessDenied));
 
@@ -383,6 +379,10 @@ class file extends control
      */
     public function edit(int $fileID)
     {
+        $file = $this->file->getById($fileID);
+        if(!$file || !$this->file->checkPriv($file)) return $this->sendError($this->lang->file->accessDenied);
+        if($file->objectType == 'avatar' && $file->addedBy !== $this->app->user->account && !$this->app->user->admin) return $this->sendError($this->lang->file->accessDenied);
+
         if($_POST)
         {
             $result = $this->fileZen->updateFileName($fileID);
@@ -391,13 +391,13 @@ class file extends control
             $newFile = $this->file->getByID($fileID);
             if($this->app->clientDevice == 'mobile') return $this->send(array('load' => true));
 
+            unset($newFile->realPath);
             $newFile->status = 'success';
             return $this->send($newFile);
         }
 
         if($this->app->clientDevice == 'mobile')
         {
-            $file = $this->file->getById($fileID);
             if(strrpos($file->title, '.') !== false)
             {
                 /* Fix the file name exe.exe */
@@ -533,9 +533,23 @@ class file extends control
     {
         if(!($this->app->company->guest and $this->app->user->account == 'guest') and !$this->loadModel('user')->isLogon()) return print(js::locate($this->createLink('user', 'login')));
 
+        if($fileID == 0)
+        {
+            $file = $this->file->getLegacyUpload($_SERVER['REQUEST_URI'] ?? '');
+            if(!$file || !$this->file->fileExists($file))
+            {
+                http_response_code(404);
+                return;
+            }
+            return $this->readFileContent($file);
+        }
+
         $file = $this->file->getById($fileID);
-        if(empty($file) or !$this->file->fileExists($file)) return $this->send(array('result' => 'fail', 'message' => $this->lang->file->fileNotFound, 'load' => helper::createLink('my', 'index'), 'closeModal' => true));
-        if(!$this->file->checkPriv($file)) return $this->send(array('result' => 'fail', 'load' => array('alert' => $this->lang->file->accessDenied, 'locate' => helper::createLink('my', 'index')), 'closeModal' => true));
+        if(!$file || !$this->file->checkPriv($file) || !$this->file->fileExists($file))
+        {
+            http_response_code(404);
+            return $this->sendError($this->lang->file->fileNotFound);
+        }
 
         $obLevel = ob_get_level();
         for($i = 0; $i < $obLevel; $i++) ob_end_clean();
@@ -543,10 +557,8 @@ class file extends control
         $mime = (isset($file->extension) and in_array($file->extension, $this->config->file->imageExtensions)) ? "image/{$file->extension}" : $this->config->file->mimes['default'];
         if(!$stream) helper::header('Content-type', $mime);
 
-        $cacheMaxAge = 10 * 365 * 24 * 3600;
-        helper::header('Cache-Control', "private, max-age=$cacheMaxAge");
-        helper::header('Pragma', 'cache');
-        helper::header('Expires', gmdate('D, d M Y H:i:s', time() + $cacheMaxAge) . ' GMT');
+        helper::header('Cache-Control', 'private, no-store');
+        helper::header('X-Content-Type-Options', 'nosniff');
 
         if($stream)
         {
@@ -577,47 +589,36 @@ class file extends control
      */
     public function ajaxQuery(int|string $fileID, string $objectType = '', int $objectID = 0, string $title = '', string $extra = '', int $stream = 0)
     {
-        if(!empty($fileID))
+        $byID = !empty($fileID);
+        if($byID && is_string($fileID) && !is_numeric($fileID))
         {
-            if(is_string($fileID) && !is_numeric($fileID))
-            {
-                $gid = base64_decode($fileID);
-                if(strpos($gid, 'g-') === 0) $gid = substr($gid, 2);
-                $file = $this->file->getByGid($gid);
-            }
-            else
-            {
-                $file = $this->file->getById((int)$fileID);
-            }
-            if($file)
-            {
-                if($this->viewType === 'json')
-                {
-                    $this->send(array('result' => 'success', 'file' => array('id' => $file->id, 'title' => $file->title, 'extension' => $file->extension, 'size' => $file->size, 'realPath' => $file->realPath, 'gid' => $file->gid, 'addedBy' => $file->addedBy, 'addedDate' => $file->addedDate, 'objectType' => $file->objectType, 'objectID' => $file->objectID)));
-                    return;
-                }
-
-                $fileID = $file->id;
-                if($stream) return $this->fetch('file', 'read', "fileID=$fileID&stream=$stream");
-                return $this->fetch('file', 'download', "fileID=$fileID");
-            }
-            http_response_code(404);
-            $this->sendError(404, '404 Not found');
+            $gid = base64_decode($fileID);
+            $file = $this->file->getByGid(str_starts_with($gid, 'g-') ? substr($gid, 2) : $gid);
         }
-
-        if(!empty($title)) $title = urldecode(base64_decode($title));
-        $file = $this->file->query($objectType, $objectID, $title, $extra);
-        if(empty($file)) return $this->send(array('result' => 'fail', 'message' => $this->lang->file->fileNotFound, 'load' => helper::createLink('my', 'index'), 'closeModal' => true));
+        elseif($byID)
+        {
+            $file = $this->file->getById((int)$fileID);
+        }
+        else
+        {
+            if(!empty($title)) $title = urldecode(base64_decode($title));
+            $file = $this->file->query($objectType, $objectID, $title, $extra);
+        }
+        if(!$file || !$this->file->checkPriv($file))
+        {
+            http_response_code(404);
+            return $this->sendError($this->lang->file->fileNotFound);
+        }
 
         if($this->viewType === 'json')
         {
-            echo json_encode(array('result' => 'success', 'data' => array('id' => $file->id, 'title' => $file->title, 'extension' => $file->extension, 'size' => $file->size, 'realPath' => $file->realPath, 'gid' => $file->gid, 'addedBy' => $file->addedBy, 'addedDate' => $file->addedDate, 'objectType' => $file->objectType, 'objectID' => $file->objectID)));
-            return;
+            helper::header('Cache-Control', 'private, no-store');
+            $metadata = array_intersect_key((array)$file, array_flip(array('id', 'title', 'extension', 'size', 'gid', 'addedBy', 'addedDate', 'objectType', 'objectID')));
+            return $this->send(array('result' => 'success', ($byID ? 'file' : 'data') => $metadata));
         }
 
-        $fileID = $file->id;
-        if($stream) return $this->fetch('file', 'read', "fileID=$fileID&stream=$stream");
-        return $this->fetch('file', 'download', "fileID=$fileID");
+        if($stream) return $this->fetch('file', 'read', "fileID={$file->id}&stream=$stream");
+        return $this->fetch('file', 'download', "fileID={$file->id}");
     }
 
     /**
@@ -765,10 +766,7 @@ class file extends control
         helper::header('X-Content-Type-Options', 'nosniff');
         helper::header('Content-Security-Policy', "default-src 'none'; script-src 'none'; base-uri 'none'; form-action 'none'");
 
-        $cacheMaxAge = 10 * 365 * 24 * 3600;
-        helper::header('Cache-Control', "private, max-age=$cacheMaxAge");
-        helper::header('Pragma', 'cache');
-        helper::header('Expires', gmdate('D, d M Y H:i:s', time() + $cacheMaxAge) . ' GMT');
+        helper::header('Cache-Control', 'private, no-store');
 
         $handle = fopen($file->realPath, "r");
         if($handle)

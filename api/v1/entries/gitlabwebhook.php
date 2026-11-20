@@ -43,23 +43,27 @@ class gitlabWebhookEntry extends baseEntry
         if(empty($event)) return;
 
         $token     = $this->getHeaderValue($headers, 'X-Gitlab-Token');
-        $entry     = $this->loadModel('entry')->getByCode('gitfox');
-        $entryKey  = empty($entry) ? '' : (string)$entry->key;
-        if(empty($entryKey) || (string)$token !== $entryKey) return $this->sendError(401, 'Unauthorized');
-
-        $pipelineID = $this->param('pipelineID');
-        if(!empty($pipelineID))
+        $pipelineID = (int)$this->param('pipelineID');
+        $repoID     = (int)$this->param('repoID');
+        $gitlab = $this->loadModel('gitlab');
+        if($pipelineID > 0)
         {
             $pipeline = $this->loadModel('pipeline')->getByID($pipelineID);
-            if(empty($pipeline)) return;
-            if($pipeline->engine != 'gitlab') return;
+            if(!$pipeline || !empty($pipeline->deleted) || $pipeline->engine !== 'gitlab') return $this->sendError(401, 'Unauthorized');
+            $provider = $this->loadModel('provider')->getByID((int)$pipeline->providerID);
+            if(!$provider || !empty($provider->deleted) || $provider->type !== 'GitLab') return $this->sendError(401, 'Unauthorized');
+            $binding = rtrim($provider->url, '/') . '/' . $pipeline->externalPipeline;
+            $expected = $gitlab->webhookToken('pipeline', $pipelineID, $binding);
+            if($expected === '' || !hash_equals($expected, $token)) return $this->sendError(401, 'Unauthorized');
+            $project = $this->requestBody->project ?? null;
+            if(!in_array(rawurldecode($pipeline->externalPipeline), array((string)($project->id ?? ''), (string)($project->path_with_namespace ?? '')), true)) return $this->sendError(401, 'Unauthorized');
 
             $this->pipeline->handleWebhook($event, $this->requestBody, $pipeline);
             return;
         }
 
-        $repoID = $this->param('repoID');
-        if(empty($repoID)) return;
+        $expected = $gitlab->webhookToken('repo', $repoID);
+        if($expected === '' || !hash_equals($expected, $token)) return $this->sendError(401, 'Unauthorized');
 
         $this->app->user = new stdclass();
         $this->app->user->account = '';
@@ -68,7 +72,7 @@ class gitlabWebhookEntry extends baseEntry
         $this->app->user->rights['acls']   = array();
 
         $repo = $this->loadModel('repo')->fetchByID($repoID);
-        if(empty($repo)) return;
+        if(empty($repo) || !empty($repo->deleted)) return;
 
         $this->loadController('user', 'login');
         $this->repo->handleWebhook($event, $this->requestBody, $repo);

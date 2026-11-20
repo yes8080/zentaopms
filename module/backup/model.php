@@ -44,7 +44,10 @@ class backupModel extends model
         $tmpLogFile = $this->getTmpLogFile($backupFile);
         $dataDir    = $this->app->getAppRoot() . 'www/data/';
         $count      = $zfile->getCount($dataDir, array('course'));
-        file_put_contents($tmpLogFile, json_encode(array('allCount' => $count)));
+        $log = fopen($tmpLogFile, 'xb');
+        if(!$log) return (object)array('result' => false, 'error' => $tmpLogFile);
+        fwrite($log, json_encode(array('allCount' => $count)));
+        fclose($log);
 
         $result = $zfile->copyDir($dataDir, $backupFile, $logLevel = false, $tmpLogFile, array('course'));
         $this->processSummary($backupFile, $result['count'], $result['size'], $result['errorFiles'], $count);
@@ -85,7 +88,10 @@ class backupModel extends model
 
         $allCount = 0;
         foreach($fileList as $codeFile) $allCount += $zfile->getCount($codeFile);
-        file_put_contents($tmpLogFile, json_encode(array('allCount' => $allCount)));
+        $log = fopen($tmpLogFile, 'xb');
+        if(!$log) return (object)array('result' => false, 'error' => $tmpLogFile);
+        fwrite($log, json_encode(array('allCount' => $allCount)));
+        fclose($log);
 
         $copiedCount = 0;
         $copiedSize  = 0;
@@ -170,62 +176,55 @@ class backupModel extends model
         return $return;
     }
 
-    /**
-     * Add file header.
-     *
-     * @param  string    $fileName
-     * @access public
-     * @return bool
-     */
     public function addFileHeader(string $fileName): bool
     {
-        $die     = "<?php die();?" . ">\n";
-        $tmpFile = $fileName . '.tmp';
-        rename($fileName, $tmpFile);
-
-        file_put_contents($fileName, $die);
-        $fh     = fopen($tmpFile, 'r');
-        $length = 2 * 1024 * 1024;
-        while(!feof($fh))
-        {
-            $buff = fread($fh, $length);
-            file_put_contents($fileName, $buff, FILE_APPEND);
-        }
-        fclose($fh);
-        unlink($tmpFile);
-
-        return true;
+        return $this->rewriteFileHeader($fileName, $fileName, true);
     }
 
-    /**
-     * Remove file header.
-     *
-     * @param  string    $fileName
-     * @access public
-     * @return bool
-     */
-    public function removeFileHeader(string $fileName): bool
+    public function removeFileHeader(string $fileName, ?string $output = null): bool
     {
-        $tmpFile = $fileName . '.tmp';
-        $fh      = fopen($fileName, 'r');
-        $length  = 2 * 1024 * 1024;
-        $readedFirstLine = false;
-        while(!feof($fh))
+        return $this->rewriteFileHeader($fileName, $output ?? $fileName, false);
+    }
+
+    /** Replace a complete file atomically without exposing the original SQL while copying. */
+    private function rewriteFileHeader(string $source, string $output, bool $add): bool
+    {
+        $root = $this->resolveBackupRoot($this->getBackupPath());
+        if(!$root || dirname(realpath($source) ?: '') !== $root || is_link($source) || !is_file($source)) return false;
+        if(realpath(dirname($output)) !== $root || is_link($output)) return false;
+
+        $temp = tempnam($root, '.header-');
+        if($temp === false) return false;
+        $input = $writer = null;
+        try
         {
-            if(!$readedFirstLine)
+            if(dirname($temp) !== $root) return false;
+            $input  = fopen($source, 'rb');
+            $writer = fopen($temp, 'wb');
+            if(!$input || !$writer) return false;
+            if($add)
             {
-                fgets($fh);
-                $readedFirstLine = true;
-                continue;
+                $header = "<?php die();?>" . "\n";
+                if(fwrite($writer, $header) !== strlen($header)) return false;
             }
-
-            $buff = fread($fh, $length);
-            file_put_contents($tmpFile, $buff, FILE_APPEND);
+            elseif(!preg_match('/^<\?php\s+(?:die|exit)\s*\(\s*\)\s*;\s*\?>\s*$/i', (string)fgets($input, 1024)))
+            {
+                return false;
+            }
+            if(stream_copy_to_stream($input, $writer) === false || !fflush($writer)) return false;
+            fclose($writer);
+            $writer = null;
+            if($source === $output) return rename($temp, $output);
+            /* Publish a second name without replacing an existing unprotected backup. */
+            if(!link($temp, $output)) return false;
+            return unlink($source);
         }
-        fclose($fh);
-        rename($tmpFile, $fileName);
-
-        return true;
+        finally
+        {
+            if(is_resource($input)) fclose($input);
+            if(is_resource($writer)) fclose($writer);
+            if(file_exists($temp)) unlink($temp);
+        }
     }
 
     /**
@@ -249,9 +248,9 @@ class backupModel extends model
         }
 
         $summaryFile = dirname($backup) . DS . 'summary';
-        if(!file_exists($summaryFile)) return array();
+        if(is_link($summaryFile) || !is_file($summaryFile)) return array();
 
-        $summary = json_decode(file_get_contents(dirname($backup) . DS . 'summary'), true);
+        $summary = json_decode(file_get_contents($summaryFile), true);
         return zget($summary, basename($backup), array());
     }
 
@@ -277,16 +276,77 @@ class backupModel extends model
      */
     public function getBackupFile(string $name, string $type): string|false
     {
-        $backupPath = $this->getBackupPath();
-        if($type == 'sql')
+        if(!in_array($type, array('sql', 'file', 'code'), true)) return false;
+        $suffixes = $type === 'sql' ? array('sql', 'sql.php') : array($type);
+        foreach($suffixes as $suffix)
         {
-            if(file_exists($backupPath . $name . ".{$type}"))     return $backupPath . $name . ".{$type}";
-            if(file_exists($backupPath . $name . ".{$type}.php")) return $backupPath . $name . ".{$type}.php";
+            $path = $this->getBackupEntry($name, $suffix);
+            if($path !== false && file_exists($path)) return $path;
         }
-
-        if(file_exists($backupPath . $name . ".{$type}")) return $backupPath . $name . ".{$type}";
-
         return false;
+    }
+
+    /** Resolve a private directory; a configured volume may itself be mounted through a symlink. */
+    public function resolveBackupRoot(string $directory): string|false
+    {
+        $root    = realpath($directory);
+        $webRoot = realpath($this->app->getAppRoot() . 'www');
+        if(!$root || !is_dir($root) || dirname($root) === $root) return false;
+        if($webRoot && ($root === $webRoot || str_starts_with($root, $webRoot . DIRECTORY_SEPARATOR))) return false;
+        return $root;
+    }
+
+    /** Resolve a direct child of the configured backup volume. Missing entries may be created. */
+    public function getBackupEntry(string $name, string $suffix): string|false
+    {
+        if(!preg_match('/\A[\pL\pN_-][\pL\pN _-]*\z/u', $name) || !in_array($suffix, array('sql', 'sql.php', 'file', 'code'), true)) return false;
+        $root = $this->resolveBackupRoot($this->getBackupPath());
+        if(!$root) return false;
+        $path = $root . DIRECTORY_SEPARATOR . $name . '.' . $suffix;
+        if(is_link($path)) return false;
+        if(file_exists($path) && (in_array($suffix, array('code', 'file'), true) ? !is_dir($path) : !is_file($path))) return false;
+        return $path;
+    }
+
+    /** Inspect a backup directory before recursive operations. Also check destinations that restore will touch. */
+    public function isSafeBackupTree(string $path, ?string $destination = null): bool
+    {
+        if(is_link($path) || !is_dir($path)) return false;
+        if($destination !== null && (is_link($destination) || !is_dir($destination))) return false;
+        try
+        {
+            $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
+            foreach($files as $file)
+            {
+                if($file->isLink() || (!$file->isFile() && !$file->isDir())) return false;
+                if($destination !== null)
+                {
+                    $target = rtrim($destination, DIRECTORY_SEPARATOR) . substr($file->getPathname(), strlen(rtrim($path, DIRECTORY_SEPARATOR)));
+                    if(is_link($target) || (file_exists($target) && ($file->isDir() ? !is_dir($target) : !is_file($target)))) return false;
+                }
+            }
+        }
+        catch(UnexpectedValueException $e)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    /** Return only directly addressable backup artifacts, excluding temporary and metadata files. */
+    public function getBackupEntries(): array
+    {
+        $files = array();
+        $root  = $this->resolveBackupRoot($this->getBackupPath());
+        if(!$root) return $files;
+        foreach(scandir($root) ?: array() as $file)
+        {
+            $parts = explode('.', $file, 2);
+            if(count($parts) !== 2) continue;
+            $path = $this->getBackupEntry($parts[0], $parts[1]);
+            if($path !== false && file_exists($path)) $files[$file] = $path;
+        }
+        return $files;
     }
 
     /**
@@ -311,7 +371,7 @@ class backupModel extends model
     public function getBackupDirProgress(string $backup): array
     {
         $tmpLogFile = $this->getTmpLogFile($backup);
-        if(file_exists($tmpLogFile))
+        if(!is_link($tmpLogFile) && is_file($tmpLogFile))
         {
             $log = json_decode(file_get_contents($tmpLogFile), true);
             return empty($log) ? array() : $log;
@@ -362,6 +422,7 @@ class backupModel extends model
         $fileName   = basename($file);
 
         $summaryFile = $backupPath . DS . 'summary';
+        if(is_link($summaryFile) || (file_exists($summaryFile) && !is_file($summaryFile))) return false;
         if(!file_exists($summaryFile) and !touch($summaryFile)) return false;
 
         $summary = json_decode(file_get_contents($summaryFile), true);

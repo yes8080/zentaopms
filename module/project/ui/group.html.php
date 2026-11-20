@@ -11,7 +11,8 @@
 
 namespace zin;
 
-jsVar('confirmDelete', $lang->group->confirmDelete);
+jsVar('groupCsrfToken', helper::csrfToken());
+jsVar('deleteGroupMessage', $lang->group->confirmDelete);
 
 /* zin: Define the feature bar on main menu. */
 featureBar

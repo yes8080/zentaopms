@@ -10,6 +10,60 @@
  */
 class providerModel extends model
 {
+    /** Return a database envelope. Jenkins v1 remains compatible with existing encrypted records. */
+    public static function encryptToken(object $provider, string $plain): string
+    {
+        if($plain === '') return '';
+        $jenkins = $provider->type === 'Jenkins';
+        $key = commonModel::integrationKey($jenkins ? 'zentao-jenkins-provider-v1' : 'zentao-provider-token-v2');
+        if($key === '') throw new RuntimeException('Missing integration key.');
+
+        $aad = $jenkins ? $provider->url : $provider->type . "\0" . $provider->url;
+        $iv  = random_bytes(12);
+        $cipher = openssl_encrypt($plain, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
+        if($cipher === false) throw new RuntimeException('Provider encryption failed.');
+        return ($jenkins ? 'gcm1:' : 'gcm2:') . base64_encode($iv . $tag . $cipher);
+    }
+
+    /** Return the verified credential, or an empty string for missing, legacy or damaged data. */
+    public static function decryptToken(object $provider): string
+    {
+        $jenkins = $provider->type === 'Jenkins';
+        if(!str_starts_with((string)$provider->token, $jenkins ? 'gcm1:' : 'gcm2:')) return '';
+        $key = commonModel::integrationKey($jenkins ? 'zentao-jenkins-provider-v1' : 'zentao-provider-token-v2');
+        $raw = base64_decode(substr($provider->token, 5), true);
+        if($key === '' || $raw === false || strlen($raw) <= 28) return '';
+        $aad = $jenkins ? $provider->url : $provider->type . "\0" . $provider->url;
+        $plain = openssl_decrypt(substr($raw, 28), 'aes-256-gcm', $key, OPENSSL_RAW_DATA, substr($raw, 0, 12), substr($raw, 12, 16), $aad);
+        return $plain === false ? '' : $plain;
+    }
+
+    private function sealFormToken(object $provider): bool
+    {
+        $plain = (string)($provider->token ?? '');
+        if($provider->type === 'Jenkins') $plain = (string)base64_decode($plain, true);
+        try
+        {
+            $provider->token = self::encryptToken($provider, $plain);
+            /* Older installations have a shorter column and may run MySQL without strict mode. */
+            if(strlen($provider->token) > 255)
+            {
+                $limit = $this->dbh->query("SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ops_provider' AND COLUMN_NAME = 'token'")->fetchColumn();
+                if(strlen($provider->token) > (int)$limit)
+                {
+                    dao::$errors['token'] = $this->lang->provider->credentialTooLong;
+                    return false;
+                }
+            }
+            return true;
+        }
+        catch(RuntimeException $e)
+        {
+            dao::$errors['token'] = $this->lang->provider->integrationKeyRequired;
+            return false;
+        }
+    }
+
     /**
      * 创建一个服务。
      * Create a provider.
@@ -20,6 +74,7 @@ class providerModel extends model
      */
     public function create(object $formData): int|false
     {
+        if(!$this->sealFormToken($formData)) return false;
         $this->dao->insert(TABLE_PROVIDER)->data($formData)
             ->batchCheck($this->config->provider->create->requiredFields, 'notempty')
             ->autoCheck()
@@ -40,6 +95,10 @@ class providerModel extends model
      */
     public function update(int $id, object $formData): bool
     {
+        $old = $this->fetchByID($id);
+        if(!$old) return false;
+        $formData->type = $old->type;
+        if(!$this->sealFormToken($formData)) return false;
         $this->dao->update(TABLE_PROVIDER)->data($formData)
             ->autoCheck()
             ->batchCheck($this->config->provider->edit->requiredFields, 'notempty')
@@ -60,7 +119,7 @@ class providerModel extends model
      */
     public function getList(string $orderBy = 'id_desc', ?object $pager = null): array
     {
-        return $this->dao->select('*')->from(TABLE_PROVIDER)
+        return $this->dao->select('id,type,name,url,createdBy,createdDate,editedBy,editedDate,deleted')->from(TABLE_PROVIDER)
             ->where('deleted')->eq(0)
             ->orderBy($orderBy)
             ->page($pager)
@@ -80,15 +139,17 @@ class providerModel extends model
         $provider = $this->fetchByID($id);
         if(empty($provider)) return false;
 
+        $plain = self::decryptToken($provider);
         if($provider->type == 'Jenkins')
         {
-            list($account, $token) = explode(':', base64_decode($provider->token));
+            list($account, $token) = array_pad(explode(':', $plain, 2), 2, '');
             $provider->account = $account;
             $provider->token   = $token;
         }
         else
         {
             $provider->account = zget($provider, 'account', '');
+            $provider->token = $plain;
         }
 
         return $provider;
@@ -123,29 +184,15 @@ class providerModel extends model
     {
         if(empty($provider->type)) return '';
 
-        if($provider->type == 'GitLab')
+        $roots = array('GitLab' => '/api/v4%s', 'Gitea' => '/api/v1%s', 'Gogs' => '/api/v1%s', 'GitHub' => '%s');
+        if(!isset($roots[$provider->type]) || empty($provider->token)) return '';
+        $auth = match($provider->type)
         {
-            return rtrim($provider->url, '/') . '/api/v4%s' . "?private_token={$provider->token}";
-        }
-        elseif($provider->type == 'Gitea')
-        {
-            return rtrim($provider->url, '/') . '/api/v1%s' . "?token={$provider->token}";
-        }
-        elseif($provider->type == 'Gogs')
-        {
-            return rtrim($provider->url, '/') . '/api/v1%s' . "?token={$provider->token}";
-        }
-        elseif($provider->type == 'GitHub')
-        {
-            $apiRoot = new stdClass();
-            $apiRoot->url    = rtrim($provider->url, '/') . '%s';
-            $apiRoot->header = array('Authorization: Bearer ' . $provider->token);
-            return $apiRoot;
-        }
-        else
-        {
-            return '';
-        }
+            'GitLab' => 'PRIVATE-TOKEN: ',
+            'GitHub' => 'Authorization: Bearer ',
+            default  => 'Authorization: token ',
+        };
+        return (object)array('url' => rtrim($provider->url, '/') . $roots[$provider->type], 'header' => array($auth . $provider->token));
     }
 
     /**
@@ -210,6 +257,8 @@ class providerModel extends model
             {
                 $provider->token = (string)$pipeline->token;
             }
+
+            if(!$this->sealFormToken($provider)) return false;
 
             $provider->createdBy   = (string)$pipeline->createdBy;
             $provider->createdDate = empty($pipeline->createdDate) ? helper::now() : $pipeline->createdDate;

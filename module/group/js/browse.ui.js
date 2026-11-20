@@ -9,8 +9,8 @@
  */
 window.confirmDelete = function(groupID, groupName)
 {
-    zui.Modal.confirm(confirmDelete.replace('%s', groupName)).then((res) =>
+    zui.Modal.confirm(deleteGroupMessage.replace('%s', groupName)).then((res) =>
     {
-        if(res) $.ajaxSubmit({url: $.createLink('group', 'delete', 'groupID=' + groupID)});
+        if(res) $.ajaxSubmit({method: 'POST', data: {csrfToken: groupCsrfToken}, url: $.createLink('group', 'delete', 'groupID=' + groupID)});
     });
 }

@@ -16,6 +16,7 @@ $storyTitle = $isEn ? $lang->common->stories : $lang->common->story;
 $taskTitle  = $isEn ? $lang->task->plural : $lang->task->common;
 $bugTitle   = $isEn ? $lang->bug->plural : $lang->bug->common;
 
+jsVar('projectCsrfToken', helper::csrfToken());
 jsVar('confirmDeleteTip', $lang->project->confirmDelete);
 
 $programDom = array();

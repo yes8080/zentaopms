@@ -217,8 +217,7 @@ class misc extends control
     public function checkNetConnect(): void
     {
         $this->app->loadConfig('extension');
-        $context = stream_context_create(array("ssl" => array("verify_peer" => false, "verify_peer_name" => false)));
-        $check   = @fopen(dirname($this->config->extension->apiRoot), "r", false, $context);
+        $check = @fopen(dirname($this->config->extension->apiRoot), "r");
         print($check ? 'success' : 'fail');
     }
 

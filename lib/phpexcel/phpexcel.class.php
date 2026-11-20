@@ -7,13 +7,11 @@
  *
  * A third-party license is embedded for some of the code in this file:
  * The use of the source code of this file is also subject to the terms
- * and consitions of the license of "PhpSpreadsheet" (LGPL, see
+ * and consitions of the license of "PhpSpreadsheet" (MIT, see
  * </lib/vendor/phpoffice/phpspreadsheet/LICENSE>).
  */
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Xls;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 use PhpOffice\PhpSpreadsheet\Writer\Exception as WriterException;
 
@@ -21,6 +19,8 @@ require_once dirname(__FILE__, 2) . '/base/delegate/delegate.class.php';
 
 class phpExcel extends baseDelegate
 {
+    private const WORKBOOK_READERS = [IOFactory::READER_XLS, IOFactory::READER_XLSX];
+
     protected static $className = 'PhpOffice\PhpSpreadsheet\Spreadsheet';
 
     public function __construct()
@@ -30,7 +30,7 @@ class phpExcel extends baseDelegate
 
     public static function load($file)
     {
-        return IOFactory::load($file);
+        return IOFactory::load($file, 0, self::WORKBOOK_READERS);
     }
 
     public function createReader($type = 'Xlsx')
@@ -61,9 +61,8 @@ class phpExcel extends baseDelegate
     {
         try
         {
-            $fileType = IOFactory::identify($file);
-            $reader   = IOFactory::createReader($fileType);
-            return $reader instanceof Xls || $reader instanceof Xlsx;
+            IOFactory::identify($file, self::WORKBOOK_READERS);
+            return true;
         }
         catch (ReaderException $e)
         {

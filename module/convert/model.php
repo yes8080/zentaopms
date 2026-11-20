@@ -1588,7 +1588,7 @@ EOT;
             }
         }
 
-        $jiraUser['password'] = md5('123456');
+        $jiraUser['password'] = helper::hashAccountPassword(bin2hex(random_bytes(32)));
         $jiraUser['group']    = '';
         $jiraUser['mode']     = 'email';
         $this->session->set('jiraUser', $jiraUser);

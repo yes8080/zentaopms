@@ -76,7 +76,8 @@ class todoEntry extends entry
         $control = $this->loadController('todo', 'delete');
         $control->delete((int)$todoID, 'yes');
 
-        $this->getData();
+        $data = $this->getData();
+        if(!$data || ($data->status ?? '') !== 'success') return $this->sendError($data->code ?? 400, $data->message ?? 'Error');
         return $this->sendSuccess(200, 'success');
     }
 }

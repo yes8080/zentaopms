@@ -167,9 +167,9 @@ class chart extends control
                 if(empty($default)) $default = array('begin' => '', 'end' => '');
                 $class = $type == 'date' ? 'form-date' : 'form-datetime';
                 $filterHtml['item'] .= '<div class="input-group">';
-                $filterHtml['item'] .= "<input type='text' name='default[begin]' id='default[begin]' value='{$default['begin']}' class='form-control $class default-begin' autocomplete='off' placeholder='{$this->lang->chart->unlimited}' onchange='changeDefault(this, this.value)'>";
+                $filterHtml['item'] .= html::input('default[begin]', $default['begin'], "id='default[begin]' class='form-control $class default-begin' placeholder='{$this->lang->chart->unlimited}' onchange='changeDefault(this, this.value)'");
                 $filterHtml['item'] .= '<span class="input-group-addon fix-border borderBox" style="border-radius: 0px;">' . $this->lang->chart->colon . '</span>';
-                $filterHtml['item'] .= "<input type='text' name='default[end]' id='default[end]' value='{$default['end']}' class='form-control $class default-end' autocomplete='off' placeholder='{$this->lang->chart->unlimited}' onchange='changeDefault(this, this.value)'>";
+                $filterHtml['item'] .= html::input('default[end]', $default['end'], "id='default[end]' class='form-control $class default-end' placeholder='{$this->lang->chart->unlimited}' onchange='changeDefault(this, this.value)'");
                 $filterHtml['item'] .= '</div>';
             }
             if($type == 'select') $filterHtml['item'] .= html::select('default', array('' => '') + $options, $default, "class='form-control picker-select' multiple");

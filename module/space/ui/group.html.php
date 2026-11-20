@@ -9,7 +9,8 @@
  */
 namespace zin;
 
-jsVar('confirmDelete', $lang->space->notice->confirmDelete);
+jsVar('groupCsrfToken', helper::csrfToken());
+jsVar('deleteGroupMessage', $lang->space->notice->confirmDelete);
 
 dropmenu
 (

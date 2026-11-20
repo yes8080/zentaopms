@@ -467,7 +467,7 @@ class convert extends control
             if($this->post->password1 && $this->post->password2 && $this->post->password1 != $this->post->password2) $errors['password2'][] = $this->lang->convert->jira->passwordDifferent;
             if($errors) return $this->send(array('result' => 'fail', 'message' => $errors));
 
-            $jiraUser['password'] = md5($this->post->password1);
+            $jiraUser['password'] = helper::hashAccountPassword($this->post->password1);
             $jiraUser['group']    = $this->post->group;
             $jiraUser['mode']     = $this->post->mode;
             $this->session->set('jiraUser', $jiraUser);

@@ -336,7 +336,7 @@ CREATE TABLE `ops_provider` (
   `type` varchar(30) NOT NULL DEFAULT '' COMMENT 'GitLab,Gitea,Gogs,Subversion,GitHub,Jenkins',
   `name` varchar(50) NOT NULL DEFAULT '' COMMENT '外部服务名称',
   `url` varchar(255) NOT NULL DEFAULT '' COMMENT '外部服务地址',
-  `token` varchar(255) NOT NULL DEFAULT '' COMMENT '外部服务调用Token，如果 type=Jenkins 则存入 base64_encode(username:token)',
+  `token` text NOT NULL DEFAULT ('') COMMENT '外部服务认证加密凭据',
   `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁创建',
   `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
   `editedBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁编辑',
@@ -5200,7 +5200,7 @@ CREATE TABLE `zt_user` (
   `type` varchar(30) NOT NULL DEFAULT 'inside',
   `dept` int unsigned NOT NULL DEFAULT '0',
   `account` varchar(30) NOT NULL DEFAULT '',
-  `password` char(32) NOT NULL DEFAULT '',
+  `password` varchar(255) NOT NULL DEFAULT '',
   `role` varchar(10) NOT NULL DEFAULT '',
   `realname` varchar(100) NOT NULL DEFAULT '',
   `superior` varchar(30) NOT NULL DEFAULT '',
@@ -5250,6 +5250,14 @@ CREATE TABLE `zt_user` (
   KEY `deleted` (`deleted`),
   KEY `idx_reset` (`resetToken`,`resetExpired`)
 ) ENGINE=InnoDB;
+CREATE TABLE `zt_userremember` (
+  `digest` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `account` varchar(30) NOT NULL,
+  `expires` int unsigned NOT NULL,
+  PRIMARY KEY (`digest`),
+  KEY `expires` (`expires`)
+);
+
 CREATE TABLE `zt_usercontact` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `account` varchar(30) NOT NULL DEFAULT '',

@@ -6,6 +6,13 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'phpseclib3\\' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
+    'ParagonIE\\ConstantTime\\' => array($vendorDir . '/paragonie/constant_time_encoding/src'),
+    'PhpOffice\\WMF\\' => array($vendorDir . '/phpoffice/wmf/src/WMF'),
+    'Matrix\\' => array($vendorDir . '/markbaker/matrix/classes/src'),
+    'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
+    'ZipStream\\' => array($vendorDir . '/maennchen/zipstream-php/src'),
+    'Composer\\Pcre\\' => array($vendorDir . '/composer/pcre/src'),
     'WpOrg\\Requests\\' => array($vendorDir . '/rmccue/requests/src'),
     'Vendor\\Spyc\\' => array($vendorDir . '/mustangostang/spyc'),
     'Vendor\\PclZip\\' => array($vendorDir . '/pclzip/pclzip'),

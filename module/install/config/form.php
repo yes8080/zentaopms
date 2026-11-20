@@ -22,5 +22,5 @@ $config->install->form->step5 = array();
 $config->install->form->step5['company']        = array('type' => 'string', 'required' => true, 'filter' => 'trim');
 $config->install->form->step5['flow']           = array('type' => 'string', 'required' => true, 'default' => 'full');
 $config->install->form->step5['account']        = array('type' => 'string', 'required' => true, 'filter' => 'trim');
-$config->install->form->step5['password']       = array('type' => 'string', 'required' => true, 'filter' => 'trim');
+$config->install->form->step5['password']       = array('type' => 'string', 'required' => true, 'specialchars' => 'no');
 $config->install->form->step5['importDemoData'] = array('type' => 'int', 'required' => false, 'default' => 0);

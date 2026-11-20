@@ -23,21 +23,7 @@ class entry extends control
         $output->result = 'success';
         $output->users  = array();
 
-        $query = '';
-        $query = $this->config->sessionVar . '=' . session_id();
-
-        $location = $referer;
-        $pathinfo = parse_url($location);
-        if(!empty($pathinfo['query']))
-        {
-            $location = substr($location, 0, strpos($location, '?'));
-            $location = rtrim($location, '?') . "?{$query}&{$pathinfo['query']}";
-        }
-        else
-        {
-            $location = rtrim($location, '?') . "?$query";
-        }
-        $output->data = $location;
+        $output->data = $referer;
 
         if($this->session->userID)
         {

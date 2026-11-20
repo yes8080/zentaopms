@@ -34,3 +34,6 @@ $lang->provider->notice->confirmDelete = '你确定要删除该服务吗？';
 $lang->provider->notice->emptyProvider = '暂无服务。';
 $lang->provider->notice->svnPath       = '服务器地址或文件路径';
 $lang->provider->notice->hasRepos      = '该服务已经关联了仓库, 请先删除关联的仓库。';
+
+$lang->provider->integrationKeyRequired = '保存服务凭据需要配置有效的集成密钥文件。';
+$lang->provider->credentialTooLong = '加密后的令牌超过数据库字段容量。请检查令牌长度并执行供应方凭据数据库迁移。';

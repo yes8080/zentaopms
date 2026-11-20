@@ -211,6 +211,7 @@ define('TABLE_AUTOCACHE',     '`' . $config->db->prefix . 'autocache`');
 define('TABLE_COMPANY',       '`' . $config->db->prefix . 'company`');
 define('TABLE_DEPT',          '`' . $config->db->prefix . 'dept`');
 define('TABLE_CONFIG',        '`' . $config->db->prefix . 'config`');
+define('TABLE_USERREMEMBER', '`' . $config->db->prefix . 'userremember`');
 define('TABLE_USER',          '`' . $config->db->prefix . 'user`');
 define('TABLE_TODO',          '`' . $config->db->prefix . 'todo`');
 define('TABLE_GROUP',         '`' . $config->db->prefix . 'group`');

@@ -76,11 +76,25 @@ include "../../common/view/m.header.html.php";
 
   <nav class='nav nav-auto affix dock-bottom footer-actions'>
   <?php
-  if(common::hasPriv('todo', 'finish') and $todo->status != 'done') echo html::a($this->createLink('todo', 'finish', "todoID=$todo->id"), $lang->todo->finish, 'hiddenwin');
+  if(common::hasPriv('todo', 'finish') and $todo->status != 'done'):
+  ?>
+    <form method="post" target="hiddenwin" action="<?php echo $this->createLink('todo', 'finish', "todoID=$todo->id");?>">
+      <input type="hidden" name="csrfToken" value="<?php echo helper::csrfToken();?>">
+      <button type="submit" class="btn"><?php echo $lang->todo->finish;?></button>
+    </form>
+  <?php
+  endif;
   if($todo->account == $app->user->account)
   {
       common::printIcon('todo', 'edit',   "todoID=$todo->id", $todo, 'button','', '', '', false, "data-display='modal' data-placement='bottom'", $lang->edit);
-      if(common::hasPriv('todo', 'delete')) echo html::a($this->createLink('todo', 'delete', "todoID=$todo->id"), $lang->delete, 'hiddenwin');
+      if(common::hasPriv('todo', 'delete')):
+      ?>
+        <form method="post" target="hiddenwin" action="<?php echo $this->createLink('todo', 'delete', "todoID=$todo->id&confirm=yes");?>" onsubmit="return window.confirm(this.dataset.confirm)" data-confirm="<?php echo htmlspecialchars($lang->todo->confirmDelete, ENT_QUOTES, 'UTF-8');?>">
+          <input type="hidden" name="csrfToken" value="<?php echo helper::csrfToken();?>">
+          <button type="submit" class="btn"><?php echo $lang->delete;?></button>
+        </form>
+      <?php
+      endif;
   }
   ?>
   </nav>

@@ -19,7 +19,7 @@ window.deleteMember = function(projectID, account, userID)
             $.get(tipsLink, function(tips)
             {
                 if(tips && window.confirm(tips)) removeExecution = 'yes';
-                $.ajaxSubmit({url: $.createLink('project', 'unlinkMember', 'projectID=' + projectID + '&userID=' + userID + '&removeExecution=' + removeExecution)});
+                $.ajaxSubmit({method: 'POST', data: {csrfToken: teamCsrfToken}, url: $.createLink('project', 'unlinkMember', 'projectID=' + projectID + '&userID=' + userID + '&removeExecution=' + removeExecution)});
             })
         }
     })

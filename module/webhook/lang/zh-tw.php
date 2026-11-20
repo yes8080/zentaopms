@@ -110,5 +110,5 @@ $lang->webhook->note->typeList['default']   = '從第三方系統獲取webhook�
 $lang->webhook->error               = new stdclass();
 $lang->webhook->error->curl         = '需要加載php-curl擴展。';
 $lang->webhook->error->noDept       = '沒有選擇部門，請先選擇同步部門。';
-$lang->webhook->error->url          = 'webhook地址錯誤，只能以http://或https://開頭！';
+$lang->webhook->error->url          = 'webhook地址錯誤，只能以https://開頭！';
 $lang->webhook->error->requestError = '請求錯誤！';

@@ -34,3 +34,6 @@ $lang->provider->notice->confirmDelete = '你確定要刪除該服務嗎？';
 $lang->provider->notice->emptyProvider = '暫無服務。';
 $lang->provider->notice->svnPath       = '伺服器地址或檔案路徑';
 $lang->provider->notice->hasRepos      = '該服務已經關聯了倉庫, 請先刪除關聯的倉庫。';
+
+$lang->provider->integrationKeyRequired = '儲存服務憑據需要配置有效的整合金鑰檔案。';
+$lang->provider->credentialTooLong = '加密後的權杖超過資料庫欄位容量。請檢查權杖長度並執行服務憑據資料庫遷移。';

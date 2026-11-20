@@ -38,7 +38,13 @@ window.ajaxConfirmLoad = function(obj)
     var action = $this.data('action');
     zui.Modal.confirm({message: confirmLang[action], icon:'icon-exclamation-sign', iconClass: 'warning-pale rounded-full icon-2x'}).then((res) =>
     {
-        if(res) $.get($this.data('url'), function(){loadCurrentPage()});
+        if(!res) return;
+        if(action === 'delete')
+        {
+            $.ajaxSubmit({url: $this.data('url'), method: planDeleteAttrs['data-method'], data: JSON.parse(planDeleteAttrs['data-data'])});
+            return;
+        }
+        $.get($this.data('url'), function(){loadCurrentPage()});
     });
 };
 

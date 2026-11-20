@@ -108,6 +108,7 @@ jsVar('cardLang', $lang->kanbancard);
 jsVar('ERURColumn', array_keys($lang->kanban->ERURColumn));
 jsVar('bugLang', $lang->bug);
 jsVar('taskLang', $lang->task);
+jsVar('taskDeleteAttrs', helper::csrfAjaxAttributes());
 jsVar('executionID', $execution->id);
 jsVar('productID', $productID);
 jsVar('productCount', count($productNames));

@@ -215,6 +215,7 @@ class personnel extends control
      */
     public function unbindWhitelist(int $id = 0)
     {
+        $this->requireWriteRequest();
         $acl = $this->dao->select('*')->from(TABLE_ACL)->where('id')->eq($id)->fetch();
         if(empty($acl)) return $this->send(array('result' => 'success', 'load' => true));
 

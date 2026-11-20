@@ -356,6 +356,7 @@ window.buildCardActions = function(item)
         if(typeof(action.modal) != 'undefined')   actionMap['data-toggle'] = 'modal';
         if(typeof(action.size) != 'undefined')    actionMap['data-size']   = action.size;
         if(typeof(action.modal) == 'undefined')   actionMap['innerClass'] = 'ajax-submit';
+        if(action.submitAttrs) Object.assign(actionMap, action.submitAttrs);
         actions.push(actionMap);
     });
     return actions;

@@ -475,8 +475,8 @@ class user extends control
         {
             if($this->app->apiVersion == 'v2')
             {
-                $_POST['password1']        = md5($_POST['password']);
-                $_POST['password2']        = md5($_POST['password']);
+                $_POST['password1']        = $_POST['password'];
+                $_POST['password2']        = $_POST['password'];
                 $_POST['passwordLength']   = strlen($_POST['password']);
                 $_POST['passwordStrength'] = 2;
                 $_POST['passwordPlain']    = $_POST['password'];
@@ -565,8 +565,8 @@ class user extends control
         {
             if($this->app->apiVersion == 'v2')
             {
-                $_POST['password1']        = isset($_POST['password']) ? md5($_POST['password']) : '';
-                $_POST['password2']        = isset($_POST['password']) ? md5($_POST['password']) : '';
+                $_POST['password1']        = $_POST['password'] ?? '';
+                $_POST['password2']        = $_POST['password'] ?? '';
                 $_POST['passwordLength']   = isset($_POST['password']) ? strlen($_POST['password']) : 0;
                 $_POST['passwordStrength'] = 2;
                 $_POST['passwordPlain']    = isset($_POST['password']) ? $_POST['password'] : '';
@@ -651,6 +651,7 @@ class user extends control
      */
     public function delete(int $userID)
     {
+        if(($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET' || $_POST) $this->requireWriteRequest();
         $user = $this->user->getByID($userID, 'id');
         if($this->app->user->admin and $this->app->user->account == $user->account) return;
 
@@ -681,6 +682,7 @@ class user extends control
      */
     public function unlock(int $userID)
     {
+        $this->requireWriteRequest();
         $user = $this->user->getById($userID, 'id');
         $this->user->cleanLocked($user->account);
         return $this->send(array('result' => 'success', 'load' => true));
@@ -696,6 +698,7 @@ class user extends control
      */
     public function unbind(int $userID)
     {
+        $this->requireWriteRequest();
         $user = $this->user->getById($userID, 'id');
         $this->user->unbind($user->account);
         return $this->send(array('result' => 'success', 'load' => true));
@@ -825,6 +828,11 @@ class user extends control
     {
         if(!empty($this->app->user->id)) $this->loadModel('action')->create('user', (int)$this->app->user->id, 'logout');
 
+        if(!empty($this->cookie->zp) && !empty($this->app->user->password))
+        {
+            $digest = hash_hmac('sha256', $this->cookie->zp, $this->app->user->password);
+            $this->dao->delete()->from(TABLE_USERREMEMBER)->where('digest')->eq($digest)->exec();
+        }
         helper::setcookie('za',  '', time() - 3600);
         helper::setcookie('zp',  '', time() - 3600);
         helper::setcookie('tab', '', time() - 3600);
@@ -1019,6 +1027,11 @@ class user extends control
     public function cropAvatar(int $imageID)
     {
         $image = $this->loadModel('file')->getByID($imageID);
+
+        if(!$image || !$this->file->fileExists($image) || !$this->file->checkPriv($image) || $image->objectType !== 'avatar' || $image->addedBy !== $this->app->user->account)
+        {
+            return $this->sendError($this->lang->error->accessDenied);
+        }
 
         if(!empty($_POST))
         {

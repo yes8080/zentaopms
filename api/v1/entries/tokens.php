@@ -22,7 +22,6 @@ class tokensEntry extends baseEntry
         $account   = $this->request('account');
         $password  = $this->request('password', '');
         $authKey   = $this->request('authKey', '');
-        $addAction = $this->request('addAction', false);
 
         $this->loadModel('user');
 
@@ -46,10 +45,11 @@ class tokensEntry extends baseEntry
 
         if($user)
         {
-            $this->user->login($user, $addAction);
+            $this->user->login($user);
             return $this->send(201, array('token' => session_id()));
         }
 
+        error_log(json_encode(array('event' => 'api_token_denied', 'accountHash' => hash('sha256', (string)$account))));
         $fails = $this->user->failPlus($account);
         $remainTimes = $this->config->user->failTimes - $fails;
 

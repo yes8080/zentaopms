@@ -1245,6 +1245,7 @@ class project extends control
      */
     public function unlinkMember(int $projectID, int $userID, string $removeExecution = 'no')
     {
+        $this->requireWriteRequest();
         $user    = $this->loadModel('user')->getById($userID, 'id');
         $account = $user->account;
 
@@ -1570,6 +1571,7 @@ class project extends control
      */
     public function delete(int $projectID)
     {
+        $this->requireWriteRequest();
         $projectID = (int)$projectID;
         $project   = $this->project->getByID($projectID);
         $this->project->delete(TABLE_PROJECT, $projectID);
@@ -1667,6 +1669,7 @@ class project extends control
      */
     public function unbindWhitelist(int $id = 0, $confirm = 'no')
     {
+        $this->requireWriteRequest();
         echo $this->fetch('personnel', 'unbindWhitelist', "id=$id&confirm=$confirm");
     }
 

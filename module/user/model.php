@@ -124,19 +124,27 @@ class userModel extends model
     {
         if(empty($user->password1))
         {
-            unset($user->passwordPlain);
+            unset($user->passwordPlain, $user->password);
             if(!$canNoPassword) dao::$errors['password1'][] = sprintf($this->lang->error->notempty, $this->lang->user->password);
             return !dao::isError();
         }
 
         /* 服务端根据明文重新计算密码强度与长度，避免信任客户端提交的 passwordStrength/passwordLength 字段。*/
         /* Recompute the password strength and length on the server, never trust the client submitted fields. */
-        $passwordPlain = isset($user->passwordPlain) ? trim((string)$user->passwordPlain) : '';
-        if($passwordPlain === '' && isset($this->post->passwordPlain)) $passwordPlain = trim((string)$this->post->passwordPlain);
+        $passwordPlain = isset($user->passwordPlain) ? (string)$user->passwordPlain : '';
+        if($passwordPlain === '' && isset($this->post->passwordPlain)) $passwordPlain = (string)$this->post->passwordPlain;
         if($passwordPlain === '')
         {
             dao::$errors['password1'][] = $this->lang->user->error->password;
             return !dao::isError();
+        }
+        /* Legacy forms send a confirmation derived from the password and the form nonce. */
+        $formDigest = md5($passwordPlain) . $this->session->rand;
+        $matchesConfirmation = hash_equals($passwordPlain, (string)$user->password1) || hash_equals($formDigest, (string)$user->password1);
+        if(!$matchesConfirmation || $user->password1 !== $user->password2)
+        {
+            dao::$errors['password1'][] = $this->lang->error->passwordsame;
+            return false;
         }
         $user->passwordLength   = strlen($passwordPlain);
         $user->passwordStrength = $this->computePasswordStrength($passwordPlain);
@@ -153,23 +161,15 @@ class userModel extends model
             dao::$errors['password1'][] = zget($this->lang->user->placeholder->passwordStrengthCheck, 0, $this->lang->user->weakPassword);
         }
 
-        if($user->password1 != $user->password2) dao::$errors['password1'][] = $this->lang->error->passwordsame;
-
         if(!empty($this->config->safe->changeWeak))
         {
             if(!isset($this->config->safe->weak)) $this->app->loadConfig('admin');
 
-            /* 检查明文的弱密码。*/
-            /* Check the weak password in clear text. */
-            if(strpos(",{$this->config->safe->weak},", ",{$user->password1},") !== false) dao::$errors['password1'] = sprintf($this->lang->user->errorWeak, $this->config->safe->weak);
-
-            /* 检查加密后的弱密码。*/
-            /* Check for encrypted weak password. */
-            $weaks = array();
-            foreach(explode(',', $this->config->safe->weak) as $weak) $weaks[] = md5(trim($weak));
-            if(in_array(substr($user->password1, 0, 32), $weaks)) dao::$errors['password1'] = sprintf($this->lang->user->errorWeak, $this->config->safe->weak);
+            $weakPasswords = array_map('trim', explode(',', $this->config->safe->weak));
+            if(in_array($passwordPlain, $weakPasswords, true)) dao::$errors['password1'] = sprintf($this->lang->user->errorWeak, $this->config->safe->weak);
         }
 
+        if(!dao::isError()) $user->password = helper::hashAccountPassword($passwordPlain);
         return !dao::isError();
     }
 
@@ -185,10 +185,24 @@ class userModel extends model
     {
         /* API has no verifyPassword. */
         if($this->app->apiVersion == 'v2') return true;
+        if($this->app->apiVersion == 'v1' && hash_equals($this->apiReauthenticationProof(), $verifyPassword)) return true;
 
-        if(empty($verifyPassword) || $verifyPassword != md5($this->app->user->password . $this->session->rand)) dao::$errors['verifyPassword'][] = $this->lang->user->error->verifyPassword;
+        if(!$this->verifyCurrentPassword($verifyPassword)) dao::$errors['verifyPassword'][] = $this->lang->user->error->verifyPassword;
 
         return !dao::isError();
+    }
+
+    /** Reauthentication must use the current database verifier after an administrator resets the account. */
+    private function verifyCurrentPassword(string $password): bool
+    {
+        $stored = $this->dao->select('password')->from(TABLE_USER)->where('id')->eq($this->app->user->id)->andWhere('deleted')->eq('0')->fetch('password');
+        return is_string($stored) && helper::verifyAccountPassword($password, $stored);
+    }
+
+    /** Preserve the internal delegation used by authenticated v1 user-management adapters. */
+    public function apiReauthenticationProof(): string
+    {
+        return hash_hmac('sha256', 'v1-user-management:' . session_id(), $this->app->user->password);
     }
 
     /**
@@ -619,7 +633,7 @@ class userModel extends model
         {
             if(empty($user->account)) continue;
 
-            $user->password = md5($user->password);
+            $user->password = helper::hashAccountPassword($user->password);
 
             if($user->type == 'outside')
             {
@@ -701,7 +715,9 @@ class userModel extends model
         $this->checkAccountChange($oldUser->account, $user->account);
         $this->checkGroupChange($user);
         $this->loadModel('score')->create('user', 'editProfile');
-        $changes = common::createChanges($oldUser, $user);
+        $historyUser = clone $user;
+        unset($historyUser->password);
+        $changes = common::createChanges($oldUser, $historyUser);
         if($changes)
         {
             $actionID = $this->loadModel('action')->create('user', $user->id, 'edited');
@@ -852,7 +868,7 @@ class userModel extends model
     {
         $this->checkPassword($user);
 
-        if($user->originalPassword != md5($this->app->user->password . $this->session->rand)) dao::$errors['originalPassword'][] = $this->lang->user->error->originalPassword;
+        if(!$this->verifyCurrentPassword($user->originalPassword)) dao::$errors['originalPassword'][] = $this->lang->user->error->originalPassword;
         if(dao::isError()) return false;
 
         $this->dao->update(TABLE_USER)->set('password')->eq($user->password)->where('id')->eq($this->app->user->id)->exec();
@@ -887,7 +903,7 @@ class userModel extends model
             return false;
         }
 
-        $this->checkPassword($user);
+        if(!$this->checkPassword($user)) return false;
 
         $this->dao->update(TABLE_USER)->set('password')->eq($user->password)->where('account')->eq($user->account)->exec();
 
@@ -906,15 +922,21 @@ class userModel extends model
      */
     public function identify(string $account, string $password, int $passwordStrength = 0): bool|object
     {
-        if(!$account || !$password) return false;
+        if(!$account || $password === '') return false;
         if(!validater::checkAccount($account)) return false;
 
         $user = $this->identifyUser($account, $password);
         if(!$user) return false;
 
+        return $this->completeIdentification($user, $passwordStrength, $password);
+    }
+
+    public function completeIdentification(object $user, int $passwordStrength, ?string $password = null): object
+    {
+        $account = $user->account;
         $ip   = helper::getRemoteIp();
         $last = helper::now();
-        $user = $this->checkNeedModifyPassword($user, $passwordStrength);
+        $user = $this->checkNeedModifyPassword($user, $passwordStrength, $password);
 
         $user->last  = $last;
         $user->admin = strpos($this->app->company->admins, ",{$user->account},") !== false;
@@ -951,22 +973,21 @@ class userModel extends model
         $user = $this->dao->select('*')->from(TABLE_USER)->where('deleted')->eq('0')->andWhere('account')->eq($account)->fetch();
         if(!$user) return false;
 
-        $passwordLength = strlen($password);
+        if(!helper::verifyAccountPassword($password, $user->password)) return false;
 
-        if($passwordLength == 32)
+        if(password_needs_rehash($user->password, PASSWORD_ARGON2ID))
         {
-            $hash = $this->session->rand ? md5($user->password . $this->session->rand) : $user->password;
-            if($password == $hash) return $user;
+            $hash = helper::hashAccountPassword($password);
+            $updated = $this->dao->update(TABLE_USER)->set('password')->eq($hash)
+                ->where('id')->eq($user->id)->andWhere('password')->eq($user->password)->exec();
+            if($updated) $user->password = $hash;
+            else
+            {
+                $user = $this->dao->select('*')->from(TABLE_USER)->where('id')->eq($user->id)->andWhere('deleted')->eq('0')->fetch();
+                if(!$user || !helper::verifyAccountPassword($password, $user->password)) return false;
+            }
         }
-
-        if($passwordLength == 40)
-        {
-            $lastTimestamp = is_numeric($user->last) ? $user->last : strtotime($user->last);
-            $hash = sha1($user->account . $user->password . $lastTimestamp);
-            if($password == $hash) return $user;
-        }
-
-        return md5($password) == $user->password ? $user : false;
+        return $user;
     }
 
     /**
@@ -978,7 +999,7 @@ class userModel extends model
      * @access public
      * @return object
      */
-    public function checkNeedModifyPassword(object $user, int $passwordStrength): object
+    public function checkNeedModifyPassword(object $user, int $passwordStrength, ?string $password = null): object
     {
         /* 如果开启了首次登录修改密码功能，检查是否是首次登录。*/
         /* If the modify password on first login feature is enabled, check if it's the first login. */
@@ -996,7 +1017,7 @@ class userModel extends model
         /* If the modify weak password feature is enabled, check if it's a weak password. */
         if(!empty($this->config->safe->changeWeak))
         {
-            $user->modifyPassword = $this->loadModel('admin')->checkWeak($user);
+            $user->modifyPassword = $this->loadModel('admin')->checkWeak($user, $password);
             if($user->modifyPassword)
             {
                 $user->modifyPasswordReason = 'weak';
@@ -1030,8 +1051,13 @@ class userModel extends model
     {
         $account  = $this->server->php_auth_user;
         $password = $this->server->php_auth_pw;
-        $user     = $this->identify($account, $password);
-        if(!$user) return false;
+        if(!$account || $this->checkLocked($account)) return false;
+        $user = $this->identify($account, $password);
+        if(!$user)
+        {
+            $this->failPlus($account);
+            return false;
+        }
 
         $user->rights = $this->authorize($account);
         $user->groups = $this->getGroups($account);
@@ -1057,8 +1083,14 @@ class userModel extends model
     {
         $account  = $this->cookie->za;
         $authHash = $this->cookie->zp;
-        $user     = $this->identify($account, $authHash, 3); // Set passwordStrength=MAX_PASSWORD_STRENGTH, don't check modifyPassword.
-        if(!$user) return false;
+        if(!is_string($authHash) || !preg_match('/^[a-f0-9]{64}$/D', $authHash)) return false;
+        $user = $this->dao->select('*')->from(TABLE_USER)->where('account')->eq($account)->andWhere('deleted')->eq('0')->fetch();
+        if(!$user || $this->checkLocked($account)) return false;
+        $digest = hash_hmac('sha256', $authHash, $user->password);
+        $consumed = $this->dao->delete()->from(TABLE_USERREMEMBER)->where('account')->eq($account)
+            ->andWhere('digest')->eq($digest)->andWhere('expires')->gt(time())->exec();
+        if(!$consumed) return false;
+        $user = $this->completeIdentification($user, 3);
 
         $user->rights = $this->authorize($account);
         $user->groups = $this->getGroups($account);
@@ -1275,9 +1307,14 @@ class userModel extends model
      */
     public function keepLogin(object $user): bool
     {
+        $token = bin2hex(random_bytes(32));
+        $entry = (object)array('account' => $user->account, 'digest' => hash_hmac('sha256', $token, $user->password), 'expires' => $this->config->cookieLife);
+        $this->dao->delete()->from(TABLE_USERREMEMBER)->where('expires')->le(time())->exec();
+        $this->dao->insert(TABLE_USERREMEMBER)->data($entry)->exec();
+        if(dao::isError()) return false;
         helper::setcookie('keepLogin', 'on');
         helper::setcookie('za', $user->account);
-        helper::setcookie('zp', sha1($user->account . $user->password . $this->server->request_time));
+        helper::setcookie('zp', $token);
         return true;
     }
 

@@ -97,8 +97,8 @@ class userZen extends user
      */
     public function getUserForJSON(object $user): object
     {
-        unset($user->password);
-        unset($user->deleted);
+        $user = clone $user;
+        unset($user->password, $user->resetToken, $user->resetExpired, $user->deleted);
 
         $user->token   = session_id(); // App client will use session id as token.
         $user->company = $this->app->company->name;
@@ -171,16 +171,14 @@ class userZen extends user
      */
     public function login(string $referer = '', string $viewType = '', string $loginLink = '', string $denyLink = '', string $locateReferer = '', string $locateWebRoot = ''): array
     {
-        if(empty($_POST) && (!isset($_GET['account']) || !isset($_GET['password']))) return array();
+        if(empty($_POST) || isset($_GET['password'])) return array();
 
         /* 预处理账号和密码。*/
         /* Preprocess account and password. */
         $account  = '';
         $password = '';
         if($this->post->account)  $account  = trim($this->post->account);
-        if($this->post->password) $password = trim($this->post->password);
-        if($this->get->account)   $account  = trim($this->get->account);
-        if($this->get->password)  $password = trim($this->get->password);
+        if($this->post->password) $password = (string)$this->post->password;
 
         if(!$account) return $this->responseForLoginFail($viewType);
 
@@ -190,11 +188,11 @@ class userZen extends user
 
         /* 如果开启了登录验证码检查验证码是否正确。*/
         /* Check if the login captcha is correct if the login captcha is enabled. */
-        if((!empty($this->config->safe->loginCaptcha) && strtolower($this->post->captcha) != strtolower($this->session->captcha) && $viewType != 'json')) return array('result' => 'fail', 'message' => $this->lang->user->errorCaptcha);
+        if(!empty($this->config->safe->loginCaptcha) && (empty($this->session->captcha) || !is_string($this->post->captcha) || strcasecmp($this->post->captcha, $this->session->captcha) !== 0)) return array('result' => 'fail', 'message' => $this->lang->user->errorCaptcha);
 
         /* 验证账号和密码。*/
         /* Verify account and password. */
-        $passwordStrength = $viewType == 'json' ? 1 : (int)$this->post->passwordStrength;
+        $passwordStrength = $this->user->computePasswordStrength($password);
         $user             = $this->user->identify($account, $password, $passwordStrength);
 
         /* 登录失败返回错误信息。*/
@@ -422,7 +420,11 @@ class userZen extends user
      */
     public function responseForLoginFail(string $viewType, string $account = ''): array
     {
-        if($viewType == 'json') return array('status' => 'failed', 'reason' => $this->lang->user->loginFailed);
+        if($viewType == 'json')
+        {
+            if($account) $this->user->failPlus($account);
+            return array('status' => 'failed', 'reason' => $this->lang->user->loginFailed);
+        }
 
         if($account)
         {

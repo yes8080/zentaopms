@@ -408,6 +408,7 @@ class program extends control
      */
     public function delete(int $programID, string $confirm = 'no')
     {
+        if($confirm !== 'no') $this->requireWriteRequest();
         /* The program can NOT be deleted if it has a child program. */
         $childrenPairs = $this->program->getChildrenPairsByID($programID);
         if(count($childrenPairs))
@@ -424,7 +425,8 @@ class program extends control
         $program = $this->dao->select('*')->from(TABLE_PROGRAM)->where('id')->eq($programID)->andWhere('deleted')->eq('0')->fetch();
         if($confirm == 'no')
         {
-            return $this->send(array('result' => 'fail', 'callback' => "zui.Modal.confirm({icon: 'icon-exclamation-sign', iconClass: 'warning-pale rounded-full icon-2x',  message: '" . sprintf($this->lang->program->confirmDelete, $program->name) . "'}).then((res) => {if(res) $.ajaxSubmit({url: '" . $this->createLink('program', 'delete', "programID={$programID}&confirm=yes") . "'});});"));
+            $confirmed = array('url' => $this->createLink('program', 'delete', "programID={$programID}&confirm=yes"), 'method' => 'POST', 'data' => array('csrfToken' => helper::csrfToken()));
+            return $this->send(array('result' => 'success', 'load' => array('confirm' => sprintf($this->lang->program->confirmDelete, $program->name), 'confirmed' => $confirmed)));
         }
         else
         {
@@ -683,6 +685,7 @@ class program extends control
      */
     public function unbindWhitelist(int $aclID)
     {
+        $this->requireWriteRequest();
         echo $this->fetch('personnel', 'unbindWhitelist', "id={$aclID}&confirm=yes");
     }
 

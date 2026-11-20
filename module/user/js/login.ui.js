@@ -41,10 +41,9 @@ window.safeSubmit = function(e)
     e.stopPropagation();
 
     let account          = $('#account').val().trim();
-    let password         = $('input#password[type="password"]').val().trim();
+    let password         = $('input#password[type="password"]').val();
     let passwordStrength = computePasswordStrength(password);
 
-    let hasMD5    = typeof(md5) == 'function';
     let referer   = $('[name=referer]').val();
     let link      = $.createLink('user', 'login');
     let keepLogin = $('#keepLoginon').prop('checked') ? 1 : 0;
@@ -60,7 +59,6 @@ window.safeSubmit = function(e)
     $('#submit').attr('disabled', 'disabled');
     $.get($.createLink('user', 'refreshRandom'), function(rand)
     {
-        if(password != '') password = hasMD5 ? md5(md5(password) + rand) : password,
         timeout  = false;
 
         $.post(link,

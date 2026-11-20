@@ -119,7 +119,12 @@ include "./m.featurebar.html.php";
           <td><?php echo $lang->user->ranzhi;?></td>
           <td>
             <?php echo $user->ranzhi . ' ';?>
-            <?php if(common::hasPriv('my', 'unbind')) echo html::a($this->createLink('my', 'unbind'), "<i class='icon-unlink'></i>", 'hiddenwin', "class='bin-icon' title='{$lang->user->unbind}'");?>
+            <?php if(common::hasPriv('my', 'unbind')):?>
+            <form method="post" target="hiddenwin" action="<?php echo $this->createLink('my', 'unbind', 'confirm=yes');?>" onsubmit="return window.confirm(this.dataset.confirm)" data-confirm="<?php echo htmlspecialchars($lang->user->confirmUnbind, ENT_QUOTES, 'UTF-8');?>">
+              <input type="hidden" name="csrfToken" value="<?php echo helper::csrfToken();?>">
+              <button type="submit" class="bin-icon" title="<?php echo htmlspecialchars($lang->user->unbind, ENT_QUOTES, 'UTF-8');?>"><i class="icon-unlink"></i></button>
+            </form>
+            <?php endif;?>
           </td>
         </tr>
         <?php endif;?>

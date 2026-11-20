@@ -106,7 +106,7 @@ window.deleteProductPlan = function(planID)
 {
     zui.Modal.confirm({message: confirmDelete, icon:'icon-exclamation-sign', iconClass: 'warning-pale rounded-full icon-2x'}).then((res) =>
     {
-        if(res) $.ajaxSubmit({url: $.createLink('productplan', 'delete', 'planID=' + planID)});
+        if(res) $.ajaxSubmit({url: $.createLink('productplan', 'delete', 'planID=' + planID), method: planDeleteAttrs['data-method'], data: JSON.parse(planDeleteAttrs['data-data'])});
     });
 }
 
@@ -339,7 +339,7 @@ window.buildCardActions = function(item)
     if(item.actionList.includes('finish'))          actions.push({text: productplanLang.finish,          icon: 'checked', url: $.createLink('productplan', 'finish', "planID=" + item.id), 'data-confirm': productplanLang.confirmFinish});
     if(item.actionList.includes('close'))           actions.push({text: productplanLang.close,           icon: 'off',     url: $.createLink('productplan', 'close', "planID=" + item.id), 'data-toggle': 'modal'});
     if(item.actionList.includes('activate'))        actions.push({text: productplanLang.activate,        icon: 'magic',   url: $.createLink('productplan', 'activate', "planID=" + item.id), 'data-confirm': productplanLang.confirmActivate});
-    if(item.actionList.includes('delete'))          actions.push({text: productplanLang.delete,          icon: 'trash',   url: $.createLink('productplan', 'delete', "planID=" + item.id), 'data-confirm': productplanLang.confirmDelete});
+    if(item.actionList.includes('delete'))          actions.push({text: productplanLang.delete,          icon: 'trash',   url: $.createLink('productplan', 'delete', "planID=" + item.id), 'data-confirm': productplanLang.confirmDelete, innerClass: 'ajax-submit', ...planDeleteAttrs});
 
     return actions;
 }

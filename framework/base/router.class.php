@@ -176,6 +176,9 @@ class baseRouter
      */
     public $apiVersion = '';
 
+    /* Per-request flag set after authenticating a signed legacy API entry. */
+    public bool $authenticatedEntry = false;
+
     /**
      * 用户使用的主题。
      * The theme of the client user.
@@ -838,16 +841,12 @@ class baseRouter
 
         unset($_REQUEST);
 
-        /* Change for CSRF. */
-        if($this->config->framework->filterCSRF)
+        $verb = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        if(!in_array($verb, array('GET', 'HEAD', 'OPTIONS'), true) && !$this->isTrustedWriteRequest())
         {
-            $httpType = (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == 'on') ? 'https' : 'http';
-            if(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) and strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']) == 'https') $httpType = 'https';
-            if(isset($_SERVER['REQUEST_SCHEME']) and strtolower((string) $_SERVER['REQUEST_SCHEME']) == 'https') $httpType = 'https';
-
-            $httpHost = zget($_SERVER, 'HTTP_HOST', '');
-            $apiMode  = $this->apiVersion || isset($_GET[$this->config->sessionVar]);
-            if(!$apiMode && (empty($httpHost) or !str_starts_with((string) $this->server->http_referer, "$httpType://$httpHost"))) $_FILES = $_POST = array();
+            helper::setStatus(403);
+            if(isset($this->worker)) helper::end('Forbidden');
+            exit('Forbidden');
         }
 
         $_POST   = validater::filterSuper($_POST);
@@ -871,6 +870,33 @@ class baseRouter
                 if(isset($_COOKIE[$key]) and !validater::checkByRule($_COOKIE[$key], $rules)) unset($_COOKIE[$key]);
             }
         }
+    }
+
+    /**
+     * Check the complete origin of a browser write. Legacy clients can explicitly
+     * authenticate without ambient cookies. Never infer an API from a URL parameter alone.
+     */
+    public function isTrustedWriteRequest(): bool
+    {
+        if(!$this->config->framework->filterCSRF) return true;
+
+        $sessionName = $this->config->sessionVar;
+        $token = $_SERVER['HTTP_TOKEN'] ?? '';
+        if(is_string($token) && $token !== '')
+        {
+            $tokenSession = str_starts_with($token, 'ss_') ? substr($token, 3) : $token;
+            if($tokenSession !== '' && hash_equals(session_id(), $tokenSession)) return true;
+        }
+        if(!isset($_COOKIE[$sessionName]) && empty($_COOKIE['za']) && empty($_COOKIE['zp']))
+        {
+            if(is_a($this, 'api')) return true;
+        }
+
+        $expectedScheme = isHttps() || strtolower($_SERVER['REQUEST_SCHEME'] ?? '') === 'https' ? 'https' : 'http';
+        $authority = $_SERVER['HTTP_HOST'] ?? '';
+        $source = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
+        if(isset($_SERVER['HTTP_ORIGIN']) && strpbrk(substr($source, strpos($source, '://') + 3), '/?#') !== false) return false;
+        return helper::sameHttpOrigin($source, $expectedScheme . '://' . $authority);
     }
 
     /**
@@ -1259,10 +1285,16 @@ class baseRouter
      */
     public function startSession()
     {
+        if(isset($_GET[$this->config->sessionVar]))
+        {
+            helper::setStatus(400);
+            if(isset($this->worker)) helper::end('Session IDs are not accepted in URLs.');
+            exit('Session IDs are not accepted in URLs.');
+        }
         if(defined('SESSION_STARTED')) return;
 
         /* API session use tmp/apisession directory. */
-        $apiMode = $this->apiVersion && !isset($_GET[$this->config->sessionVar]);
+        $apiMode = $this->apiVersion;
 
         /* If token has ss_, auth by session, not token. */
         $useToken = $apiMode && (!isset($_SERVER['HTTP_TOKEN']) || substr($_SERVER['HTTP_TOKEN'], 0, 3) !== 'ss_');
@@ -1299,10 +1331,6 @@ class baseRouter
 
             helper::restartSession($tokenSession);
             $this->sessionID = isset($ztSessionHandler) ? $ztSessionHandler->getSessionID() : session_id();
-        }
-        elseif(isset($_GET[$this->config->sessionVar]))
-        {
-            helper::restartSession($_GET[$this->config->sessionVar]);
         }
 
         define('SESSION_STARTED', true);
@@ -1499,7 +1527,8 @@ class baseRouter
      */
     public function parseRequest()
     {
-        if(str_starts_with($_SERVER['REQUEST_URI'], '/data/upload') && !is_file($this->wwwRoot . $_SERVER['REQUEST_URI']))
+        $requestPath = rawurldecode((string)parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+        if(str_starts_with($requestPath, '/data/upload/') && (str_contains($requestPath, "\0") || !is_file($this->wwwRoot . $requestPath)))
         {
             helper::setStatus(404);
             helper::end();
@@ -2447,13 +2476,11 @@ class baseRouter
         }
         if(empty($url)) return false;
 
-        $url .= (str_contains($url, '?') ? '&' : '?') . $this->config->sessionVar . '=' . session_id() . '&account=' . $_SESSION['user']->account;
-
         if($extension == '302') helper::header('location', $url);
 
         if($extension == 'api')
         {
-            $response = common::http($url);
+            $response = common::http($url, null, array(), helper::localSessionHeaders($url));
             $headFile = $this->moduleRoot . 'common/view/header.html.php';
             $footFile = $this->moduleRoot . 'common/view/footer.html.php';
 

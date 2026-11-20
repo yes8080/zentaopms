@@ -654,6 +654,7 @@ class aiModel extends model
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $authURL);
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
             $result = curl_exec($ch);
@@ -687,7 +688,9 @@ class aiModel extends model
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $requestHeaders);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
 
         /* Use proxy if proxy is set. */
@@ -704,14 +707,8 @@ class aiModel extends model
             global $app;
             $logFile = $app->getLogRoot() . 'saas.' . date('Ymd') . '.log.php';
             if(!file_exists($logFile)) file_put_contents($logFile, '<?php die(); ?' . '>');
-            $fh = @fopen($logFile, 'a');
-            if($fh)
-            {
-                fwrite($fh, date('Ymd H:i:s') . ": " . $app->getURI() . ' AI Request' . "\n");
-                fwrite($fh, "postData:    " . print_r($data, true) . "\n");
-                fwrite($fh, "results:" . print_r($result, true) . "\n");
-                fclose($fh);
-            }
+            $line = sprintf("%s AI request status=%d errno=%d\n", date('c'), curl_getinfo($ch, CURLINFO_HTTP_CODE), curl_errno($ch));
+            file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
         }
 
         $response = new stdclass();
@@ -4312,10 +4309,12 @@ class aiModel extends model
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_ENCODING, '');
         curl_setopt($curl, CURLOPT_MAXREDIRS, 10);
-        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, empty($header) && empty($data));
+        curl_setopt($curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+        curl_setopt($curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
         curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 30);
         curl_setopt($curl, CURLOPT_TIMEOUT, 120);
 

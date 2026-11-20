@@ -15,6 +15,35 @@
 class baseControl
 {
     /**
+     * Stop browser mutations before dispatching a write. Authenticated API clients
+     * keep the HTTP verb declared by their API route.
+     */
+    protected function requireWriteRequest(): void
+    {
+        $token = $_SERVER['HTTP_TOKEN'] ?? '';
+        if(helper::isApiRequest() && !empty($this->app->user->account) && $this->app->user->account !== 'guest')
+        {
+            $tokenSession = is_string($token) && str_starts_with($token, 'ss_') ? substr($token, 3) : $token;
+            if($this->app->authenticatedEntry || (is_string($tokenSession) && $tokenSession !== '' && hash_equals(session_id(), $tokenSession))) return;
+        }
+
+        $status = 403;
+        if(($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST')
+        {
+            helper::header('Allow', 'POST');
+            $status = 405;
+        }
+        else
+        {
+            $submitted = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrfToken'] ?? null;
+            if($this->app->isTrustedWriteRequest() && is_string($submitted) && !empty($_SESSION['csrfToken']) && hash_equals($_SESSION['csrfToken'], $submitted)) return;
+        }
+        helper::setStatus($status);
+        helper::header('Content-Type', 'application/json; charset=utf-8');
+        helper::end(json_encode(array('result' => 'fail', 'status' => 'fail', 'code' => $status, 'message' => $this->lang->error->accessDenied)));
+    }
+
+    /**
      * 是否收集 FormData，用于补全 Form 表单。
      * Collect form data.
      *

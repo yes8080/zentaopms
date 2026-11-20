@@ -1,6 +1,7 @@
 <?php
 namespace zin;
 
+jsVar('projectCsrfToken', helper::csrfToken());
 jsVar('confirmDeleteTip', $lang->project->confirmDelete);
 
 dropmenu();

@@ -26,6 +26,7 @@ jsVar('initLink',           $link);
 jsVar('type',               $type);
 jsVar('linkParams',         $decodeParam);
 jsVar('orderBy',            $orderBy);
+jsVar('planDeleteAttrs', helper::csrfAjaxAttributes());
 jsVar('planID',             $plan->id);
 jsVar('confirmLang',        $confirmLang);
 jsVar('unlinkURL',          $unlinkURL);

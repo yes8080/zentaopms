@@ -34,3 +34,6 @@ $lang->provider->notice->confirmDelete = 'Are you sure to delete this provider?'
 $lang->provider->notice->emptyProvider = 'No providers.';
 $lang->provider->notice->svnPath       = 'Server address or file path';
 $lang->provider->notice->hasRepos      = 'This provider has been linked to repositories, please delete them first.';
+
+$lang->provider->integrationKeyRequired = 'A valid integration key file is required to store provider credentials.';
+$lang->provider->credentialTooLong = 'The encrypted token exceeds the database column size. Check the token length and apply the provider credential schema migration.';

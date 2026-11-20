@@ -19,14 +19,10 @@ class backupZen extends backup
      */
     protected function getBackupList(): array
     {
-        $backupPath = $this->backup->getBackupPath();
-        $sqlFiles   = glob("{$backupPath}*.sql*");
-        if(empty($sqlFiles)) return array();
-
         $backupList = array();
-        foreach($sqlFiles as $file)
+        foreach($this->backup->getBackupEntries() as $fileName => $file)
         {
-            $fileName = basename($file);
+            if(!str_ends_with($fileName, '.sql') && !str_ends_with($fileName, '.sql.php')) continue;
             $backupFile = new stdclass();
             $backupFile->time = filemtime($file);
             $backupFile->name = substr($fileName, 0, strpos($fileName, '.'));
@@ -56,25 +52,16 @@ class backupZen extends backup
      */
     protected function backupSQL(string $fileName, string $reload = 'no'): array
     {
-        $backFileName = "{$this->backupPath}{$fileName}.sql";
-        $nosafe       = str_contains($this->config->backup->setting, 'nosafe');
-        if(!$nosafe) $backFileName .= '.php';
-
-        $result = $this->backup->backSQL($backFileName);
-        if(!$result->result) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->noWritable, $this->backupPath));
-        if(!$result->result)
+        $nosafe = str_contains($this->config->backup->setting, 'nosafe');
+        $path   = $this->backup->getBackupEntry($fileName, $nosafe ? 'sql' : 'sql.php');
+        if(!$path || file_exists($path) || !($handle = fopen($path, 'xb'))) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->noWritable, $this->backupPath));
+        fclose($handle);
+        $result = $this->backup->backSQL($path);
+        if(!$result->result || (!$nosafe && !$this->backup->addFileHeader($path)))
         {
-            if($reload == 'yes')
-            {
-                return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->backupFile, $this->backupPath));
-            }
-            else
-            {
-                printf($this->lang->backup->error->noWritable, $this->backupPath);
-            }
+            unlink($path);
+            return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->noWritable, $this->backupPath));
         }
-
-        if(!$nosafe) $this->backup->addFileHeader($backFileName);
         return array('result' => 'success');
     }
 
@@ -91,18 +78,10 @@ class backupZen extends backup
     {
         if(str_contains($this->config->backup->setting, 'nofile')) return array('result' => 'success');
 
-        $result = $this->backup->backFile("{$this->backupPath}{$fileName}.file");
-        if(!$result->result)
-        {
-            if($reload == 'yes')
-            {
-                return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->backupFile, $result->error));
-            }
-            else
-            {
-                printf($this->lang->backup->error->backupFile, $result->error);
-            }
-        }
+        $path = $this->backup->getBackupEntry($fileName, 'file');
+        if(!$path || file_exists($path) || !mkdir($path, 0700)) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->noWritable, $this->backupPath));
+        $result = $this->backup->backFile($path);
+        if(!$result->result) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->backupFile, $result->error));
         return array('result' => 'success');
     }
 
@@ -119,19 +98,10 @@ class backupZen extends backup
     {
         if(str_contains($this->config->backup->setting, 'nofile')) return array('result' => 'success');
 
-        $result = $this->backup->backCode("{$this->backupPath}{$fileName}.code");
+        $path = $this->backup->getBackupEntry($fileName, 'code');
+        if(!$path || file_exists($path) || !mkdir($path, 0700)) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->noWritable, $this->backupPath));
+        $result = $this->backup->backCode($path);
         if(!$result->result) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->backupCode, $result->error));
-        if(!$result->result)
-        {
-            if($reload == 'yes')
-            {
-                return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->backupCode, $result->error));
-            }
-            else
-            {
-                printf($this->lang->backup->error->backupCode, $result->error);
-            }
-        }
         return array('result' => 'success');
     }
 
@@ -144,7 +114,7 @@ class backupZen extends backup
      */
     protected function removeExpiredFiles()
     {
-        $backupFiles = glob("{$this->backupPath}*.*");
+        $backupFiles = $this->backup->getBackupEntries();
         if(empty($backupFiles)) return;
 
         $time  = time();
@@ -153,7 +123,8 @@ class backupZen extends backup
         {
             /* Only delete backup file. */
             $fileName = basename($file);
-            if(!preg_match('/[0-9]+\.(sql|file|code)/', $fileName)) continue;
+            if(!preg_match('/\A[0-9]{14}[A-Za-z0-9_-]*\.(sql(?:\.php)?|file|code)\z/', $fileName)) continue;
+            if(is_dir($file) && !$this->backup->isSafeBackupTree($file)) continue;
 
             /* Remove before holdDays file. */
             if($time - filemtime($file) > $this->config->backup->holdDays * 24 * 3600)
@@ -176,14 +147,10 @@ class backupZen extends backup
     protected function restoreSQL(string $fileName): array
     {
         $backupFile = $this->backup->getBackupFile($fileName, 'sql');
-        if(empty($backupFile)) return array('result' => 'success');
+        if(!$backupFile || !is_readable($backupFile)) return array('result' => 'fail', 'message' => $this->lang->backup->notice->unknownVersion);
 
-        $extension = substr($backupFile, -3);
-        if($extension == 'php') $this->backup->removeFileHeader($backupFile);
-
+        /* The SQL importer skips non-SQL lines, including the PHP protection header. */
         $result = $this->backup->restoreSQL($backupFile);
-
-        if($extension == 'php') $this->backup->addFileHeader($backupFile);
 
         if(!$result->result) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->restoreSQL, $result->error));
         return array('result' => 'success');
@@ -202,12 +169,7 @@ class backupZen extends backup
         $backupFile = $this->backup->getBackupFile($fileName, 'file');
         if(empty($backupFile)) return array('result' => 'success');
 
-        $extension = substr($backupFile, -3);
-        if($extension == 'php') $this->backup->removeFileHeader($backupFile);
-
         $result = $this->backup->restoreFile($backupFile);
-
-        if($extension == 'php') $this->backup->addFileHeader($backupFile);
 
         if(!$result->result) return array('result' => 'fail', 'message' => sprintf($this->lang->backup->error->restoreFile, $result->error));
         return array('result' => 'success');

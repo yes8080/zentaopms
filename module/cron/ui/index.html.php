@@ -9,6 +9,8 @@
  */
 namespace zin;
 
+$csrfData  = htmlspecialchars(helper::csrfAjaxAttributes()['data-data'], ENT_QUOTES, 'UTF-8');
+$csrfAttrs = "data-method='POST' data-data='$csrfData'";
 foreach($crons as $cron)
 {
     $actionsHtml = '';
@@ -16,10 +18,10 @@ foreach($crons as $cron)
     {
         $toggleLink   = inlink('toggle', "id={$cron->id}&status=" . ($cron->status == 'stop' ? 'normal' :  'stop'));
         $toggleName   = $cron->status == 'stop' ? $lang->cron->toggleList['start'] : $lang->cron->toggleList['stop'];
-        $actionsHtml .= html::a($toggleLink, $toggleName, '', "class='primary-500 ajax-submit'");
+        $actionsHtml .= html::a($toggleLink, $toggleName, '', "$csrfAttrs class='primary-500 ajax-submit'");
     }
     if(!empty($cron->command) and common::hasPriv('cron', 'edit')) $actionsHtml .= html::a(inlink('edit', "id={$cron->id}"), $lang->edit, '', "class='primary-500' data-toggle='modal'");
-    if($cron->buildin == 0 and common::hasPriv('cron', 'delete'))  $actionsHtml .= html::a(inlink('delete', "id={$cron->id}"), $lang->delete, '', "class='primary-500 ajax-submit' data-confirm={$lang->cron->confirmDelete}");
+    if($cron->buildin == 0 and common::hasPriv('cron', 'delete'))  $actionsHtml .= html::a(inlink('delete', "id={$cron->id}"), $lang->delete, '', "$csrfAttrs class='primary-500 ajax-submit' data-confirm={$lang->cron->confirmDelete}");
 
     $cron->actions = $actionsHtml;
     if($cron->command == '') $cron->lastTime = '';
@@ -33,8 +35,8 @@ panel
     !empty($config->global->cron) ? set::bodyClass('p-0') : null,
     !empty($config->global->cron) ? set::headingActions(array
     (
-        array('class' => 'mr-3 ajax-submit', 'url' => inlink('ajaxExec', 'restart=1'), 'text' => $lang->cron->openProcess),
-        array('class' => 'mr-3 ajaxTurnon ajax-submit', 'url' => inlink('turnon'), 'text' => $lang->cron->turnonList[0], 'data-confirm' => $this->lang->cron->confirmTurnon),
+        array('class' => 'mr-3 ajax-submit', 'url' => inlink('ajaxExec', 'restart=1'), 'text' => $lang->cron->openProcess) + helper::csrfAjaxAttributes(),
+        array('class' => 'mr-3 ajaxTurnon ajax-submit', 'url' => inlink('turnon'), 'text' => $lang->cron->turnonList[0], 'data-confirm' => $this->lang->cron->confirmTurnon) + helper::csrfAjaxAttributes(),
         array('class' => 'mr-3 primary', 'data-toggle' => 'modal', 'url' => inlink('create'), 'text' => $lang->cron->create)
     )) : null,
     !empty($config->global->cron) ? div
@@ -49,7 +51,7 @@ panel
     ) : div
     (
         html($lang->cron->introduction),
-        !common::hasPriv('cron', 'turnon') ? null : html(sprintf($lang->cron->confirmOpen, inlink('turnon')))
+        !common::hasPriv('cron', 'turnon') ? null : html(sprintf($lang->cron->confirmOpen, inlink('turnon'), $csrfAttrs))
     )
 );
 

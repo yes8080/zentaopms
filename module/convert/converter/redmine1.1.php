@@ -203,7 +203,7 @@ class redmine11ConvertModel extends redmineConvertModel
             }
             else
             {
-                $user->password = md5('123456');
+                $user->password = helper::hashAccountPassword(bin2hex(random_bytes(32)));
                 $user->realname = $user->lastname . $user->firstname;
                 unset($user->id);
                 unset($user->lastname);

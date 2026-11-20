@@ -435,7 +435,7 @@ class excel extends model
             /* Set cell format of date fields. */
             if(strpos($key, 'Date') !== false || in_array($key, $this->config->excel->dateFields))
             {
-                $excelSheet->getStyle("{$column}{$startRow}:{$column}{$endRow}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD2);
+                $excelSheet->getStyle("{$column}{$startRow}:{$column}{$endRow}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD);
             }
         }
 

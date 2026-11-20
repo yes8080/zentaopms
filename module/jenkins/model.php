@@ -21,7 +21,7 @@ class jenkinsModel extends model
      * @access protected
      * @return array
      */
-    public function getDepthJobs(array $jobs, string $userPWD, int $depth = 1): array
+    public function getDepthJobs(array $jobs, string $userPWD, int $depth = 1, string $providerUrl = ''): array
     {
         if($depth > 4) return array();
 
@@ -43,14 +43,18 @@ class jenkinsModel extends model
             {
                 if($depth > 1)
                 {
+                    $host = parse_url($providerUrl);
+                    $target = parse_url($job->url);
+                    if(empty($host['host']) || ($target['scheme'] ?? '') !== 'https' || strcasecmp($host['host'], $target['host'] ?? '') !== 0 || ($host['port'] ?? 443) !== ($target['port'] ?? 443)) continue;
                     $response = common::http($job->url . 'api/json', '', array(CURLOPT_USERPWD => $userPWD));
                     $job = json_decode($response);
+                    if(empty($job->url)) continue;
                 }
 
                 $tasks[urldecode(basename($job->url))] = array();
                 if(empty($job->jobs)) continue;
 
-                $tasks[urldecode(basename($job->url))] = $this->getDepthJobs($job->jobs, $userPWD, $depth + 1);
+                $tasks[urldecode(basename($job->url))] = $this->getDepthJobs($job->jobs, $userPWD, $depth + 1, $providerUrl);
             }
         }
 
@@ -106,9 +110,11 @@ class jenkinsModel extends model
     public function apiGetExecInfo(int $number, string $pipelineName, object $provider): array|object
     {
         if(empty($provider->token) || empty($provider->url)) return array();
-        $options = array(CURLOPT_USERPWD => base64_decode($provider->token));
+        $userPWD = $provider->account . ':' . $provider->token;
+        if(empty($provider->account)) return array();
+        $options = array(CURLOPT_USERPWD => $userPWD);
 
-        $url = rtrim($provider->url, '/') . $pipelineName . $number . '/api/json';
+        $url = rtrim($provider->url, '/') . '/' . ltrim($pipelineName, '/') . $number . '/api/json';
 
         $response = json_decode(common::http($url, null, $options, array('Accept: application/json'), 'json'));
         if(empty($response) || empty($response->result)) return array();
@@ -146,9 +152,10 @@ class jenkinsModel extends model
     public function getLogs(int $buildNumber, string $pipelineName, object $provider): string
     {
         if(empty($provider->token) || empty($provider->url)) return '';
-        $userPWD = base64_decode($provider->token);
+        $userPWD = $provider->account . ':' . $provider->token;
+        if(empty($provider->account)) return '';
 
-        $url = rtrim($provider->url, '/') . $pipelineName;
+        $url = rtrim($provider->url, '/') . '/' . ltrim($pipelineName, '/');
         $url .= sprintf('%s/consoleText', $buildNumber);
 
         $logs = common::http($url, '', array(CURLOPT_USERPWD => $userPWD));

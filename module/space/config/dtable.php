@@ -170,5 +170,6 @@ $config->spaceMember->dtable->fieldList['actions']['list']['removeMember']['icon
 $config->spaceMember->dtable->fieldList['actions']['list']['removeMember']['text']         = $lang->space->removeMember;
 $config->spaceMember->dtable->fieldList['actions']['list']['removeMember']['hint']         = $lang->space->removeMember;
 $config->spaceMember->dtable->fieldList['actions']['list']['removeMember']['ajaxSubmit']   = true;
+$config->spaceMember->dtable->fieldList['actions']['list']['removeMember']['csrf']         = true;
 $config->spaceMember->dtable->fieldList['actions']['list']['removeMember']['data-confirm'] = array('message' => $lang->space->notice->confirmRemoveMember, 'icon' => 'icon-exclamation-sign', 'iconClass' => 'warning-pale rounded-full icon-2x');
 $config->spaceMember->dtable->fieldList['actions']['list']['removeMember']['url']          = helper::createLink('space', 'removeMember', "spaceID={spaceID}&account={account}");

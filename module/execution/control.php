@@ -2260,6 +2260,7 @@ class execution extends control
      */
     public function delete(int $executionID, string $confirm = 'no')
     {
+        if($confirm !== 'no') $this->requireWriteRequest();
         if($confirm == 'no')
         {
             /* Get the number of unfinished tasks and unresolved bugs. */
@@ -2288,7 +2289,8 @@ class execution extends control
             }
 
             $tips = $tips . sprintf($this->lang->execution->confirmDelete, $execution->name);
-            return $this->send(array('callback' => "confirmDeleteExecution({$executionID}, \"{$tips}\")"));
+            $confirmation = array('name' => 'confirmDeleteExecution', 'params' => array($executionID, $tips, helper::csrfToken()));
+            return $this->send(array('callback' => $confirmation));
         }
         else
         {
@@ -2430,6 +2432,7 @@ class execution extends control
      */
     public function unlinkMember(int $executionID, int $userID)
     {
+        $this->requireWriteRequest();
         $user = $this->loadModel('user')->getById($userID, 'id');
         $this->execution->unlinkMember($executionID, $user->account);
 
@@ -3126,6 +3129,7 @@ class execution extends control
      */
     public function unbindWhitelist(int $id = 0, string $confirm = 'no')
     {
+        $this->requireWriteRequest();
         echo $this->fetch('personnel', 'unbindWhitelist', "id=$id&confirm=$confirm");
     }
 

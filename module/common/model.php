@@ -21,6 +21,15 @@ class commonModel extends model
      */
     public static $httpClient;
 
+    /** Load a purpose-specific key from a secret stored outside the database. */
+    public static function integrationKey(string $purpose): string
+    {
+        $path = getenv('ZT_INTEGRATION_KEY_FILE') ?: '/var/lib/zentao/config/integration.key';
+        $hex  = trim((string)@file_get_contents($path, false, null, 0, 128));
+        if(!preg_match('/^[a-f0-9]{64}$/iD', $hex)) return '';
+        return hash_hkdf('sha256', hex2bin($hex), 32, $purpose);
+    }
+
     /**
      * 网络请求错误。
      * Request errors.
@@ -1855,6 +1864,7 @@ eof;
         $user->admin  = strpos($this->app->company->admins, ",{$user->account},") !== false;
         $this->session->set('user', $user);
         $this->app->user = $user;
+        $this->app->authenticatedEntry = true;
 
         $this->dao->update(TABLE_USER)->set('last')->eq($user->last)->set('visits=visits+1')->where('account')->eq($user->account)->exec();
         $this->loadModel('action')->create('user', $user->id, 'login');
@@ -2104,8 +2114,9 @@ eof;
 
         if(!is_array($headers)) $headers = (array)$headers;
 
-        $headers[] = 'API-RemoteIP: ' . helper::getRemoteIp(); /* Real IP of real user. */
-        $headers[] = 'API-LocalIP: ' . zget($_SERVER, 'SERVER_ADDR', ''); /* Server IP of self. */
+        $authenticated = !empty($options[CURLOPT_USERPWD]) || preg_grep('/^(?:authorization|private-token)\s*:/i', $headers);
+        /* Custom headers may contain credentials known only to the integration. */
+        $allowRedirect = empty($headers) && empty($options[CURLOPT_HTTPHEADER]) && empty($options[CURLOPT_USERPWD]) && empty($data);
 
         if($dataType == 'json')
         {
@@ -2119,12 +2130,8 @@ eof;
         curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_ENCODING,'');
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         curl_setopt($curl, CURLOPT_HEADER, $httpCode);
-        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 2);
-        curl_setopt($curl, CURLINFO_HEADER_OUT, true);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_URL, $url);
 
@@ -2138,6 +2145,11 @@ eof;
         }
 
         if($options) curl_setopt_array($curl, $options);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, $allowRedirect);
+        curl_setopt($curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+        curl_setopt($curl, CURLOPT_PROTOCOLS, $authenticated ? CURLPROTO_HTTPS : (CURLPROTO_HTTPS | CURLPROTO_HTTP));
         $response = curl_exec($curl);
 
         $errno  = curl_errno($curl);
@@ -2172,26 +2184,10 @@ eof;
             $logFile = $app->getLogRoot() . 'saas' . $runMode . '.' . date('Ymd') . '.log.php';
             if(!file_exists($logFile)) file_put_contents($logFile, '<?php die(); ?' . '>');
 
-            $saasLog  = date('Ymd H:i:s') . ': ' . $app->getURI() . "\n";
-            $saasLog .= "{$requestType} url:    {$url}\n";
-
-            if($app->config->debug)
-            {
-                $saasLog .= 'request  header: ' . json_encode($headers) . PHP_EOL;
-                if(isset($newHeader)) $saasLog .= 'response header: ' . json_encode($newHeader) . PHP_EOL;
-            }
-
-            if(!empty($data)) $saasLog .= 'data:   ' . print_r($data, true) . "\n";
-            $saasLog .= 'results:' . print_r($response, true) . "\n";
-
-            if(!empty($errors))
-            {
-                $saasLog .= "errno: {$errno}\n";
-                $saasLog .= "errors: {$errors}\n";
-                $saasLog .= 'info: ' . print_r($info, true) . "\n";
-            }
-
-            file_put_contents($logFile, $saasLog, FILE_APPEND);
+            /* URLs, bodies, headers and curl error text may contain credentials. */
+            $saasLog = sprintf("%s method=%s status=%d errno=%d duration_ms=%d\n", date('c'), $requestType,
+                $info['http_code'] ?? 0, $errno, round(($info['total_time'] ?? 0) * 1000));
+            file_put_contents($logFile, $saasLog, FILE_APPEND | LOCK_EX);
         }
 
         if($errors) commonModel::$requestErrors[] = $errors;

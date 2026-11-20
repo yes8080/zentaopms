@@ -381,6 +381,7 @@ class space extends control
      */
     public function deleteGroup(int $groupID)
     {
+        $this->requireWriteRequest();
         $this->loadModel('group');
         $group = $this->group->getByID($groupID);
         if(empty($group)) return $this->sendError($this->lang->group->notFound);
@@ -618,6 +619,7 @@ class space extends control
      */
     public function removeMember(int $spaceID, string $account)
     {
+        $this->requireWriteRequest();
         $this->space->removeMember($spaceID, $account);
         if(dao::isError()) return $this->sendError(dao::getError());
 

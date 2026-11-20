@@ -223,7 +223,7 @@ class webhookModel extends model
             $webhook = $this->webhookTao->getFeishuSecret($webhook);
         }
 
-        if(!empty($webhook->url) && !preg_match('/^http(s)?:\/\//', $webhook->url)) dao::$errors['url'] = $this->lang->webhook->error->url;
+        if(!empty($webhook->url) && parse_url($webhook->url, PHP_URL_SCHEME) !== 'https') dao::$errors['url'] = $this->lang->webhook->error->url;
         if(dao::isError()) return false;
 
         $this->dao->insert(TABLE_WEBHOOK)->data($webhook, 'agentId,appKey,appSecret,wechatCorpId,wechatCorpSecret,wechatAgentId,feishuAppId,feishuAppSecret')
@@ -264,7 +264,7 @@ class webhookModel extends model
             $webhook = $this->webhookTao->getFeishuSecret($webhook);
         }
 
-        if(!empty($webhook->url) && !preg_match('/^http(s)?:\/\//', $webhook->url)) dao::$errors['url'] = $this->lang->webhook->error->url;
+        if(!empty($webhook->url) && parse_url($webhook->url, PHP_URL_SCHEME) !== 'https') dao::$errors['url'] = $this->lang->webhook->error->url;
         if(dao::isError()) return false;
 
         $this->dao->update(TABLE_WEBHOOK)->data($webhook, 'agentId,appKey,appSecret,wechatCorpId,wechatCorpSecret,wechatAgentId,feishuAppId,feishuAppSecret')
@@ -752,8 +752,9 @@ class webhookModel extends model
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $sendData);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         $result   = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error    = curl_error($ch);

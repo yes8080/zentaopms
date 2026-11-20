@@ -179,6 +179,8 @@ function toggleTodoStatus(todoID, isFinished)
 
     $.ajax({
         url    : actionURL.replace('{id}', todoID),
+        type   : 'POST',
+        data   : {csrfToken: todoCsrfToken},
         success: function(data)
         {
             data = JSON.parse(data);

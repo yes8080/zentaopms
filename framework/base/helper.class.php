@@ -14,6 +14,52 @@
  */
 class baseHelper
 {
+    public static function hashAccountPassword(string $password): string
+    {
+        return password_hash($password, PASSWORD_ARGON2ID);
+    }
+
+    public static function verifyAccountPassword(string $password, string $stored): bool
+    {
+        if($password === '' || $stored === '') return false;
+        if(preg_match('/^[a-f0-9]{32}$/D', $stored)) return hash_equals($stored, md5($password));
+        return password_verify($password, $stored);
+    }
+
+    /** Return the CSRF token for forms rendered in this session. */
+    public static function csrfToken(): string
+    {
+        if(empty($_SESSION['csrfToken'])) $_SESSION['csrfToken'] = bin2hex(random_bytes(32));
+        return $_SESSION['csrfToken'];
+    }
+
+    /** Attributes understood by the ZUI ajax-submit action. */
+    public static function csrfAjaxAttributes(): array
+    {
+        return array('data-method' => 'POST', 'data-data' => json_encode(array('csrfToken' => self::csrfToken())));
+    }
+
+    /** Compare scheme, hostname and effective port. */
+    public static function sameHttpOrigin(string $url, string $origin): bool
+    {
+        $source = parse_url($url);
+        $expected = parse_url($origin);
+        if(empty($expected['host']) || empty($source['host']) || isset($source['user']) || isset($source['pass'])) return false;
+        $scheme = strtolower($expected['scheme'] ?? '');
+        if(!in_array($scheme, array('http', 'https'), true)) return false;
+        $defaultPort = $scheme === 'https' ? 443 : 80;
+        return strtolower($source['scheme'] ?? '') === $scheme
+            && strcasecmp($source['host'], $expected['host']) === 0
+            && ($source['port'] ?? $defaultPort) === ($expected['port'] ?? $defaultPort);
+    }
+
+    /** Session authentication is only forwarded to a same-origin HTTP API. */
+    public static function localSessionHeaders(string $url): array
+    {
+        if(!session_id() || !self::sameHttpOrigin($url, common::getSysURL())) return array();
+        return array('Token: ss_' . session_id());
+    }
+
     /**
      * 已加载的目录.
      * The loaded directories.
@@ -1120,13 +1166,14 @@ class baseHelper
         $value          = (string)$value;
         $_COOKIE[$name] = $value;
 
+        $sameSite = in_array($name, array($config->sessionVar, 'za', 'zp', 'keepLogin'), true) ? 'Lax' : '';
         if(isset($app->worker))
         {
-            $app->worker->response->setCookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+            $app->worker->response->setCookie($name, $value, $expire, $path, $domain, $secure, $httponly, $sameSite ?: null);
         }
         else
         {
-            return setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+            return setcookie($name, $value, array('expires' => $expire, 'path' => $path, 'domain' => $domain, 'secure' => $secure, 'httponly' => $httponly, 'samesite' => $sameSite));
         }
     }
 

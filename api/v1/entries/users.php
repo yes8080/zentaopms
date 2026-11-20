@@ -83,9 +83,10 @@ class usersEntry extends entry
         }
         $this->setPost('password1', $password . $this->app->session->rand);
         $this->setPost('password2', $password . $this->app->session->rand);
+        $this->setPost('passwordPlain', $this->request('password', zget($_POST, 'password', '')));
         $this->setPost('passwordStrength', 3);
         $this->setPost('visions', $visions);
-        $this->setPost('verifyPassword', md5($this->app->user->password . $this->app->session->rand));
+        $this->setPost('verifyPassword', $this->loadModel('user')->apiReauthenticationProof());
         $this->setPost('passwordLength', strlen($_POST['password1']));
         unset($_POST['password']);
 

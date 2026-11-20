@@ -292,11 +292,7 @@ class helper extends baseHelper
      */
     public static function requestAPI(string $url)
     {
-        global $config;
-
-        $url .= (str_contains($url, '?') ? '&' : '?') . $config->sessionVar . '=' . session_id();
-        if(isset($_SESSION['user'])) $url .= '&account=' . $_SESSION['user']->account;
-        $response = common::http($url);
+        $response = common::http($url, null, array(), helper::localSessionHeaders($url));
         $jsonDecode = json_decode((string) $response);
         if(empty($jsonDecode)) return $response;
         return $jsonDecode;
@@ -993,6 +989,11 @@ function initTableActions(array &$fieldList, string $actionMenu): void
 
         $actionConfig = $fieldList['actions']['list'][$action];
         if(!empty($actionConfig['icon'])) $actionConfig['text'] = '';
+        if(!empty($actionConfig['csrf']))
+        {
+            unset($actionConfig['csrf']);
+            $actionConfig += helper::csrfAjaxAttributes();
+        }
 
         if(!empty($actionConfig['url']['module']) && !empty($actionConfig['url']['method']))
         {

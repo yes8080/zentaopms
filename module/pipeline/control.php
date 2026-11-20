@@ -218,8 +218,8 @@ class pipeline extends control
                     $provider = $this->loadModel('provider')->getByID((int)$pipeline->providerID);
                     if($provider && !empty($provider->url) && !empty($provider->token))
                     {
-                        $entry = $this->loadModel('entry')->getByCode('gitfox');
-                        $this->loadModel('gitlab')->addPushWebhook((string)$id, $entry->key, $provider->url, $provider->token, $pipeline->externalPipeline);
+                        $registered = $this->loadModel('gitlab')->addPushWebhook((string)$id, '', $provider->url, $provider->token, $pipeline->externalPipeline);
+                        if($registered !== true) return $this->sendError($this->lang->gitlab->failCreateWebhook);
                     }
                 }
             }
@@ -1185,8 +1185,8 @@ class pipeline extends control
         if(!empty($execution->status) && !in_array($execution->status, array('created', 'pending')))
         {
             $engine   = $pipeline->engine;
-            $provider = $this->loadModel('provider')->fetchByID($pipeline->providerID);
-            if($engine) $execution->logs = $this->$engine->getLogs($execution->number, $pipeline->externalPipeline, $provider);
+            $provider = $this->loadModel('provider')->getByID($pipeline->providerID);
+            if($engine && $provider && !empty($provider->token)) $execution->logs = $this->$engine->getLogs($execution->number, $pipeline->externalPipeline, $provider);
         }
         $logs = $execution->logs ? str_replace(array("\r\n", "\n"), "<br />", $execution->logs) : '';
 

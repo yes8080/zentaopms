@@ -10,6 +10,38 @@
  */
 class todoModel extends model
 {
+    /** Limit writes to active todos belonging to the actor or assigned to them. */
+    private function restrictTodoWrite($query)
+    {
+        $account = $this->app->user->account;
+        return $query->andWhere('deleted')->eq(0)
+            ->beginIF(!$this->app->user->admin)
+            ->andWhere('account', true)->eq($account)->orWhere('assignedTo')->eq($account)->markRight(1)
+            ->fi();
+    }
+
+    public function canManageTodos(array $ids): bool
+    {
+        if(!$ids || empty($this->app->user->account)) return false;
+        foreach($ids as $id)
+        {
+            if(!is_int($id) && !is_string($id)) return false;
+            if(filter_var($id, FILTER_VALIDATE_INT, array('options' => array('min_range' => 1))) === false) return false;
+        }
+        $ids = array_unique($ids);
+        $query = $this->dao->select('COUNT(*) AS total')->from(TABLE_TODO)->where('id')->in($ids);
+        return (int)$this->restrictTodoWrite($query)->fetch('total') === count($ids);
+    }
+
+    public function deleteManagedTodo(int $id): bool
+    {
+        if($id < 1 || empty($this->app->user->account)) return false;
+        $query = $this->dao->update(TABLE_TODO)->set('deleted')->eq(1)->where('id')->eq($id);
+        if(!$this->restrictTodoWrite($query)->exec()) return false;
+        $this->loadModel('action')->create('todo', $id, 'deleted', '', ACTIONMODEL::CAN_UNDELETED);
+        return true;
+    }
+
     /**
      * 创建待办。
      * Create todo data.

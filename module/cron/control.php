@@ -34,6 +34,7 @@ class cron extends control
      */
     public function turnon()
     {
+        $this->requireWriteRequest();
         $turnon = empty($this->config->global->cron) ? '1' : '0';
         $this->loadModel('setting')->setItem('system.common.global.cron', $turnon);
         return $this->sendSuccess(array('load' => inlink('index')));
@@ -104,6 +105,7 @@ class cron extends control
      */
     public function toggle(int $cronID, string $status)
     {
+        $this->requireWriteRequest();
         $this->cron->changeStatus($cronID, $status);
         return $this->send(array('result' => 'success', 'load' => true));
     }
@@ -118,6 +120,7 @@ class cron extends control
      */
     public function delete(int $cronID)
     {
+        $this->requireWriteRequest();
         $this->dao->delete()->from(TABLE_CRON)->where('id')->eq($cronID)->exec();
         return $this->sendSuccess(array('load' => true));
     }
@@ -132,6 +135,7 @@ class cron extends control
      */
     public function ajaxExec(bool $restart = false)
     {
+        if($restart) $this->requireWriteRequest();
         if(empty($this->config->global->cron)) return;
 
         /* Run as daemon. */
