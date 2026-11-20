@@ -232,3 +232,11 @@ sequenceDiagram
 - 原型用 `scopes` 演示多行回显与转研发需求预填。正式接入时将各行映射到原生的 `branches[]`、`modules[]`、`plans[]`。原型的转单编号为模拟结果，正式接入需要核验原生多范围创建时返回的全部目标 ID 和关联结果。
 
 列表左侧使用模块树，节点只显示本级名称，通过缩进、连线和展开／收起来表达层级。选择父模块时纳入其子模块，选择叶子时按模块 ID 筛选。表单选择器继续显示和搜索完整路径。 [研发需求侧栏](../../module/product/ui/browse.html.php#L52) · [模块下拉路径](../../module/tree/model.php#L164)
+
+## 前端组件复用
+
+正式插件全部使用禅道现有的 ZIN 页面框架、ZUI 主题和控件。列表使用 `featureBar`、`moduleMenu` 与 `dtable`，新建和编辑使用 `formGridPanel`／`detailForm`，详情和工具栏使用 `detail`，转单与关闭使用原生 `modal`。搜索、模块、人员、富文本、附件、日期分别用已有控件，样式跟随实例主题。插件只编写字段配置、候选加载、状态与提交规则。 [列表组件](../../module/product/ui/browse.html.php#L509) · [研发需求新建表单](../../module/story/ui/create.html.php) · [研发需求详情](../../module/story/ui/view.html.php#L292)
+
+数据库候选和来源、类别等可配置字典使用原生 `picker`，在控件的原位置搜索，菜单只列选项且与控件等宽。优先级、严重程度等固定短选项使用原生单选样式，显示选项供直接点选。字典值仍沿用禅道的键。 [Picker 参数](../../lib/zin/wg/picker/v1.php) · [Radio 组件](../../lib/zin/wg/radio/v1.php)
+
+交互原型直接引用仓库中的 ZUI JavaScript、CSS 和默认主题。原型页面结构与模拟状态用于评审，正式页面由上述 ZIN 组件渲染。可从仓库根目录用 `python3 -m http.server 8091 --bind 127.0.0.1` 启动本地服务，然后打开 `/doc/wishpool/prototype.html`。

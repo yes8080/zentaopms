@@ -3,6 +3,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>许愿池 · 交互原型</title>
+<link rel="stylesheet" href="../../www/js/zui3/zui.zentao.css">
+<link rel="stylesheet" href="../../www/js/zui3/themes/default.css">
+<script src="../../www/js/zui3/zui.zentao.js"></script>
 <style>
 *{box-sizing:border-box}
 :root{--blue:#3883fa;--ink:#30394a;--muted:#59697c;--line:#e5e8ec;--surface:#fff;--page:#f8f9fa}
@@ -38,22 +41,20 @@ label span{text-align:right;padding-top:6px}
 label input,label select,label textarea{width:100%;min-width:0}
 label b{color:#df3444;font-weight:400}textarea{min-height:80px;resize:vertical}form .actions{justify-content:flex-end;margin-top:15px}#notice:not(:empty){padding:6px 10px;background:#e8f6ef;color:#17573d;margin-bottom:9px}#error{color:#9d261a}.editor{max-width:1000px;margin:0 auto;padding:16px 20px}.editor h1{padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:12px}.editor .actions{justify-content:flex-start;margin-left:98px}.form-group{border:0;border-bottom:1px solid var(--line);margin:0 0 15px;padding:0 0 12px;min-width:0}.form-group legend{font-weight:650}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 15px}.full{grid-column:1/-1}
 @media(max-width:720px){.grid,.browse,.form-grid{grid-template-columns:1fr}.dock{justify-content:center}main{padding-inline:10px}}
-.picker{min-width:0;margin:7px 0}
+.wish-picker{min-width:0;margin:7px 0}
 .picker-row{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px;align-items:start}
 .picker-row>span{text-align:right;padding-top:6px}.picker-row b{color:#df3444;font-weight:400}
-.picker-control{position:relative;min-width:0}
+.picker-control{min-width:0}
+.picker-control>select{position:absolute;width:1px;height:1px;min-height:0;opacity:0;pointer-events:none}
 .picker-label{display:block;margin-bottom:5px}
 .picker-label b{color:#df3444;font-weight:400}
-.picker-menu[hidden]{display:none!important}
-.picker-menu.above{top:auto;bottom:calc(100% + 3px)}
-.picker-options button[aria-current="true"]{background:var(--blue);color:white}
 .scope-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;align-items:end;margin-bottom:8px}
 .scope-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-.scope-pair .picker,.scope-plan .picker{margin:0}
+.scope-pair .wish-picker,.scope-plan .wish-picker{margin:0}
 .scope-plan{display:flex;gap:8px;align-items:end;min-width:0}.scope-plan>.picker-field{flex:1;min-width:0}
-.scope-pair>div:first-child .picker-toggle{border-radius:4px 0 0 4px}
+.scope-pair>div:first-child .picker-select{border-radius:4px 0 0 4px}
 .scope-pair>div+div .picker-control{margin-left:-1px}
-.scope-pair>div+div .picker-toggle{border-radius:0 4px 4px 0}
+.scope-pair>div+div .picker-select{border-radius:0 4px 4px 0}
 .scope-head{display:block;margin-bottom:5px}
 .editor label,.editor .picker-row{grid-template-columns:minmax(0,1fr);gap:5px}
 .editor label>span,.editor .picker-row>span{text-align:left;padding-top:0}
@@ -61,14 +62,9 @@ label b{color:#df3444;font-weight:400}textarea{min-height:80px;resize:vertical}f
 .scope-actions{white-space:nowrap}.scope-row button:disabled{cursor:default;opacity:.55}
 @media(max-width:600px){.scope-row{grid-template-columns:minmax(0,1fr)}}
 
-.picker-toggle{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;white-space:nowrap}
-.picker-value{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.picker-toggle::after{content:"▾";color:var(--muted)}
-.picker select{position:absolute;width:1px;height:1px;min-height:0;opacity:0;pointer-events:none}
-.picker-menu{position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:6;background:white;border:1px solid var(--line);border-radius:4px;padding:6px;box-shadow:0 4px 12px #26354825}
-.picker-menu input{width:100%}.picker-options{max-height:145px;overflow:auto;margin-top:5px}
-.picker-options button{display:block;width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left;border:0}.picker-options button:hover,.picker-options button:focus-visible{background:#eaf2ff}
-.picker-options p{margin:5px;color:var(--muted)}
+.fixed-options{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;min-height:32px}
+.fixed-options .radio>label{display:block;text-align:left;margin:0}
+.fixed-options input[type=radio]{min-height:0;width:auto}
 </style>
 <div class="apps-bar"><strong>禅道</strong><span>交互原型 · 模拟数据</span></div>
 <header><strong>许愿池</strong><button type="button" id="poolNav">许愿列表</button></header>
@@ -140,6 +136,7 @@ function renderModuleNode(product,node){
  return '<li><details data-tree-key="'+key+'" '+(collapsedNodes.has(product+':'+node.key)?'':'open')+'><summary>'+button+'</summary><ul>'+children+'</ul></details></li>';
 }
 function list(){
+ destroyPickers(app);
  const all='<button type="button" class="tree-node" data-product="" data-module="" data-ids="" aria-pressed="'+!filters.product+'">所有产品</button>';
  const tree='<ul>'+Object.entries(moduleTrees).map(([product,node])=>renderModuleNode(product,node)).join('')+'</ul>';
  app.innerHTML=
@@ -172,6 +169,7 @@ function list(){
  app.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>wishForm(wishes.find(w=>w.id===Number(b.dataset.edit)),list));
 }
 function detail(w, active='基本信息'){
+ destroyPickers(app);
  const closed=w.status==='已关闭';
  const closure=w.closure;
  const duplicate=wishes.find(item=>item.id===closure?.duplicateID);
@@ -201,73 +199,62 @@ function optionMarkup(values,selected=''){
  const entries=Array.isArray(values)?values.map(value=>[value,value]):Object.entries(values);
  return '<option value="">请选择</option>'+entries.map(([value,label])=>'<option value="'+esc(value)+'"'+(String(value)===selected?' selected':'')+'>'+esc(label)+'</option>').join('');
 }
-let activePicker=null;
-document.addEventListener('pointerdown',e=>{
- if(activePicker&&!activePicker.control.contains(e.target))activePicker.close();
-});
+const pickerMounts=new WeakMap();
 function picker(label,name,markup,required=false,layout='row'){
  const heading=label?fieldLabel(label,required):'';
- const control='<div class="picker-control"><button class="picker-toggle" type="button" aria-label="'+esc(label||name)+'" aria-expanded="false"><span class="picker-value"></span></button>'+
-  '<select name="'+name+'" aria-label="'+esc(label||name)+'" tabindex="-1" '+(required?'required':'')+'>'+markup+'</select>'+
-  '<div class="picker-menu" hidden><input type="search" aria-label="搜索'+esc(label||name)+'" placeholder="输入名称或编号"><div class="picker-options"></div></div></div>';
- return '<div class="picker-field"><div class="picker" data-label="'+esc(label||name)+'">'+
+ const control='<div class="picker-control"><select name="'+esc(name)+'" aria-label="'+esc(label||name)+'" tabindex="-1" '+(required?'required':'')+'>'+markup+'</select><div class="picker-mount"></div></div>';
+ return '<div class="picker-field"><div class="wish-picker" data-label="'+esc(label||name)+'">'+
   (layout==='row'?'<div class="picker-row">'+heading+control+'</div>':(layout==='stack'&&heading?'<span class="picker-label">'+heading+'</span>':'')+control)+'</div></div>';
 }
 const select=(label,name,values,value='',required=false,layout='row')=>picker(label,name,optionMarkup(values,value),required,layout);
+let choiceGroup=0;
+function fixedChoice(label,name,values,value,required=false){
+ const group=++choiceGroup;
+ const choices=values.map((option,index)=>{
+  const id='wish-choice-'+group+'-'+index;
+  return '<div class="radio radio-primary"><input type="radio" id="'+id+'" name="'+esc(name)+'" value="'+esc(option)+'" '+(option===value?'checked ':'')+(required?'required':'')+'><label for="'+id+'">'+esc(option)+'</label></div>';
+ }).join('');
+ return '<div class="wish-picker picker-row">'+fieldLabel(label,required)+'<div class="fixed-options" role="group" aria-label="'+esc(label)+'">'+choices+'</div></div>';
+}
+function destroyPickers(root){
+ root.querySelectorAll('.picker-mount').forEach(host=>{
+  pickerMounts.get(host)?.destroy();
+  pickerMounts.delete(host);
+ });
+}
 function initPickers(root){
- root.querySelectorAll('.picker').forEach(p=>{
-  const field=p.querySelector('select'), toggle=p.querySelector('.picker-toggle'), control=p.querySelector('.picker-control');
-  const menu=p.querySelector('.picker-menu'), search=menu.querySelector('input'), results=menu.querySelector('.picker-options');
+ root.querySelectorAll('.picker-mount').forEach(host=>{
+  const field=host.previousElementSibling;
   const render=()=>{
-   const query=search.value.trim().toLocaleLowerCase();
-   const matches=Array.from(field.options).filter(o=>!o.disabled&&(!field.required||o.value!=='')&&(!query||o.text.toLocaleLowerCase().includes(query)||o.value.toLocaleLowerCase().includes(query)));
-   results.replaceChildren();
-   matches.forEach(option=>{
-    const button=document.createElement('button');
-    button.type='button';button.textContent=option.text;
-    button.setAttribute('aria-current',String(option.selected));
-    button.onclick=()=>{
-     field.value=option.value;
-     field.dispatchEvent(new Event('change',{bubbles:true}));
-     close();toggle.focus();
-    };
-    results.append(button);
+   pickerMounts.get(host)?.destroy();
+   const items=Array.from(field.options).filter(option=>option.value!=='').map(option=>({
+    value:option.value,text:option.text,disabled:option.disabled,keys:option.value
+   }));
+   const widget=new zui.Picker(host,{
+    items,defaultValue:field.value,required:field.required,search:true,popWidth:'100%',
+    placeholder:field.options[0]?.text||'请选择',searchEmptyHint:'无匹配选项',
+    popContainer:host.closest('dialog')?'#dialog':undefined,
+    onChange:value=>{
+     const next=String(value??'');
+     if(next===field.value)return;
+     field.value=next;
+     queueMicrotask(()=>{if(field.isConnected)field.dispatchEvent(new Event('change',{bubbles:true}))});
+    }
    });
-   if(!matches.length){const empty=document.createElement('p');empty.textContent='无匹配选项';results.append(empty)}
+   pickerMounts.set(host,widget);
   };
-  const refresh=()=>{
-   const value=field.selectedOptions[0]?.text||'请选择';
-   toggle.querySelector('.picker-value').textContent=value;
-   toggle.title=value;
-   if(!menu.hidden)render();
-  };
-  const close=()=>{
-   menu.hidden=true;toggle.setAttribute('aria-expanded','false');
-   if(activePicker?.control===control)activePicker=null;
-  };
-  const open=()=>{
-   activePicker?.close();
-   activePicker={control,close};
-   menu.classList.remove('above');
-   menu.hidden=false;toggle.setAttribute('aria-expanded','true');search.value='';render();
-   const bounds=toggle.getBoundingClientRect();
-   const container=toggle.closest('dialog')?.getBoundingClientRect();
-   const bottom=Math.min(innerHeight,container?.bottom??innerHeight);
-   const top=Math.max(0,container?.top??0);
-   if(bottom-bounds.bottom<menu.offsetHeight+3&&bounds.top-top>bottom-bounds.bottom)menu.classList.add('above');
-   search.focus({preventScroll:true});
-  };
-  toggle.onclick=()=>menu.hidden?open():close();
-  search.oninput=render;
-  p.onkeydown=e=>{
-   if(e.key==='Escape'&&!menu.hidden){e.preventDefault();e.stopPropagation();close();toggle.focus()}
-   if(e.key==='ArrowDown'&&e.target===search){e.preventDefault();results.querySelector('button')?.focus()}
-   if(e.key==='Enter'&&e.target===search){e.preventDefault();(results.querySelector('button[aria-current="true"]')||results.querySelector('button'))?.click()}
-  };
-  p.onfocusout=e=>{if(e.relatedTarget&&!control.contains(e.relatedTarget))close()};
-  field.addEventListener('change',refresh);
-  field.addEventListener('invalid',e=>{e.preventDefault();if(menu.hidden)open()});
-  refresh();
+  host.addEventListener('keydown',e=>{
+   if(e.key!=='Escape'||!host.querySelector('.picker-select.is-open'))return;
+   e.preventDefault();
+   e.stopPropagation();
+   pickerMounts.get(host)?.$?.close();
+  });
+  field.addEventListener('invalid',e=>{
+   e.preventDefault();
+   host.querySelector('.picker-select')?.click();
+  });
+  field.addEventListener('wish-options-change',render);
+  render();
  });
 }
 function scopeLabel(product,scope){
@@ -276,6 +263,7 @@ function scopeLabel(product,scope){
 }
 function mountScopes(host,productField,initial=[]){
  const render=(values=[])=>{
+  destroyPickers(host);
   const product=productScopes[productField.value];
   if(!product){host.innerHTML='';return}
   const multi=product.type!=='normal';
@@ -303,7 +291,7 @@ function mountScopes(host,productField,initial=[]){
    const current=read();
    current[i]={branch:field.value,module:'0',plan:''};
    render(current);
-   host.querySelectorAll('[data-label="所属'+kind+'"] .picker-toggle')[i]?.focus();
+
   });
  };
  const read=()=>Array.from(host.querySelectorAll('.scope-row'),row=>({
@@ -311,13 +299,13 @@ function mountScopes(host,productField,initial=[]){
   module:row.querySelector('select[name^="module"]').value,
   plan:row.querySelector('select[name^="plan"]').value
  }));
- productField.addEventListener('change',()=>{activePicker?.close();render()});
+ productField.addEventListener('change',()=>render());
  render(initial);
  return read;
 }
 function setOptions(field,values){
  field.innerHTML=optionMarkup(values);
- field.dispatchEvent(new Event('change',{bubbles:true}));
+ field.dispatchEvent(new Event('wish-options-change'));
 }
 function modal(title,fields,save,action='保存'){
  document.querySelector('#dialogTitle').textContent=title;
@@ -330,15 +318,16 @@ function modal(title,fields,save,action='保存'){
 }
 document.querySelector('#cancel').onclick=()=>dialog.close();
 dialog.addEventListener('close',()=>{
- if(activePicker&&dialog.contains(activePicker.control))activePicker.close();
+ destroyPickers(dialog);
  document.querySelector('#fields').replaceChildren();
 });
 function wishForm(w, back=()=>w?detail(w):list()){
+ destroyPickers(app);
  const group=(title,fields)=>'<fieldset class="form-group"><legend>'+title+'</legend><div class="form-grid">'+fields+'</div></fieldset>';
  const full=html=>'<div class="full">'+html+'</div>';
  app.innerHTML='<section class="panel editor"><h1>'+(w?'编辑许愿':'提交许愿')+'</h1><form id="wishForm">'+
   group('所属范围',select('所属产品','product',Object.keys(products),w?.product,true,'stack')+full('<div id="wishScopes"></div><p id="assignee" class="muted"></p>'))+
-  group('许愿内容',full(input('标题','title',w?.title,true))+select('类别','category',storyCategories,w?.category)+select('优先级','priority',storyPriorities,w?.priority||'3',true)+full(area('许愿描述','desc',w?.desc,true))+full(area('验收标准','verify',w?.verify)))+
+  group('许愿内容',full(input('标题','title',w?.title,true))+select('类别','category',storyCategories,w?.category)+fixedChoice('优先级','priority',Object.values(storyPriorities),w?.priority||'3',true)+full(area('许愿描述','desc',w?.desc,true))+full(area('验收标准','verify',w?.verify)))+
   group('反馈来源',input('客户／提出者','customer',w?.customer)+select('来源','source',storySources,w?.source)+full(input('来源备注','sourceNote',w?.sourceNote)))+
   '<div id="wishError" role="alert"></div><div class="actions"><button class="primary" type="submit">保存</button><button id="formBack" type="button">返回</button></div></form></section>';
  const editor=app.querySelector('#wishForm');
@@ -389,7 +378,7 @@ function closeWish(w){
   document.querySelector('#duplicateField').hidden=!show;
   duplicate.disabled=!show;
   duplicate.required=show;
-  if(!show){duplicate.value='';duplicate.dispatchEvent(new Event('change',{bubbles:true}))}
+  if(!show){duplicate.value='';duplicate.dispatchEvent(new Event('wish-options-change'))}
  };
 }
 function handle(w,action){
@@ -415,10 +404,10 @@ function conversion(w,target){
  const product=select('所属产品','product',Object.keys(products),w.product,true);
  const note=area(({Bug:'复现步骤',需求:'需求描述'})[target]||'描述','desc',w.desc);
  const byTarget={
-  反馈:product+name+select('反馈类型','type',['建议','问题','需求'],'建议')+input('反馈者','customer',w.customer)+input('来源','source',[storySources[w.source],w.sourceNote].filter(Boolean).join(' · ')),
-  Bug:product+name+select('影响版本','build',builds[w.product]||{},'',true)+select('严重程度','severity',['1','2','3','4'],'3'),
+  反馈:product+name+fixedChoice('反馈类型','type',['建议','问题','需求'],'建议')+input('反馈者','customer',w.customer)+input('来源','source',[storySources[w.source],w.sourceNote].filter(Boolean).join(' · ')),
+  Bug:product+name+select('影响版本','build',builds[w.product]||{},'',true)+fixedChoice('严重程度','severity',['1','2','3','4'],'3'),
   工单:product+select('所属模块','module',modules[w.product]||[],'',true)+name,
-  待办:input('日期','date',today,true,'date')+name+select('可见范围','visibility',['仅本人','按待办权限可见'],'仅本人'),
+  待办:input('日期','date',today,true,'date')+name+fixedChoice('可见范围','visibility',['仅本人','按待办权限可见'],'仅本人'),
   需求:product+'<div id="conversionScopes"></div>'+name+select('类别','category',storyCategories,w.category||'feature')+select('来源','source',storySources,w.source)+input('来源备注','sourceNote',w.sourceNote),
   任务:select('所属执行','execution',[w.product+' · 11 月迭代'],'',true)+name+select('指派给','owner',['林然','王晓','陈晨'])+input('预计开始','start','',false,'date')+input('截止日期','end','',false,'date')
  };
@@ -444,7 +433,11 @@ function conversion(w,target){
   productField.onchange=()=>setOptions(dependent,candidates[productField.value]||[]);
  }
 }
-document.querySelector('#poolNav').onclick=list;
-list();
+if(window.zui?.Picker){
+ document.querySelector('#poolNav').onclick=list;
+ list();
+}else{
+ notice.textContent='未加载禅道 ZUI 资源，请从仓库根目录启动 HTTP 服务后打开 doc/wishpool/prototype.html。';
+}
 </script>
 </html>
