@@ -3,9 +3,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>许愿池 · 交互原型</title>
-<link rel="stylesheet" href="../../www/js/zui3/zui.zentao.css">
-<link rel="stylesheet" href="../../www/js/zui3/themes/default.css">
-<script src="../../www/js/zui3/zui.zentao.js"></script>
+<link rel="stylesheet" href="./zui/zui.zentao.css">
+<link rel="stylesheet" href="./zui/themes/default.css">
+<script src="./zui/zui.zentao.js"></script>
 <style>
 *{box-sizing:border-box}
 :root{--blue:#3883fa;--ink:#30394a;--muted:#59697c;--line:#e5e8ec;--surface:#fff;--page:#f8f9fa}
@@ -30,12 +30,12 @@ h1,h2{margin:0}h1{font-size:18px}h2{font-size:14px}p{margin:10px 0}.bar,.filters
 .tree details[open]>summary::before{transform:rotate(45deg) translateY(-2px)}
 .tree li:not(:has(>details))>.tree-node{margin-left:12px}
 .tree>h2{margin-bottom:6px}
-.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent}.tabs button[aria-pressed=true]{color:#1b6de2;border-bottom-color:var(--blue);font-weight:600}.count{padding:10px}.record-title{justify-content:flex-start}.section{padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px}.section:last-child{border:0;margin:0}.detail-tabs{border-bottom:1px solid var(--line);margin-bottom:13px}
-dl{margin:0;display:grid;grid-template-columns:88px 1fr;gap:10px}dt{color:var(--muted)}dd{margin:0}
+.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent}.tabs button[aria-pressed=true]{color:#1b6de2;border-bottom-color:var(--blue);font-weight:600}.count{padding:10px}.record-title{justify-content:flex-start}.record-title h1,.section p{overflow-wrap:anywhere}.section{padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px}.section:last-child{border:0;margin:0}.detail-tabs{border-bottom:1px solid var(--line);margin-bottom:13px}
+dl{margin:0;display:grid;grid-template-columns:88px 1fr;gap:10px}dt{color:var(--muted)}dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .dock{position:fixed;z-index:2;bottom:14px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);background:#151a23d9;color:#fff;border-radius:4px;padding:5px;backdrop-filter:blur(8px);box-shadow:0 4px 12px #26354840}.dock button,.dock summary{background:transparent;color:inherit;border:0;padding:6px 9px;cursor:pointer}.dock button:hover,.dock summary:hover{background:#3c4d62}.dock details{position:relative}.dock-menu{position:absolute;right:0;bottom:calc(100% + 9px);background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:5px;min-width:145px;box-shadow:0 5px 15px #26354830}.dock-menu button{display:block;text-align:left;width:100%}.dock-menu button:hover{background:#eaf2ff}
-dialog{border:1px solid #c5d1e0;border-radius:4px;width:min(640px,94vw);max-height:90vh;padding:0}dialog::backdrop{background:#26354870}dialog h2{padding:10px 16px;border-bottom:1px solid var(--line);font-size:16px}
-dialog #fields,dialog #error{padding-inline:16px}
-dialog form>.actions{margin:10px 0 0;border-top:1px solid var(--line);padding:9px 16px}
+#wish-modal .form-error{color:#9d261a}
+#wish-modal .modal-body{min-width:0}
+#wish-modal .actions{margin-top:12px}
 label{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px;align-items:start;margin:7px 0;min-width:0}
 label span{text-align:right;padding-top:6px}
 label input,label select,label textarea{width:100%;min-width:0}
@@ -65,13 +65,17 @@ label b{color:#df3444;font-weight:400}textarea{min-height:80px;resize:vertical}f
 .fixed-options{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;min-height:32px}
 .fixed-options .radio>label{display:block;text-align:left;margin:0}
 .fixed-options input[type=radio]{min-height:0;width:auto}
+.attachments .file-selector-box{display:flex;justify-content:center;align-items:center;min-height:46px}
+.attachments .file-selector-item label,.attachment-links .checkbox>label{display:block;text-align:left;margin:0}
+.attachment-links .checkbox{margin:4px 0}
+.attachment-links .checkbox input{min-height:0;width:auto}
+.attachment-links .checkbox>label{overflow-wrap:anywhere}
 </style>
 <div class="apps-bar"><strong>禅道</strong><span>交互原型 · 模拟数据</span></div>
 <header><strong>许愿池</strong><button type="button" id="poolNav">许愿列表</button></header>
 <main><div id="notice" role="status"></div><div id="app"></div></main>
-<dialog id="dialog"><form id="form"><h2 id="dialogTitle"></h2><div id="fields"></div><div id="error" role="alert"></div><div class="actions"><button type="button" id="cancel">取消</button><button class="primary" id="confirm">保存</button></div></form></dialog>
 <script>
-const app=document.querySelector('#app'), dialog=document.querySelector('#dialog'), form=document.querySelector('#form'), notice=document.querySelector('#notice');
+const app=document.querySelector('#app'), notice=document.querySelector('#notice');
 const products={'库存管理':'王晓','客户服务':'陈晨','ERP':'王晓','集成网关':'陈晨'};
 const productScopes={
  '库存管理':{type:'normal',branches:{'0':{modules:{'101':'/库存/库存查询','102':'/库存/库存导出'},plans:{'501':'库存优化'}}}},
@@ -88,21 +92,26 @@ const productScopes={
   '22':{label:'试验分支',modules:{'421':'/试验分支/集成/接口管理'},plans:{'522':'试验版本发布'}}
  }}
 };
-const modules={'库存管理':['库存查询','库存导出'],'客户服务':['工单处理','客户档案']};
 const builds={'库存管理':{'trunk':'trunk（主干）','21':'库存管理 22.7 测试构建'},'客户服务':{'trunk':'trunk（主干）','22':'客户服务 22.7 测试构建'}};
-const targets=['反馈','Bug','工单','待办','需求','任务'];
+const storyTargets={'研发需求':'story','业务需求':'epic','用户需求':'requirement'};
+// The static preview uses sample settings. The plugin reads these flags from ZenTao before rendering and submitting.
+const previewSettings=new URLSearchParams(location.search);
+const storyAvailable=type=>type==='story'||(type==='epic'?previewSettings.get('enableER'):previewSettings.get('URAndSR'))!=='0';
+const targets=['Bug','待办','研发需求',...Object.keys(storyTargets).filter(name=>name!=='研发需求'&&storyAvailable(storyTargets[name])),'任务'];
 const states=['待评估','跟进中','已关闭'];
 const closeReasons={done:'已完成',duplicate:'重复',postponed:'延期',willnotdo:'不做',cancel:'已取消',bydesign:'设计如此'};
 const people=['王晓','陈晨','林然'];
 // Illustrative copies of the native story dictionaries for this offline prototype.
 const storySources={customer:'客户',user:'用户',po:'产品经理',market:'市场',service:'客服',operation:'运营',support:'技术支持',competitor:'竞争对手',partner:'合作伙伴',dev:'开发人员',tester:'测试人员',bug:'Bug',forum:'论坛',other:'其他'};
 const storyCategories={feature:'功能',interface:'接口',performance:'性能',safe:'安全',experience:'体验',improve:'改进',other:'其他'};
+const taskTypes={design:'设计',devel:'开发',request:'需求',test:'测试',study:'研究',discuss:'讨论',ui:'界面',affair:'事务',misc:'其他'};
+const bugTypes={codeerror:'代码错误',config:'配置相关',install:'安装部署',security:'安全相关',performance:'性能问题',standard:'标准规范',automation:'测试脚本',designdefect:'设计缺陷',codeimprovement:'代码改进',others:'其他'};
 const storyPriorities={'1':'1','2':'2','3':'3','4':'4'};
 const currentUser='林然';
 const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Shanghai'});
 const wishes=[
  {id:104,scopes:[{branch:'0',module:'102',plan:''}],title:'库存导出支持按仓库筛选',product:'库存管理',customer:'华东仓储',source:'customer',sourceNote:'客户拜访',desc:'导出库存时，希望先选择仓库，以便仓库主管查看各自的数据。',verify:'导出结果仅包含所选仓库的库存。',owner:'王晓',reporter:'林然',priority:'1',category:'feature',status:'待评估',date:'2026-11-20',links:{},history:['林然登记了许愿']},
- {id:103,scopes:[{branch:'0',module:'201',plan:''}],title:'工单详情展示最近一次答复',product:'客户服务',customer:'南区服务团队',source:'service',sourceNote:'群聊',desc:'客服接手工单时需要快速看到上一位同事的答复。',verify:'详情中能看到最近答复和时间。',owner:'林然',reporter:'陈晨',priority:'2',category:'experience',status:'跟进中',date:'2026-11-19',links:{需求:{id:62,title:'工单详情展示最近一次答复'}},history:['陈晨创建了研发需求 #62']},
+ {id:103,scopes:[{branch:'0',module:'201',plan:''}],title:'工单详情展示最近一次答复',product:'客户服务',customer:'南区服务团队',source:'service',sourceNote:'群聊',desc:'客服接手工单时需要快速看到上一位同事的答复。',verify:'详情中能看到最近答复和时间。',owner:'林然',reporter:'陈晨',priority:'2',category:'experience',status:'跟进中',date:'2026-11-19',links:{研发需求:{id:62,title:'工单详情展示最近一次答复'}},history:['陈晨创建了研发需求 #62']},
  {id:102,scopes:[{branch:'0',module:'101',plan:''}],title:'库存列表默认显示可用数量',product:'库存管理',customer:'北区仓储',source:'customer',sourceNote:'电话',desc:'希望进页面即可看到可用库存。',verify:'默认列包含可用库存。',owner:'王晓',reporter:'林然',priority:'3',category:'improve',status:'已关闭',date:'2026-11-18',closure:{reason:'done',comment:'已指导开启可用库存列，客户确认。',by:'王晓',date:'2026-11-18'},links:{},history:['王晓记录答复并关闭许愿']}
 ];
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -136,7 +145,7 @@ function renderModuleNode(product,node){
  return '<li><details data-tree-key="'+key+'" '+(collapsedNodes.has(product+':'+node.key)?'':'open')+'><summary>'+button+'</summary><ul>'+children+'</ul></details></li>';
 }
 function list(){
- destroyPickers(app);
+ destroyWidgets(app);
  const all='<button type="button" class="tree-node" data-product="" data-module="" data-ids="" aria-pressed="'+!filters.product+'">所有产品</button>';
  const tree='<ul>'+Object.entries(moduleTrees).map(([product,node])=>renderModuleNode(product,node)).join('')+'</ul>';
  app.innerHTML=
@@ -144,7 +153,7 @@ function list(){
   '<div class="browse"><aside class="panel tree"><h2>产品模块</h2>'+all+tree+'</aside>'+
   '<section class="panel"><div id="searchPanel" hidden><div class="filters"><select aria-label="状态" id="statusFilter"><option value="">所有状态</option>'+options(states,filters.status)+'</select><input aria-label="搜索" id="search" placeholder="编号、标题、客户" value="'+esc(filters.search)+'"><button id="apply">筛选</button><button id="clear">清除</button></div></div><div class="scroll"><table><thead><tr><th>编号</th><th>优先级</th><th>标题</th><th>产品</th><th>客户</th><th>状态</th><th>负责人</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div><div id="count" class="muted count"></div></section></div>';
  const rows=wishes.filter(w=>(tab==='全部'||(tab==='我提交的'?w.reporter===currentUser:w.owner===currentUser&&w.status!=='已关闭'))&&(!filters.product||w.product===filters.product)&&(!filters.module||w.scopes.some(scope=>filters.moduleIDs.includes(scope.module)))&&(!filters.status||w.status===filters.status)&&(w.id+' '+w.title+' '+w.customer).includes(filters.search));
- app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td>'+esc(w.priority)+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill" data-state="'+w.status+'">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td><td><button class="link" data-edit="'+w.id+'" aria-label="编辑许愿 '+w.id+'">编辑</button></td></tr>').join('')||'<tr><td colspan="9">没有符合条件的许愿</td></tr>';
+ app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td>'+esc(w.priority)+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill" data-state="'+w.status+'">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td><td>'+(w.status==='已关闭'?'': '<button class="link" data-edit="'+w.id+'" aria-label="编辑许愿 '+w.id+'">编辑</button>')+'</td></tr>').join('')||'<tr><td colspan="9">没有符合条件的许愿</td></tr>';
  app.querySelector('#count').textContent='共 '+rows.length+' 条许愿';
  const searchToggle=app.querySelector('#toggleSearch');
  const searchPanel=app.querySelector('#searchPanel');
@@ -169,7 +178,7 @@ function list(){
  app.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>wishForm(wishes.find(w=>w.id===Number(b.dataset.edit)),list));
 }
 function detail(w, active='基本信息'){
- destroyPickers(app);
+ destroyWidgets(app);
  const closed=w.status==='已关闭';
  const closure=w.closure;
  const duplicate=wishes.find(item=>item.id===closure?.duplicateID);
@@ -179,10 +188,11 @@ function detail(w, active='基本信息'){
  const section=(heading,body)=>'<div class="section"><h2>'+heading+'</h2>'+body+'</div>';
  const description=(heading,value)=>section(heading,'<p>'+esc(value)+'</p>');
  app.innerHTML='<div class="bar record-title"><button class="link" id="back">← 返回许愿列表</button><span class="muted">#'+w.id+'</span><h1>'+esc(w.title)+'</h1><span class="pill" data-state="'+w.status+'">'+w.status+'</span></div>'+
-  '<div class="grid"><section class="panel">'+description('许愿描述',w.desc||'暂无描述')+description('验收标准',w.verify||'待补充')+(closure?description('关闭记录',closureText):'')+section('历史记录',w.history.map(h=>'<p>'+esc(h)+'</p>').join(''))+'</section>'+
+  '<div class="grid"><section class="panel">'+description('许愿描述',w.desc||'暂无描述')+description('验收标准',w.verify||'待补充')+section('附件',attachmentList(w.attachments))+(closure?description('关闭记录',closureText):'')+section('历史记录',w.history.map(h=>'<p>'+esc(h)+'</p>').join(''))+'</section>'+
   '<aside><section class="panel"><div class="actions tabs detail-tabs">'+['基本信息','承接单据'].map(t=>'<button data-detail-tab="'+t+'" aria-pressed="'+(t===active)+'">'+t+(t==='承接单据'?' ('+Object.keys(w.links).length+')':'')+'</button>').join('')+'</div>'+
   (active==='基本信息'?'<dl>'+fields.map(([k,v])=>'<dt>'+k+'</dt><dd>'+esc(v||'—')+'</dd>').join('')+'</dl>':related||'<p class="muted">暂无承接单据</p>')+'</section></aside></div>'+
   '<div class="actions dock" aria-label="许愿操作"><button id="dockBack">返回</button>'+(closed?'<button data-action="重开">激活</button>':'<button data-action="编辑">编辑</button><button data-action="转交">指派</button><button data-action="关闭">关闭</button><details><summary>转单</summary><div class="dock-menu">'+targets.map(t=>'<button data-target="'+t+'">'+(w.links[t]?'查看':'转')+t+'</button>').join('')+'</div></details>')+'</div>';
+ mountAttachmentList(app,w.attachments);
  app.querySelector('#back').onclick=list;
  app.querySelector('#dockBack').onclick=list;
  app.querySelectorAll('[data-detail-tab]').forEach(b=>b.onclick=()=>detail(w,b.dataset.detailTab));
@@ -200,13 +210,13 @@ function optionMarkup(values,selected=''){
  return '<option value="">请选择</option>'+entries.map(([value,label])=>'<option value="'+esc(value)+'"'+(String(value)===selected?' selected':'')+'>'+esc(label)+'</option>').join('');
 }
 const pickerMounts=new WeakMap();
-function picker(label,name,markup,required=false,layout='row'){
+function picker(label,name,markup,required=false,layout='row',multiple=false){
  const heading=label?fieldLabel(label,required):'';
- const control='<div class="picker-control"><select name="'+esc(name)+'" aria-label="'+esc(label||name)+'" tabindex="-1" '+(required?'required':'')+'>'+markup+'</select><div class="picker-mount"></div></div>';
+ const control='<div class="picker-control"><select name="'+esc(name)+'" aria-label="'+esc(label||name)+'" tabindex="-1" '+(multiple?'multiple ':'')+(required?'required':'')+'>'+markup+'</select><div class="picker-mount"></div></div>';
  return '<div class="picker-field"><div class="wish-picker" data-label="'+esc(label||name)+'">'+
   (layout==='row'?'<div class="picker-row">'+heading+control+'</div>':(layout==='stack'&&heading?'<span class="picker-label">'+heading+'</span>':'')+control)+'</div></div>';
 }
-const select=(label,name,values,value='',required=false,layout='row')=>picker(label,name,optionMarkup(values,value),required,layout);
+const select=(label,name,values,value='',required=false,layout='row',multiple=false)=>picker(label,name,optionMarkup(values,value),required,layout,multiple);
 let choiceGroup=0;
 function fixedChoice(label,name,values,value,required=false){
  const group=++choiceGroup;
@@ -231,13 +241,18 @@ function initPickers(root){
     value:option.value,text:option.text,disabled:option.disabled,keys:option.value
    }));
    const widget=new zui.Picker(host,{
-    items,defaultValue:field.value,required:field.required,search:true,popWidth:'100%',
+    items,defaultValue:field.multiple?Array.from(field.selectedOptions,o=>o.value):field.value,
+    required:field.required,multiple:field.multiple,search:true,popWidth:'100%',
     placeholder:field.options[0]?.text||'请选择',searchEmptyHint:'无匹配选项',
-    popContainer:host.closest('dialog')?'#dialog':undefined,
+    popContainer:host.closest('#wish-modal')?'#wish-modal':undefined,
     onChange:value=>{
-     const next=String(value??'');
-     if(next===field.value)return;
-     field.value=next;
+     const next=(Array.isArray(value)?value:String(value??'').split(',')).map(String);
+     if(field.multiple){
+      for(const option of field.options)option.selected=next.includes(option.value);
+     }else{
+      if(next[0]===field.value)return;
+      field.value=next[0]||'';
+     }
      queueMicrotask(()=>{if(field.isConnected)field.dispatchEvent(new Event('change',{bubbles:true}))});
     }
    });
@@ -257,11 +272,67 @@ function initPickers(root){
   render();
  });
 }
+const attachmentWidgets=new WeakMap();
+let nextFileID=0;
+function attachmentField(){
+ return '<div class="attachments"><span class="picker-label">附件</span><div data-file-selector></div></div>';
+}
+function attachmentList(files=[]){
+ return files.length?'<div data-file-list></div>':'<p class="muted">暂无附件</p>';
+}
+function destroyWidgets(root){
+ destroyPickers(root);
+ root.querySelectorAll('[data-file-selector],[data-file-list]').forEach(host=>{
+  attachmentWidgets.get(host)?.destroy();
+  attachmentWidgets.delete(host);
+ });
+}
+function mountAttachmentSelector(root,existing=[]){
+ const host=root.querySelector('[data-file-selector]');
+ if(!host)return;
+ attachmentWidgets.set(host,new zui.FileSelector(host,{
+  name:'attachments',deleteName:'removedAttachments',mode:'box',draggable:true,
+  multiple:true,renameBtn:false,maxFileSize:'10MB',totalFileSize:'16MB',
+  uploadBtn:'选择文件',tip:'或将文件拖到此处',
+  defaultFiles:existing.map(file=>({id:file.id,name:file.name,size:file.file.size}))
+ }));
+}
+function readAttachments(form,existing=[]){
+ const data=new FormData(form);
+ const kept=existing.filter(file=>!data.has('removedAttachments['+file.id+']'));
+ const added=data.getAll('attachments').filter(file=>file instanceof File&&file.name).map(file=>({
+  id:'wish-file-'+(++nextFileID),name:file.name,file
+ }));
+ return [...kept,...added];
+}
+function downloadAttachment(attachment){
+ const url=URL.createObjectURL(attachment.file);
+ const link=document.createElement('a');
+ link.href=url;
+ link.download=attachment.name;
+ link.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function mountAttachmentList(root,files=[]){
+ const host=root.querySelector('[data-file-list]');
+ if(!host||!files.length)return;
+ attachmentWidgets.set(host,new zui.FileList(host,{
+  items:files.map(file=>({id:file.id,title:file.name,size:file.file.size})),
+  fileActions:item=>[{text:'下载',onClick:()=>downloadAttachment(files.find(file=>file.id===item.id))}]
+ }));
+}
+function attachmentChoices(files=[]){
+ if(!files.length)return '';
+ return '<fieldset class="attachment-links"><legend>携带许愿附件</legend>'+files.map((file,index)=>{
+  const id='carry-file-'+index;
+  return '<div class="checkbox checkbox-primary"><input type="checkbox" name="carryFiles" id="'+id+'" value="'+esc(file.id)+'"><label for="'+id+'">'+esc(file.name)+'</label></div>';
+ }).join('')+'</fieldset>';
+}
 function scopeLabel(product,scope){
  const branch=productScopes[product]?.branches[scope.branch];
  return [branch?.label,(branch?.modules[scope.module]||productScopes[product]?.branches['0'].modules[scope.module]||'/'),branch?.plans[scope.plan]].filter(Boolean).join(' · ');
 }
-function mountScopes(host,productField,initial=[]){
+function mountScopes(host,productField,initial=[],multiple=true){
  const render=(values=[])=>{
   destroyPickers(host);
   const product=productScopes[productField.value];
@@ -277,7 +348,7 @@ function mountScopes(host,productField,initial=[]){
    const modulePicker=select('所属模块','module'+i,{'0':'/',...product.branches['0'].modules,...branch.modules},row.module||'0',true,'inline');
    const scope='<div><span class="scope-head">'+(multi?'所属'+kind+'与所属模块':'所属模块')+'</span><div class="'+(multi?'scope-pair':'')+'">'+branchPicker+modulePicker+'</div></div>';
    const plan=select('所属计划','plan'+i,branch.plans,row.plan,false,'stack');
-   const actions=multi?'<div class="scope-actions">'+(i===0?'<button type="button" id="addScope" '+(rows.length===branches.length?'disabled':'')+'>＋ 添加'+kind+'</button>':'<button type="button" data-remove-scope="'+i+'">移除</button>')+'</div>':'';
+   const actions=multi&&multiple?'<div class="scope-actions">'+(i===0?'<button type="button" id="addScope" '+(rows.length===branches.length?'disabled':'')+'>＋ 添加'+kind+'</button>':'<button type="button" data-remove-scope="'+i+'">移除</button>')+'</div>':'';
    return '<div class="scope-row">'+scope+'<div class="scope-plan">'+plan+actions+'</div></div>';
   }).join('');
   initPickers(host);
@@ -307,31 +378,58 @@ function setOptions(field,values){
  field.innerHTML=optionMarkup(values);
  field.dispatchEvent(new Event('wish-options-change'));
 }
-function modal(title,fields,save,action='保存'){
- document.querySelector('#dialogTitle').textContent=title;
- document.querySelector('#fields').innerHTML=fields;
- initPickers(form);
- document.querySelector('#confirm').textContent=action;
- document.querySelector('#error').textContent='';
- form.onsubmit=e=>{e.preventDefault();const failure=save(Object.fromEntries(new FormData(form)));if(failure)document.querySelector('#error').textContent=failure;else dialog.close()};
- dialog.showModal();
+function modal(title,fields,save,action='保存',setup){
+ return new Promise(resolve=>{
+  zui.Modal.open({
+   id:'wish-modal',type:'custom',title,size:'md',
+   content:{html:'<form id="wish-modal-form">'+fields+
+    '<div class="form-error" role="alert"></div><div class="actions">'+
+    '<button type="button" class="btn" data-dismiss="modal">取消</button>'+
+    '<button type="submit" class="btn primary">'+esc(action)+'</button></div></form>'},
+   onShown(){
+    const form=document.querySelector('#wish-modal-form');
+    initPickers(form);
+    setup?.(form);
+    const error=form.querySelector('.form-error');
+    const clearError=()=>{error.textContent=''};
+    form.addEventListener('input',clearError);
+    form.addEventListener('change',clearError);
+    form.onsubmit=async e=>{
+     e.preventDefault();
+     const submit=form.querySelector('[type="submit"]');
+     if(submit.disabled)return;
+     submit.disabled=true;
+     try{
+      const values=new FormData(form);
+      const fields=Object.fromEntries(values);
+      form.querySelectorAll('select[multiple]').forEach(field=>{fields[field.name]=values.getAll(field.name)});
+      const failure=await save(fields,form,values);
+      if(failure)error.textContent=failure;
+      else form.querySelector('[data-dismiss="modal"]').click();
+     }finally{submit.disabled=false}
+    };
+    resolve(form);
+   },
+   onHide(){
+    const form=document.querySelector('#wish-modal-form');
+    if(form)destroyWidgets(form);
+   }
+  });
+ });
 }
-document.querySelector('#cancel').onclick=()=>dialog.close();
-dialog.addEventListener('close',()=>{
- destroyPickers(dialog);
- document.querySelector('#fields').replaceChildren();
-});
 function wishForm(w, back=()=>w?detail(w):list()){
- destroyPickers(app);
+ destroyWidgets(app);
  const group=(title,fields)=>'<fieldset class="form-group"><legend>'+title+'</legend><div class="form-grid">'+fields+'</div></fieldset>';
  const full=html=>'<div class="full">'+html+'</div>';
  app.innerHTML='<section class="panel editor"><h1>'+(w?'编辑许愿':'提交许愿')+'</h1><form id="wishForm">'+
   group('所属范围',select('所属产品','product',Object.keys(products),w?.product,true,'stack')+full('<div id="wishScopes"></div><p id="assignee" class="muted"></p>'))+
-  group('许愿内容',full(input('标题','title',w?.title,true))+select('类别','category',storyCategories,w?.category)+fixedChoice('优先级','priority',Object.values(storyPriorities),w?.priority||'3',true)+full(area('许愿描述','desc',w?.desc,true))+full(area('验收标准','verify',w?.verify)))+
+  group('许愿内容',full(input('标题','title',w?.title,true))+select('类别','category',storyCategories,w?.category)+fixedChoice('优先级','priority',Object.values(storyPriorities),w?.priority||'3',true)+full(area('许愿描述','desc',w?.desc,true))+full(area('验收标准','verify',w?.verify))+full(attachmentField()))+
   group('反馈来源',input('客户／提出者','customer',w?.customer)+select('来源','source',storySources,w?.source)+full(input('来源备注','sourceNote',w?.sourceNote)))+
   '<div id="wishError" role="alert"></div><div class="actions"><button class="primary" type="submit">保存</button><button id="formBack" type="button">返回</button></div></form></section>';
  const editor=app.querySelector('#wishForm');
+ editor.oninput=()=>{app.querySelector('#wishError').textContent=''};
  initPickers(editor);
+ mountAttachmentSelector(editor,w?.attachments);
  const product=editor.elements.product;
  const readScopes=mountScopes(app.querySelector('#wishScopes'),product,w?.scopes);
  const update=()=>app.querySelector('#assignee').textContent=product.value?(w?'当前负责人：'+w.owner:'预计负责人：'+(products[product.value]||currentUser)):'选择产品后显示预计负责人';
@@ -342,29 +440,32 @@ function wishForm(w, back=()=>w?detail(w):list()){
   e.preventDefault();
   const data=Object.fromEntries(new FormData(editor));
   data.scopes=readScopes();
+  delete data.attachments;
   Object.keys(data).filter(key=>/^(branch|module|plan)\d+$/.test(key)).forEach(key=>delete data[key]);
   if(!data.title.trim()||!data.desc.trim()){app.querySelector('#wishError').textContent='请填写标题和许愿描述。';return}
+  data.attachments=readAttachments(editor,w?.attachments);
+  Object.keys(data).filter(key=>key.startsWith('removedAttachments[')).forEach(key=>delete data[key]);
   if(w){Object.assign(w,data,{date:today});w.history.push(currentUser+'更新了许愿');detail(w)}
   else{const entry={...data,id:Math.max(...wishes.map(x=>x.id))+1,owner:products[data.product]||currentUser,reporter:currentUser,date:today,status:'待评估',links:{},history:[currentUser+'登记了许愿']};wishes.unshift(entry);detail(entry)}
   notice.textContent='许愿已保存';
  };
 }
-function closeWish(w){
+async function closeWish(w){
  const candidates=wishes.filter(item=>item.id!==w.id&&item.product===w.product);
  const duplicateOptions=candidates.map(item=>'<option value="'+item.id+'">#'+item.id+' '+esc(item.title)+'</option>').join('');
  const reasons=Object.entries(closeReasons).map(([key,label])=>'<option value="'+key+'">'+label+'</option>').join('');
  const openTask=w.links.任务?.open===true;
- modal('关闭许愿','<label>'+fieldLabel('关闭原因',true)+'<select name="reason" required><option value="">请选择</option>'+reasons+'</select></label>'+
+ const form=await modal('关闭许愿','<label>'+fieldLabel('关闭原因',true)+'<select name="reason" required><option value="">请选择</option>'+reasons+'</select></label>'+
   '<div id="duplicateField" hidden>'+picker('重复许愿','duplicateID','<option value="">请选择同产品许愿</option>'+duplicateOptions,true)+
   (candidates.length?'':'<p class="muted">当前产品没有其他可选许愿。</p>')+'</div>'+
   area('备注','note')+
   (openTask?'<p role="status">承接任务 #'+w.links.任务.id+' 尚未完成，关闭许愿后该任务继续办理。</p>':''),
-  data=>{
+  async data=>{
    if(w.status==='已关闭')return '该许愿已关闭。';
    if(!Object.hasOwn(closeReasons,data.reason))return '请选择关闭原因。';
    const duplicate=candidates.find(item=>item.id===Number(data.duplicateID));
    if(data.reason==='duplicate'&&!duplicate)return '请选择同产品的另一条许愿。';
-   if(openTask&&!window.confirm('承接任务尚未完成，确认继续关闭许愿？'))return '已取消关闭，可继续修改。';
+   if(openTask&&!await zui.Modal.confirm('承接任务尚未完成，确认继续关闭许愿？'))return '已取消关闭，可继续修改。';
    w.status='已关闭';
    w.date=today;
    w.closure={reason:data.reason,duplicateID:duplicate?.id,comment:data.note.trim(),by:currentUser,date:today};
@@ -395,49 +496,63 @@ function handle(w,action){
   detail(w);notice.textContent=handing?'许愿已指派':'许愿已激活';
  });
 }
-function conversion(w,target){
+async function conversion(w,target){
+ const storyType=storyTargets[target];
+ const supportsFiles=target!=='待办';
+ if(!targets.includes(target)||(storyType&&!storyAvailable(storyType)))return;
  const existing=w.links[target];
  if(existing){
- modal(target+' #'+existing.id,'<p>'+esc(existing.title)+'</p><p class="muted">已建立承接关系 · 来源许愿 #'+w.id+'</p>',()=>null,'完成');return
+ const values={'标题':existing.title,'来源许愿':'#'+w.id,'所属产品':existing.product,'所属模块':existing.module,'影响版本':existing.build?.join('、'),'所属执行':existing.execution,'指派给':existing.owner,'创建人':existing.createdBy,'创建日期':existing.createdAt};
+ const fields=Object.entries(values).filter(([,value])=>value).map(([label,value])=>'<dt>'+label+'</dt><dd>'+esc(value)+'</dd>').join('');
+ modal(target+' #'+existing.id,'<dl>'+fields+'</dl>'+(supportsFiles?'<h3>附件</h3>'+attachmentList(existing.attachments):''),()=>null,'完成',root=>mountAttachmentList(root,existing.attachments));return
  }
  const name=input(['待办','任务'].includes(target)?'名称':'标题','title',w.title,true);
  const product=select('所属产品','product',Object.keys(products),w.product,true);
- const note=area(({Bug:'复现步骤',需求:'需求描述'})[target]||'描述','desc',w.desc);
+ const note=area(target==='Bug'?'复现步骤':storyType?'需求描述':'描述','desc',w.desc);
  const byTarget={
-  反馈:product+name+fixedChoice('反馈类型','type',['建议','问题','需求'],'建议')+input('反馈者','customer',w.customer)+input('来源','source',[storySources[w.source],w.sourceNote].filter(Boolean).join(' · ')),
-  Bug:product+name+select('影响版本','build',builds[w.product]||{},'',true)+fixedChoice('严重程度','severity',['1','2','3','4'],'3'),
-  工单:product+select('所属模块','module',modules[w.product]||[],'',true)+name,
-  待办:input('日期','date',today,true,'date')+name+fixedChoice('可见范围','visibility',['仅本人','按待办权限可见'],'仅本人'),
-  需求:product+'<div id="conversionScopes"></div>'+name+select('类别','category',storyCategories,w.category||'feature')+select('来源','source',storySources,w.source)+input('来源备注','sourceNote',w.sourceNote),
-  任务:select('所属执行','execution',[w.product+' · 11 月迭代'],'',true)+name+select('指派给','owner',['林然','王晓','陈晨'])+input('预计开始','start','',false,'date')+input('截止日期','end','',false,'date')
+  Bug:product+name+select('影响版本','build',builds[w.product]||{'trunk':'trunk（主干）'},'',true,'row',true)+fixedChoice('严重程度','severity',['1','2','3','4'],'3')+fixedChoice('优先级','pri',Object.values(storyPriorities),w.priority)+select('Bug 类型','type',bugTypes),
+  待办:input('日期','date',today,true,'date')+name+fixedChoice('优先级','pri',Object.values(storyPriorities),w.priority,true)+fixedChoice('可见范围','visibility',['仅本人','按待办权限可见'],'仅本人'),
+  任务:select('所属执行','execution',[w.product+' · 11 月迭代'],'',true)+name+select('任务类型','type',taskTypes,'devel',true)+select('指派给','owner',people)+input('预计开始','start','',false,'date')+input('截止日期','end','',false,'date')
  };
+ const requirementFields=storyType?product+'<div id="conversionScopes"></div>'+name+
+  '<div class="picker-row"><span>需求层级</span><div>'+({story:'SR',requirement:'UR',epic:'BR'})[storyType]+'</div></div>'+
+  select('评审人','reviewer',people,'',true,'row',true)+select('类别','category',storyCategories,w.category||'feature')+
+  fixedChoice('优先级','pri',Object.values(storyPriorities),w.priority)+
+  select('来源','source',storySources,w.source)+input('来源备注','sourceNote',w.sourceNote):'';
  let readScopes;
- modal('转'+target,(['反馈','工单'].includes(target)?'<p class="muted">正式接入需启用禅道'+target+'模块。这里可以模拟完整操作。</p>':'')+byTarget[target]+note+(target==='需求'?area('验收标准','verify',w.verify):''),data=>{
+ const form=await modal('转'+target,(byTarget[target]||requirementFields)+note+(storyType?area('验收标准','verify',w.verify):'')+(supportsFiles?attachmentChoices(w.attachments)+attachmentField():''),(data,modalForm,values)=>{
+ if(storyType&&!storyAvailable(storyType))return '该需求类型在当前配置中未启用。';
  if(!data.title.trim())return '请填写标题或名称。';
  if(data.start&&data.end&&data.end<data.start)return '截止日期不能早于预计开始。';
  if(w.links[target])return '已有同类型承接单据，请查看原转单结果。';
  if(readScopes){
+  data.storyType=storyType;
   data.scopes=readScopes();
   Object.keys(data).filter(key=>/^(branch|module|plan)\d+$/.test(key)).forEach(key=>delete data[key]);
  }
- w.links[target]={...data,id:++nextTarget,open:target==='任务'};
+ if(target==='任务'){data.module=0;data.story=0}
+ if(target==='待办'){data.type='custom';data.status='wait';data.private=data.visibility==='仅本人'?1:0}
+ if(supportsFiles){
+  const carryIDs=values.getAll('carryFiles');
+  data.attachments=[...(w.attachments||[]).filter(file=>carryIDs.includes(file.id)),...readAttachments(modalForm)];
+  delete data.carryFiles;
+ }
+ w.links[target]={...data,id:++nextTarget,open:target==='任务',createdAt:today,createdBy:currentUser};
  w.status='跟进中';w.date=today;
  w.history.push(currentUser+'模拟创建了'+target+' #'+nextTarget);
  detail(w,'承接单据');notice.textContent='已模拟创建'+target+' #'+nextTarget;
- },'模拟创建'+target);
- if(target==='需求')readScopes=mountScopes(form.querySelector('#conversionScopes'),form.elements.product,w.scopes);
- if(target==='工单'||target==='Bug'){
+ },'模拟创建'+target,mountAttachmentSelector);
+ if(storyType)readScopes=mountScopes(form.querySelector('#conversionScopes'),form.elements.product,storyType==='story'?w.scopes:w.scopes.slice(0,1),storyType==='story');
+ if(target==='Bug'){
   const productField=form.elements.product;
-  const dependent=target==='工单'?form.elements.module:form.elements.build;
-  const candidates=target==='工单'?modules:builds;
-  productField.onchange=()=>setOptions(dependent,candidates[productField.value]||[]);
+  productField.onchange=()=>setOptions(form.elements.build,builds[productField.value]||{'trunk':'trunk（主干）'});
  }
 }
 if(window.zui?.Picker){
  document.querySelector('#poolNav').onclick=list;
  list();
 }else{
- notice.textContent='未加载禅道 ZUI 资源，请从仓库根目录启动 HTTP 服务后打开 doc/wishpool/prototype.html。';
+ notice.textContent='未加载禅道 ZUI 资源，请保留原型目录中的 zui 文件夹后重新打开。';
 }
 </script>
 </html>
