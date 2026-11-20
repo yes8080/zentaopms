@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>许愿池 · 交互原型</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;color:#192a42;background:#f3f6fa}header{background:#142843;color:white;padding:16px 5%;display:flex;justify-content:space-between;align-items:center}header strong{font-size:19px}header span{color:#c6d6e8}main{max-width:1180px;margin:auto;padding:36px 24px}h1{margin:0;font-size:30px}h2{margin:0 0 18px;font-size:19px}p{line-height:1.65}.bar,.filters,.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.bar{justify-content:space-between;margin-bottom:22px}.panel{background:white;border:1px solid #dce4ee;border-radius:12px;padding:20px;margin-bottom:16px}.primary{background:#165dc0;color:white;border-color:#165dc0}button,input,select,textarea{font:inherit;border:1px solid #c5d1e0;border-radius:7px;padding:9px 12px;background:white;color:inherit}button{cursor:pointer}button:hover{filter:brightness(.94)}.link{border:0;background:transparent;color:#165dc0;text-align:left;padding:4px 0}.actions{margin-top:18px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;margin-top:15px;white-space:nowrap}td,th{padding:13px 9px;text-align:left;border-bottom:1px solid #e7edf4}th{color:#48617c;font-size:13px}.pill{background:#e8f1ff;color:#2054a0;padding:3px 9px;border-radius:12px}.muted{color:#526982}.grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}dl{margin:0;display:grid;grid-template-columns:90px 1fr;gap:12px}dt{color:#526982}dd{margin:0}dialog{border:1px solid #c5d1e0;border-radius:14px;width:min(580px,94vw);max-height:90vh;padding:22px}dialog::backdrop{background:#14284380}label{display:grid;gap:5px;margin:10px 0}textarea{min-height:84px}form .actions{justify-content:flex-end}#notice{min-height:22px;color:#155b42}.empty{padding:15px 0}.tabs{margin-bottom:14px}.tabs button[aria-pressed=true]{background:#e8f1ff;color:#165dc0;border-color:#165dc0}@media(max-width:700px){.grid{grid-template-columns:1fr}main{padding:22px 12px}}
+</style>
+<header><strong>许愿池</strong><span>交互原型 · 模拟数据</span></header>
+<main><div id="notice" role="status"></div><div id="app"></div></main>
+<dialog id="dialog"><form id="form"><h2 id="dialogTitle"></h2><div id="fields"></div><div id="error" role="alert"></div><div class="actions"><button type="button" id="cancel">取消</button><button class="primary" id="confirm">保存</button></div></form></dialog>
+<script>
+const app=document.querySelector('#app'), dialog=document.querySelector('#dialog'), form=document.querySelector('#form'), notice=document.querySelector('#notice');
+const products={'库存管理':'王晓','客户服务':'陈晨'};
+const targets=['反馈','Bug','工单','待办','需求','任务'];
+const states=['待评估','跟进中','已关闭'];
+const currentUser='林然';
+const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Shanghai'});
+const wishes=[
+ {id:104,title:'库存导出支持按仓库筛选',product:'库存管理',customer:'华东仓储',channel:'客户拜访',desc:'导出库存时，希望先选择仓库，以便仓库主管查看各自的数据。',verify:'导出结果仅包含所选仓库的库存。',owner:'王晓',reporter:'林然',priority:'高',status:'待评估',date:'2026-11-20',links:{},history:['林然登记了许愿']},
+ {id:103,title:'工单详情展示最近一次答复',product:'客户服务',customer:'南区服务团队',channel:'群聊',desc:'客服接手工单时需要快速看到上一位同事的答复。',verify:'详情中能看到最近答复和时间。',owner:'林然',reporter:'陈晨',priority:'中',status:'跟进中',date:'2026-11-19',links:{需求:{id:62,title:'工单详情展示最近一次答复'}},history:['陈晨创建了研发需求 #62']},
+ {id:102,title:'库存列表默认显示可用数量',product:'库存管理',customer:'北区仓储',channel:'电话',desc:'希望进页面即可看到可用库存。',verify:'默认列包含可用库存。',owner:'王晓',reporter:'林然',priority:'低',status:'已关闭',date:'2026-11-18',reason:'已指导开启可用库存列，客户确认。',links:{},history:['王晓记录答复并关闭许愿']}
+];
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let selected=null, tab='全部', filters={product:'',status:'',search:''}, nextTarget=200;
+const options=(values,selected='')=>values.map(v=>'<option'+(v===selected?' selected':'')+'>'+esc(v)+'</option>').join('');
+function list(){
+ selected=null;
+ app.innerHTML='<div class="bar"><h1>许愿池</h1><button class="primary" id="new">提交许愿</button></div><section class="panel"><div class="actions tabs">'+['全部','我提交的','待我处理'].map(t=>'<button data-tab="'+t+'" aria-pressed="'+(tab===t)+'">'+t+'</button>').join('')+'</div><div class="filters"><select aria-label="产品" id="productFilter"><option value="">所有产品</option>'+options(Object.keys(products),filters.product)+'</select><select aria-label="状态" id="statusFilter"><option value="">所有状态</option>'+options(states,filters.status)+'</select><input aria-label="搜索" id="search" placeholder="搜索编号、标题、客户" value="'+esc(filters.search)+'"><button id="apply">筛选</button></div><div class="scroll"><table><thead><tr><th>编号</th><th>标题</th><th>产品</th><th>客户</th><th>状态</th><th>负责人</th><th>更新时间</th></tr></thead><tbody id="rows"></tbody></table></div></section>';
+ const rows=wishes.filter(w=>(tab==='全部'||(tab==='我提交的'?w.reporter===currentUser:w.owner===currentUser&&w.status!=='已关闭'))&&(!filters.product||w.product===filters.product)&&(!filters.status||w.status===filters.status)&&(w.id+' '+w.title+' '+w.customer).includes(filters.search));
+ app.querySelector('#rows').innerHTML=rows.map(w=>'<tr><td>'+w.id+'</td><td><button class="link" data-id="'+w.id+'">'+esc(w.title)+'</button></td><td>'+esc(w.product)+'</td><td>'+esc(w.customer)+'</td><td><span class="pill">'+w.status+'</span></td><td>'+esc(w.owner)+'</td><td>'+w.date+'</td></tr>').join('')||'<tr><td colspan="7">没有符合条件的许愿</td></tr>';
+ app.querySelector('#new').onclick=()=>wishForm();
+ app.querySelector('#apply').onclick=()=>{filters={product:app.querySelector('#productFilter').value,status:app.querySelector('#statusFilter').value,search:app.querySelector('#search').value.trim()};list()};
+ app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;list()});
+ app.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>detail(wishes.find(w=>w.id===Number(b.dataset.id))));
+}
+function detail(w){
+ selected=w;
+ const closed=w.status==='已关闭';
+ app.innerHTML='<button class="link" id="back">← 返回许愿列表</button><div class="bar"><h1>'+esc(w.title)+'</h1><span class="pill">'+w.status+'</span></div><div class="grid"><section class="panel"><h2>客户诉求</h2><p>'+esc(w.desc||'暂无描述')+'</p><h2>验收标准</h2><p>'+esc(w.verify||'待补充')+'</p>'+(w.reason?'<h2>结案记录</h2><p>'+esc(w.reason)+'</p>':'')+'<h2>承接单据</h2>'+targets.filter(t=>w.links[t]).map(t=>'<p>'+t+' #'+w.links[t].id+' · '+esc(w.links[t].title)+'</p>').join('')+(Object.keys(w.links).length?'':'<p class="muted">暂无承接单据</p>')+'<h2>办理历史</h2>'+w.history.map(h=>'<p>'+esc(h)+'</p>').join('')+'</section><aside><section class="panel"><h2>基本信息</h2><dl>'+Object.entries({'编号':w.id,'产品':w.product,'客户':w.customer,'渠道':w.channel,'优先级':w.priority,'提报人':w.reporter,'负责人':w.owner}).map(([k,v])=>'<dt>'+k+'</dt><dd>'+esc(v||'—')+'</dd>').join('')+'</dl></section><section class="panel"><h2>办理</h2><div class="actions">'+(closed?'<button data-action="重开">重新打开</button>':'<button data-action="编辑">编辑</button><button data-action="转交">转交</button><button data-action="关闭">记录答复并关闭</button>')+'</div>'+(closed?'':'<div class="actions">'+targets.map(t=>'<button data-target="'+t+'">'+(w.links[t]?'查看':'转')+t+'</button>').join('')+'</div>')+'</section></aside></div>';
+ app.querySelector('#back').onclick=list;
+ app.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>conversion(w,b.dataset.target));
+ app.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>handle(w,b.dataset.action));
+}
+const input=(label,name,value='',required=false,type='text')=>'<label>'+label+(required?' *':'')+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+'></label>';
+const area=(label,name,value='',required=false)=>'<label>'+label+(required?' *':'')+'<textarea name="'+name+'" '+(required?'required':'')+'>'+esc(value)+'</textarea></label>';
+const select=(label,name,values,value='',required=false)=>'<label>'+label+(required?' *':'')+'<select name="'+name+'" '+(required?'required':'')+'><option value="">请选择</option>'+options(values,value)+'</select></label>';
+function modal(title,fields,save,action='保存'){
+ document.querySelector('#dialogTitle').textContent=title;
+ document.querySelector('#fields').innerHTML=fields;
+ document.querySelector('#confirm').textContent=action;
+ document.querySelector('#error').textContent='';
+ form.onsubmit=e=>{e.preventDefault();const failure=save(Object.fromEntries(new FormData(form)));if(failure)document.querySelector('#error').textContent=failure;else dialog.close()};
+ dialog.showModal();
+}
+document.querySelector('#cancel').onclick=()=>dialog.close();
+function wishForm(w){
+ modal(w?'编辑许愿':'提交许愿',select('所属产品','product',Object.keys(products),w?.product,true)+'<p id="assignee" class="muted"></p>'+input('标题','title',w?.title,true)+input('客户／提出者','customer',w?.customer)+select('采集渠道','channel',['电话','群聊','客户拜访','现场服务','其他'],w?.channel)+select('优先级','priority',['高','中','低'],w?.priority||'中',true)+area('客户诉求','desc',w?.desc,true)+area('验收标准','verify',w?.verify),data=>{
+ if(!data.title.trim()||!data.desc.trim())return '请填写标题和客户诉求。';
+ if(w){Object.assign(w,data,{date:today});w.history.push(currentUser+'更新了许愿');detail(w)}
+ else{const entry={...data,id:Math.max(...wishes.map(x=>x.id))+1,owner:products[data.product]||currentUser,reporter:currentUser,date:today,status:'待评估',links:{},history:[currentUser+'登记了许愿']};wishes.unshift(entry);detail(entry)}
+ notice.textContent='许愿已保存';
+ });
+ const product=form.elements.product;
+ const update=()=>document.querySelector('#assignee').textContent=product.value?(w?'当前负责人：'+w.owner:'预计负责人：'+(products[product.value]||currentUser)):'选择产品后显示预计负责人';
+ product.onchange=update;update();
+}
+function handle(w,action){
+ if(action==='编辑'){wishForm(w);return}
+ const handing=action==='转交';
+ modal(action,handing?select('新负责人','owner',['王晓','陈晨','林然'],w.owner,true)+area('转交说明','note'):area(action==='关闭'?'处理结果和实际答复':'重开原因','note','',true),data=>{
+ if(!handing&&!data.note.trim())return '请填写说明。';
+ if(handing)w.owner=data.owner;
+ else if(action==='关闭'){w.status='已关闭';w.reason=data.note}
+ else w.status='跟进中';
+ w.date=today;w.history.push(currentUser+action+(data.note?'：'+data.note:''));
+ detail(w);notice.textContent='办理已记录';
+ });
+}
+function conversion(w,target){
+ const existing=w.links[target];
+ if(existing){
+ modal(target+' #'+existing.id,'<p>'+esc(existing.title)+'</p><p class="muted">已建立承接关系 · 来源许愿 #'+w.id+'</p>',()=>null,'完成');return
+ }
+ const name=input(['待办','任务'].includes(target)?'名称':'标题','title',w.title,true);
+ const product=select('所属产品','product',Object.keys(products),w.product,true);
+ const note=area(({Bug:'复现步骤',需求:'需求描述'})[target]||'描述','desc',w.desc);
+ const byTarget={
+  反馈:product+name+select('反馈类型','type',['建议','问题','需求'],'建议')+input('反馈者','customer',w.customer)+input('来源','source',w.channel),
+  Bug:product+name+select('影响版本','build',['trunk（主干）','22.7 测试构建'],'',true)+select('严重程度','severity',['1','2','3','4'],'3'),
+  工单:product+select('所属模块','module',w.product==='库存管理'?['库存查询','库存导出']:['工单处理','客户档案'],'',true)+name,
+  待办:input('日期','date',today,true,'date')+name+select('可见范围','visibility',['仅本人','按待办权限可见'],'仅本人'),
+  需求:product+name+select('类别','category',['功能','体验','性能'],'功能'),
+  任务:select('所属执行','execution',w.product==='库存管理'?['库存管理 · 11 月迭代']:['客户服务 · 11 月迭代'],'',true)+name+select('指派给','owner',['林然','王晓','陈晨'])+input('预计开始','start','',false,'date')+input('截止日期','end','',false,'date')
+ };
+ modal('转'+target,(['反馈','工单'].includes(target)?'<p class="muted">正式接入需启用禅道'+target+'模块。这里可以模拟完整操作。</p>':'')+byTarget[target]+note+(target==='需求'?area('验收标准','verify',w.verify):''),data=>{
+ if(!data.title.trim())return '请填写标题或名称。';
+ if(data.start&&data.end&&data.end<data.start)return '截止日期不能早于预计开始。';
+ if(w.links[target])return '已有同类型承接单据，请查看原转单结果。';
+ w.links[target]={...data,id:++nextTarget};
+ w.status='跟进中';w.date=today;
+ w.history.push(currentUser+'模拟创建了'+target+' #'+nextTarget);
+ detail(w);notice.textContent='已模拟创建'+target+' #'+nextTarget;
+ },'模拟创建'+target);
+ if(target==='工单'){
+ form.elements.product.onchange=()=>{form.elements.module.innerHTML='<option value="">请选择</option>'+options(form.elements.product.value==='库存管理'?['库存查询','库存导出']:['工单处理','客户档案'])};
+ }
+}
+list();
+</script>
+</html>
