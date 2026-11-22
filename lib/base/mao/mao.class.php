@@ -490,7 +490,7 @@ class baseMao
         $field = $this->config->cache->raw[$this->table];
         foreach($this->conditions as $condition)
         {
-            if($condition['field'] == $field && $condition['operator'] == 'eq')
+            if($condition['field'] == $field && $condition['operator'] == 'eq' && !empty($condition['value']))
             {
                 $rawResult = $this->cache->fetch($this->table, $condition['value']);
                 if($rawResult)

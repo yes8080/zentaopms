@@ -662,10 +662,10 @@ class cache
     public function fetch(string $table, int|string $id): object|null
     {
         if($this->status == 'disabled') return null;
-        if(!$this->checkTable($table)) return $this->log("Table {$table} is not set in the cache configuration", __FILE__, __LINE__);
+        if(empty($table))               return null;
+        if(empty($id))                  return null;
 
-        if(empty($table)) return $this->log('The table name is empty', __FILE__, __LINE__);
-        if(empty($id))    return $this->log('The id is empty', __FILE__, __LINE__);
+        if(!$this->checkTable($table)) return $this->log("Table {$table} is not set in the cache configuration", __FILE__, __LINE__);
 
         $this->setTable($table);
 

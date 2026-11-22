@@ -2684,6 +2684,8 @@ class userModel extends model
         /* 如果是迭代并且是私有的，则检查所属项目的权限。 */
         if(($project->type == 'sprint' || $project->type == 'stage' || $project->type == 'kanban') && $project->acl == 'private')
         {
+            if(empty($project->project)) return false;
+
             $project = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROJECT)->where('id')->eq($project->project)->fetch();
             if(empty($project)) return false;
 
@@ -2811,6 +2813,8 @@ class userModel extends model
         /* 如果是迭代类型并且是私有的，则所属项目的PM和创建者是关系人。 */
         if(($project->type == 'sprint' || $project->type == 'stage' || $project->type == 'kanban') && $project->acl == 'private')
         {
+            if(empty($project->project)) return $users;
+
             $parent = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROJECT)->where('id')->eq($project->project)->fetch();
             if($parent)
             {
