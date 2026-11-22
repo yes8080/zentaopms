@@ -43,7 +43,7 @@ class wechatapi
         if(!isset($config->wechatTokens)) $config->wechatTokens = array();
         if(isset($config->wechatTokens[$wechatKey])) list($this->token, $this->expires) = $config->wechatTokens[$wechatKey];
 
-        if($this->token and (time() - $this->expires) >= 0) return $this->token;
+        if($this->token and (time() - $this->expires) < 0) return $this->token;
 
         $response = $this->queryAPI($this->apiUrl . "gettoken?corpid={$this->appKey}&corpsecret={$this->appSecret}");
         if($this->isError()) return false;

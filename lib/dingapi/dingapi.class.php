@@ -43,7 +43,7 @@ class dingapi
         if(!isset($config->dingTokens)) $config->dingTokens = array();
         if(isset($config->dingTokens[$dingKey])) list($this->token, $this->expires) = $config->dingTokens[$dingKey];
 
-        if($this->token and (time() - $this->expires) >= 0) return $this->token;
+        if($this->token and (time() - $this->expires) < 0) return $this->token;
 
         $response = $this->queryAPI($this->apiUrl . "gettoken?appkey={$this->appKey}&appsecret={$this->appSecret}");
         if($this->isError()) return false;
