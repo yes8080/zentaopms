@@ -113,20 +113,46 @@ class installModel extends model
      * Replace contants in SQL.
      *
      * @param  string $sql
+     * @param  string $name
+     * @param  string $schema
+     * @param  string $driver
+     * @param  string $defaultPrefix
+     * @param  string $prefix
      * @access public
      * @return string
      */
-    public function replaceContantsInSQL(string $sql): string
+    public function replaceContantsInSQL(string $sql, string $name = '', string $schema = '', string $driver = '', string $defaultPrefix = '', string $prefix = ''): string
     {
         $sql = trim($sql);
         if(!$sql) return '';
 
-        $schema = $this->config->db->schema ?? 'public';
-        $prefix = in_array($this->config->db->driver, $this->config->pgsqlDriverList) ? $schema : $this->config->db->name;
-        $sql    = str_replace("`{$this->config->db->defaultPrefix}", $prefix . ".`{$this->config->db->defaultPrefix}", $sql);
-        $sql    = str_replace('`ztv_', $prefix . '.`ztv_', $sql);
-        $sql    = str_replace($this->config->db->defaultPrefix, $this->config->db->prefix, $sql);
-        $sql    = str_replace('__DATABASE__', $this->config->db->name, $sql);
+        if(empty($name))          $name          = $this->config->db->name;
+        if(empty($schema))        $schema        = $this->config->db->schema ?? 'public';
+        if(empty($driver))        $driver        = $this->config->db->driver;
+        if(empty($defaultPrefix)) $defaultPrefix = $this->config->db->defaultPrefix;
+        if(empty($prefix))        $prefix        = $this->config->db->prefix;
+
+        $dbName      = in_array($driver, $this->config->pgsqlDriverList) ? $schema : $name;
+        $useCustom   = $prefix !== $defaultPrefix;
+        $placeholder = '__ZENTAO_CUSTOM_TABLE_PREFIX__';
+
+        /* 先保护已经存在的自定义前缀，避免自定义前缀包含默认前缀时被二次替换。 */
+        /* Protect existing custom prefixes so a custom prefix containing the default prefix is not replaced twice. */
+        if($useCustom) $sql = str_replace($prefix, $placeholder, $sql);
+
+        /* 只给未带数据库限定的默认前缀表名追加数据库，保证重复处理时结果不变。 */
+        /* Qualify only unqualified default-prefix table names so repeated processing remains idempotent. */
+        $sql = preg_replace('/(?<!\.)`' . preg_quote($defaultPrefix, '/') . '/', $dbName . '.`' . $defaultPrefix, $sql);
+        $sql = preg_replace('/(?<!\.)`ztv_/', $dbName . '.`ztv_', $sql);
+        $sql = str_replace($defaultPrefix, $prefix, $sql);
+        if($useCustom)
+        {
+            /* 恢复已有的自定义前缀表名，并仅在尚未限定时追加数据库。 */
+            /* Restore existing custom-prefix table names and qualify them only when not already qualified. */
+            $sql = preg_replace('/(?<!\.)`' . preg_quote($placeholder, '/') . '/', $dbName . '.`' . $placeholder, $sql);
+            $sql = str_replace($placeholder, $prefix, $sql);
+        }
+        $sql = str_replace('__DATABASE__', $name, $sql);
         return $sql;
     }
 

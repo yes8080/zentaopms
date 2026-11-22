@@ -152,7 +152,18 @@ class upgradeTao extends upgradeModel
             $xStandardSQL = $this->app->getAppRoot() . 'db' . DS . 'standard' . DS . 'xuanxuan' . $openVersion . '.sql';
             if(file_exists($xStandardSQL)) $sqls .= "\n" . file_get_contents($xStandardSQL);
         }
-        return $sqls;
+
+        $defaultPrefix = $this->config->db->defaultPrefix;
+        $prefix        = $this->config->db->prefix;
+
+        /* 标准 SQL 使用默认前缀，进入一致性检查前统一替换为当前实际表前缀。 */
+        /* Standard SQL uses the default prefix, so normalize it to the configured table prefix before consistency checks. */
+        return preg_replace_callback('/`' . preg_quote($defaultPrefix, '/') . '([^`]*)`/', function($matches) use ($prefix)
+        {
+            /* 只匹配反引号包裹的表标识符，避免误改 SQL 字符串数据。 */
+            /* Match only backtick-quoted table identifiers to avoid changing SQL string literals. */
+            return '`' . $prefix . $matches[1] . '`';
+        }, $sqls);
     }
 
     /**

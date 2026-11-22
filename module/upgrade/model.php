@@ -634,7 +634,9 @@ class upgradeModel extends model
         preg_match_all('/CREATE TABLE [^`]*`([^`]*)`/', $createHead, $out);
         if(!isset($out[1][0])) return $changes;
 
-        $table = str_replace($this->config->db->defaultPrefix, $this->config->db->prefix, $out[1][0]);
+        /* 标准 SQL 已在 getStandardSQLs() 中完成实际前缀替换。 */
+        /* Standard SQL has already been normalized to the configured prefix in getStandardSQLs(). */
+        $table = $out[1][0];
         if($table == $this->config->db->prefix . 'metriclib') return $changes; // 度量库表数据量过大，检查到表结构不一致执行升级会导致长时间卡死，跳过检查。Skip checking metriclib table because it has too much data and checking it will cause long time stuck.
 
         $fields = array();
@@ -14116,17 +14118,21 @@ class upgradeModel extends model
     {
         if($version == '22.6')
         {
+            /* 使用表常量适配实际前缀，PostgreSQL 系由 dbh 转换标识符引号。 */
+            /* Use table constants for the configured prefix; dbh converts identifier quotes for PostgreSQL-family databases. */
+            $workflowField      = TABLE_WORKFLOWFIELD;
+            $workflowDatasource = TABLE_WORKFLOWDATASOURCE;
             $sqls = "
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'taskMode'           LIMIT 1) WHERE `module` = 'task'     AND `field` = 'mode';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'storyCategory'      LIMIT 1) WHERE `module` = 'story'    AND `field` = 'category';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'taskDocs'           LIMIT 1) WHERE `module` = 'task'     AND `field` = 'docs';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'caseScene'          LIMIT 1) WHERE `module` = 'testcase' AND `field` = 'scene';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'bugInjection'       LIMIT 1) WHERE `module` = 'bug'      AND `field` = 'injection';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'bugIdentify'        LIMIT 1) WHERE `module` = 'bug'      AND `field` = 'identify';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'ticketClosedReason' LIMIT 1) WHERE `module` = 'ticket'   AND `field` = 'closedReason';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'feedbackPri'        LIMIT 1) WHERE `module` = 'feedback' AND `field` = 'pri';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'ticketRepeat'       LIMIT 1) WHERE `module` = 'ticket'   AND `field` = 'repeatTicket';
-                UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'feedbackRepeat'     LIMIT 1) WHERE `module` = 'feedback' AND `field` = 'repeatFeedback';";
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'taskMode'           LIMIT 1) WHERE `module` = 'task'     AND `field` = 'mode';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'storyCategory'      LIMIT 1) WHERE `module` = 'story'    AND `field` = 'category';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'taskDocs'           LIMIT 1) WHERE `module` = 'task'     AND `field` = 'docs';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'caseScene'          LIMIT 1) WHERE `module` = 'testcase' AND `field` = 'scene';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'bugInjection'       LIMIT 1) WHERE `module` = 'bug'      AND `field` = 'injection';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'bugIdentify'        LIMIT 1) WHERE `module` = 'bug'      AND `field` = 'identify';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'ticketClosedReason' LIMIT 1) WHERE `module` = 'ticket'   AND `field` = 'closedReason';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'feedbackPri'        LIMIT 1) WHERE `module` = 'feedback' AND `field` = 'pri';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'ticketRepeat'       LIMIT 1) WHERE `module` = 'ticket'   AND `field` = 'repeatTicket';
+                UPDATE {$workflowField} SET `options` = (SELECT `id` FROM {$workflowDatasource} WHERE `code` = 'feedbackRepeat'     LIMIT 1) WHERE `module` = 'feedback' AND `field` = 'repeatFeedback';";
 
             foreach(explode(';', $sqls) as $sql)
             {
